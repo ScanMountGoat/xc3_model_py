@@ -2,7 +2,7 @@
 Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib). xc3_model_py provides high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenblade 3.
 
 ## Introduction
-xc3_model_py is designed for simplicity and speed. All of the processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. 
+Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. 
 
 ```python
 import xc3_model_py
@@ -25,7 +25,7 @@ for group in root.groups:
         print(len(model.instances.shape))
 ```
 
-Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package. Blender addons can also use functions like `foreach_get` and `foreach_set` for very efficiently property access.
+Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
 
 ```python
 # blender
