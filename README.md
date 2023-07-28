@@ -1,5 +1,5 @@
 # xc3_model_py
-Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib). xc3_model_py provides high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenblade 3.
+Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenblade 3.
 
 ## Introduction
 Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. 
