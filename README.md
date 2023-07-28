@@ -33,6 +33,9 @@ blender_mesh.vertices.add(positions_array.shape[0])
 blender_mesh.vertices.foreach_set('co', positions_array.reshape(-1))
 ```
 
+## Documentation
+See the [pyi stub file](https://github.com/ScanMountGoat/xc3_model_py/blob/main/xc3_model_py/__init__.pyi) for functions and types. This also enables autocomplete in supported editors like the Python extension for VSCode. The Python API attempts to match the Rust functions and types in xc3_model as closely as possible. 
+
 ## Installation
 The compiled extension module can be imported just like any other Python file. On Windows, rename `xc3_model_py.dll` to `xc3_model_py.pyd`. If importing `xc3_model_py` fails, make sure the import path is specified correctly and the current Python version matches the version used when building. For installing in the current Python environment, install [maturin](https://github.com/PyO3/maturin) and use `maturin develop --release`.
 
