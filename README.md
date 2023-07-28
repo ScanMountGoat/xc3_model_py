@@ -25,7 +25,7 @@ for group in root.groups:
         print(len(model.instances.shape))
 ```
 
-Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This allows loading times to be close pure Rust code and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package. Blender addons can also use functions `foreach_get` and `foreach_set` for very efficiently propert access.
+Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package. Blender addons can also use functions like `foreach_get` and `foreach_set` for very efficiently property access.
 
 ```python
 # blender
@@ -33,17 +33,17 @@ blender_mesh.vertices.add(positions_array.shape[0])
 blender_mesh.vertices.foreach_set('co', positions_array.reshape(-1))
 ```
 
-## Importing
-The compiled extension module can be imported just like any other Python file. On Windows, rename `xc3_model_py.dll` to `xc3_model_py.pyd`. If importing `xc3_model_py` fails, make sure the import path is specified correctly and the current Python version matches the version used when building. 
+## Installation
+The compiled extension module can be imported just like any other Python file. On Windows, rename `xc3_model_py.dll` to `xc3_model_py.pyd`. If importing `xc3_model_py` fails, make sure the import path is specified correctly and the current Python version matches the version used when building. For installing in the current Python environment, install [maturin](https://github.com/PyO3/maturin) and use `maturin develop --release`.
 
 ## Building
 Build the project with `cargo build --release`. This will compile a native python module for the current Python interpreter. For use with Blender, make sure to build for the Python version used by Blender. The easiest way to do this is to use the Python interpreter bundled with Blender. See the [PyO3 guide](https://pyo3.rs/main/building_and_distribution) for details. Some example commands are listed below for different operating systems. 
 
-**Blender 3.6 on Windows**
+**Blender 3.6 on Windows**  
 ```
 set PYO3_PYTHON = "C:\Program Files\Blender Foundation\Blender 3.6\3.6\python\bin\python.exe"
 cargo build --release
 ```
 
-**Blender 3.6 on MacOS**
+**Blender 3.6 on MacOS**  
 `PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10" cargo build --release`
