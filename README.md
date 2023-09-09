@@ -49,7 +49,9 @@ cargo build --release
 ```
 
 **Blender 3.6 on MacOS**  
-`PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10" cargo build --release`
+```
+PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10" cargo build --release
+```
 
 ## Limitations
 All data should be treated as immutable. Attempting to set fields will result in an error. Modifying list elements will appear to work, but changes will not be reflected when accessing the elements again. Types from `xc3_model_py` also cannot be constructed in any way from Python. These limitations may be lifted in the future. Write support may be added in the future as xc3_lib and xc3_model develop. 
