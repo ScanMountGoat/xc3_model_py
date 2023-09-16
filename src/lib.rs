@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
@@ -17,19 +18,34 @@ pub struct ModelRoot {
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct ModelGroup {
+    pub models: Vec<Models>,
+    pub buffers: Vec<ModelBuffers>,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct ModelBuffers {
+    pub vertex_buffers: Vec<VertexBuffer>,
+    pub index_buffers: Vec<IndexBuffer>,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct Models {
     pub models: Vec<Model>,
     pub materials: Vec<Material>,
+    pub samplers: Vec<Sampler>,
     pub skeleton: Option<Skeleton>,
+    pub base_lod_indices: Option<Vec<u16>>,
 }
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct Model {
     pub meshes: Vec<Mesh>,
-    pub vertex_buffers: Vec<VertexBuffer>,
-    pub index_buffers: Vec<IndexBuffer>,
     // N x 4 x 4 numpy.ndarray
     pub instances: PyObject,
+    pub model_buffers_index: usize,
 }
 
 #[pyclass(get_all)]
@@ -38,6 +54,7 @@ pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
     pub material_index: usize,
+    pub lod: u16,
 }
 
 #[pyclass(get_all)]
@@ -58,10 +75,31 @@ pub struct Bone {
 #[derive(Debug, Clone)]
 pub struct Material {
     pub name: String,
-    // pub flags: MaterialFlags,
+    // TODO: how to handle flags?
+    // pub flags: StateFlags,
     pub textures: Vec<Texture>,
+    pub alpha_test: Option<TextureAlphaTest>,
     pub shader: Option<Shader>,
     // pub unk_type: ShaderUnkType,
+    pub parameters: MaterialParameters,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct TextureAlphaTest {
+    pub texture_index: usize,
+    pub channel_index: usize,
+    pub ref_value: f32,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct MaterialParameters {
+    pub mat_color: (f32, f32, f32, f32),
+    pub alpha_test_ref: f32,
+    pub tex_matrix: Option<Vec<[f32; 8]>>,
+    pub work_float4: Option<Vec<(f32, f32, f32, f32)>>,
+    pub work_color: Option<Vec<(f32, f32, f32, f32)>>,
 }
 
 #[pyclass(get_all)]
@@ -140,53 +178,183 @@ pub struct ImageTexture {
     pub image_data: Vec<u8>,
 }
 
+// TODO: Create a macro for this?
 #[pyclass]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ViewDimension {
-    D2 = 1,
-    D3 = 2,
-    Cube = 8,
+    D2,
+    D3,
+    Cube,
 }
 
-impl From<xc3_model::texture::ViewDimension> for ViewDimension {
-    fn from(value: xc3_model::texture::ViewDimension) -> Self {
+impl From<xc3_model::ViewDimension> for ViewDimension {
+    fn from(value: xc3_model::ViewDimension) -> Self {
         match value {
-            xc3_model::texture::ViewDimension::D2 => Self::D2,
-            xc3_model::texture::ViewDimension::D3 => Self::D3,
-            xc3_model::texture::ViewDimension::Cube => Self::Cube,
+            xc3_model::ViewDimension::D2 => Self::D2,
+            xc3_model::ViewDimension::D3 => Self::D3,
+            xc3_model::ViewDimension::Cube => Self::Cube,
+        }
+    }
+}
+
+impl From<ViewDimension> for xc3_model::ViewDimension {
+    fn from(value: ViewDimension) -> Self {
+        match value {
+            ViewDimension::D2 => Self::D2,
+            ViewDimension::D3 => Self::D3,
+            ViewDimension::Cube => Self::Cube,
         }
     }
 }
 
 #[pyclass]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ImageFormat {
-    R8Unorm = 1,
-    R8G8B8A8Unorm = 37,
-    R16G16B16A16Float = 41,
-    BC1Unorm = 66,
-    BC2Unorm = 67,
-    BC3Unorm = 68,
-    BC4Unorm = 73,
-    BC5Unorm = 75,
-    BC7Unorm = 77,
-    B8G8R8A8Unorm = 109,
+    R8Unorm,
+    R8G8B8A8Unorm,
+    R16G16B16A16Float,
+    BC1Unorm,
+    BC2Unorm,
+    BC3Unorm,
+    BC4Unorm,
+    BC5Unorm,
+    BC7Unorm,
+    B8G8R8A8Unorm,
 }
 
-impl From<xc3_model::texture::ImageFormat> for ImageFormat {
-    fn from(value: xc3_model::texture::ImageFormat) -> Self {
+impl From<xc3_model::ImageFormat> for ImageFormat {
+    fn from(value: xc3_model::ImageFormat) -> Self {
         match value {
-            xc3_model::texture::ImageFormat::R8Unorm => Self::R8Unorm,
-            xc3_model::texture::ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
-            xc3_model::texture::ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
-            xc3_model::texture::ImageFormat::BC1Unorm => Self::BC1Unorm,
-            xc3_model::texture::ImageFormat::BC2Unorm => Self::BC2Unorm,
-            xc3_model::texture::ImageFormat::BC3Unorm => Self::BC3Unorm,
-            xc3_model::texture::ImageFormat::BC4Unorm => Self::BC4Unorm,
-            xc3_model::texture::ImageFormat::BC5Unorm => Self::BC5Unorm,
-            xc3_model::texture::ImageFormat::BC7Unorm => Self::BC7Unorm,
-            xc3_model::texture::ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
+            xc3_model::ImageFormat::R8Unorm => Self::R8Unorm,
+            xc3_model::ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
+            xc3_model::ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
+            xc3_model::ImageFormat::BC1Unorm => Self::BC1Unorm,
+            xc3_model::ImageFormat::BC2Unorm => Self::BC2Unorm,
+            xc3_model::ImageFormat::BC3Unorm => Self::BC3Unorm,
+            xc3_model::ImageFormat::BC4Unorm => Self::BC4Unorm,
+            xc3_model::ImageFormat::BC5Unorm => Self::BC5Unorm,
+            xc3_model::ImageFormat::BC7Unorm => Self::BC7Unorm,
+            xc3_model::ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
         }
+    }
+}
+
+impl From<ImageFormat> for xc3_model::ImageFormat {
+    fn from(value: ImageFormat) -> Self {
+        match value {
+            ImageFormat::R8Unorm => Self::R8Unorm,
+            ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
+            ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
+            ImageFormat::BC1Unorm => Self::BC1Unorm,
+            ImageFormat::BC2Unorm => Self::BC2Unorm,
+            ImageFormat::BC3Unorm => Self::BC3Unorm,
+            ImageFormat::BC4Unorm => Self::BC4Unorm,
+            ImageFormat::BC5Unorm => Self::BC5Unorm,
+            ImageFormat::BC7Unorm => Self::BC7Unorm,
+            ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
+        }
+    }
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct Sampler {
+    pub address_mode_u: AddressMode,
+    pub address_mode_v: AddressMode,
+    pub address_mode_w: AddressMode,
+    pub min_filter: FilterMode,
+    pub mag_filter: FilterMode,
+    pub mipmaps: bool,
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum AddressMode {
+    ClampToEdge,
+    Repeat,
+    MirrorRepeat,
+}
+
+impl From<xc3_model::AddressMode> for AddressMode {
+    fn from(value: xc3_model::AddressMode) -> Self {
+        match value {
+            xc3_model::AddressMode::ClampToEdge => Self::ClampToEdge,
+            xc3_model::AddressMode::Repeat => Self::Repeat,
+            xc3_model::AddressMode::MirrorRepeat => Self::MirrorRepeat,
+        }
+    }
+}
+
+impl From<AddressMode> for xc3_model::AddressMode {
+    fn from(value: AddressMode) -> Self {
+        match value {
+            AddressMode::ClampToEdge => Self::ClampToEdge,
+            AddressMode::Repeat => Self::Repeat,
+            AddressMode::MirrorRepeat => Self::MirrorRepeat,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum FilterMode {
+    Nearest,
+    Linear,
+}
+
+impl From<xc3_model::FilterMode> for FilterMode {
+    fn from(value: xc3_model::FilterMode) -> Self {
+        match value {
+            xc3_model::FilterMode::Nearest => Self::Nearest,
+            xc3_model::FilterMode::Linear => Self::Linear,
+        }
+    }
+}
+
+impl From<FilterMode> for xc3_model::FilterMode {
+    fn from(value: FilterMode) -> Self {
+        match value {
+            FilterMode::Nearest => Self::Nearest,
+            FilterMode::Linear => Self::Linear,
+        }
+    }
+}
+
+#[pymethods]
+impl ModelRoot {
+    pub fn decode_images_rgbaf32(&self, py: Python) -> Vec<PyObject> {
+        // TODO: make decoding optional?
+        // TODO: Expose xc3_model types from root?
+        let buffers: Vec<_> = self
+            .image_textures
+            .par_iter()
+            .map(|image| {
+                // TODO: Use image_dds directly to avoid cloning?
+                let bytes = xc3_model::ImageTexture {
+                    name: image.name.clone(),
+                    width: image.width,
+                    height: image.height,
+                    depth: image.depth,
+                    view_dimension: image.view_dimension.into(),
+                    image_format: image.image_format.into(),
+                    mipmap_count: image.mipmap_count,
+                    image_data: image.image_data.clone(),
+                }
+                .to_image()
+                .unwrap()
+                .into_raw();
+
+                bytes
+                    .into_iter()
+                    .map(|u| u as f32 / 255.0)
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+
+        buffers
+            .into_iter()
+            .map(|buffer| buffer.into_pyarray(py).into())
+            .collect()
     }
 }
 
@@ -219,33 +387,32 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                 models: group
                     .models
                     .into_iter()
-                    .map(|model| Model {
-                        meshes: model
-                            .meshes
-                            .into_iter()
-                            .map(|mesh| Mesh {
-                                vertex_buffer_index: mesh.vertex_buffer_index,
-                                index_buffer_index: mesh.index_buffer_index,
-                                material_index: mesh.material_index,
-                            })
-                            .collect(),
-                        vertex_buffers: vertex_buffers(py, model.vertex_buffers),
-                        index_buffers: index_buffers(py, model.index_buffers),
-                        instances: transforms_pyarray(py, &model.instances),
+                    .map(|models| Models {
+                        models: models.models.into_iter().map(|m| model(py, m)).collect(),
+                        materials: materials(models.materials),
+                        samplers: samplers(models.samplers),
+                        skeleton: models.skeleton.map(|skeleton| Skeleton {
+                            bones: skeleton
+                                .bones
+                                .into_iter()
+                                .map(|bone| Bone {
+                                    name: bone.name,
+                                    transform: mat4_pyarray(py, bone.transform),
+                                    parent_index: bone.parent_index,
+                                })
+                                .collect(),
+                        }),
+                        base_lod_indices: models.base_lod_indices,
                     })
                     .collect(),
-                materials: materials(group.materials),
-                skeleton: group.skeleton.map(|skeleton| Skeleton {
-                    bones: skeleton
-                        .bones
-                        .into_iter()
-                        .map(|bone| Bone {
-                            name: bone.name,
-                            transform: mat4_pyarray(py, bone.transform),
-                            parent_index: bone.parent_index,
-                        })
-                        .collect(),
-                }),
+                buffers: group
+                    .buffers
+                    .into_iter()
+                    .map(|buffer| ModelBuffers {
+                        vertex_buffers: vertex_buffers(py, buffer.vertex_buffers),
+                        index_buffers: index_buffers(py, buffer.index_buffers),
+                    })
+                    .collect(),
             })
             .collect(),
         image_textures: root
@@ -265,6 +432,23 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
     }
 }
 
+fn model(py: Python, model: xc3_model::Model) -> Model {
+    Model {
+        meshes: model
+            .meshes
+            .into_iter()
+            .map(|mesh| Mesh {
+                vertex_buffer_index: mesh.vertex_buffer_index,
+                index_buffer_index: mesh.index_buffer_index,
+                material_index: mesh.material_index,
+                lod: mesh.lod,
+            })
+            .collect(),
+        instances: transforms_pyarray(py, &model.instances),
+        model_buffers_index: model.model_buffers_index,
+    }
+}
+
 fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
     materials
         .into_iter()
@@ -277,9 +461,41 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                     image_texture_index: texture.image_texture_index,
                 })
                 .collect(),
+            alpha_test: material.alpha_test.map(|a| TextureAlphaTest {
+                texture_index: a.texture_index,
+                channel_index: a.channel_index,
+                ref_value: a.ref_value,
+            }),
             shader: material.shader.map(|shader| Shader {
                 output_dependencies: shader.output_dependencies.into_iter().collect(),
             }),
+            parameters: MaterialParameters {
+                mat_color: material.parameters.mat_color.into(),
+                alpha_test_ref: material.parameters.alpha_test_ref,
+                tex_matrix: material.parameters.tex_matrix.into(),
+                work_float4: material
+                    .parameters
+                    .work_float4
+                    .map(|v| v.into_iter().map(|v| v.into()).collect()),
+                work_color: material
+                    .parameters
+                    .work_color
+                    .map(|v| v.into_iter().map(|v| v.into()).collect()),
+            },
+        })
+        .collect()
+}
+
+fn samplers(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
+    samplers
+        .into_iter()
+        .map(|sampler| Sampler {
+            address_mode_u: sampler.address_mode_u.into(),
+            address_mode_v: sampler.address_mode_v.into(),
+            address_mode_w: sampler.address_mode_w.into(),
+            min_filter: sampler.min_filter.into(),
+            mag_filter: sampler.mag_filter.into(),
+            mipmaps: sampler.mipmaps,
         })
         .collect()
 }
@@ -448,11 +664,15 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     // TODO: automate registering every type?
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
+    m.add_class::<ModelBuffers>()?;
+    m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
     m.add_class::<Skeleton>()?;
     m.add_class::<Bone>()?;
     m.add_class::<Material>()?;
+    m.add_class::<TextureAlphaTest>()?;
+    m.add_class::<MaterialParameters>()?;
     m.add_class::<Shader>()?;
     m.add_class::<Texture>()?;
     m.add_class::<VertexBuffer>()?;
@@ -464,6 +684,9 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ImageTexture>()?;
     m.add_class::<ViewDimension>()?;
     m.add_class::<ImageFormat>()?;
+    m.add_class::<Sampler>()?;
+    m.add_class::<AddressMode>()?;
+    m.add_class::<FilterMode>()?;
 
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;

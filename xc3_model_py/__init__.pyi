@@ -1,4 +1,4 @@
-from typing import List, Optional, ClassVar
+from typing import List, Optional, ClassVar, Tuple
 import numpy
 
 
@@ -46,6 +46,20 @@ class Material:
     name: str
     textures: List[Texture]
     shader: Optional[Shader]
+
+
+class TextureAlphaTest:
+    texture_index: int
+    channel_index: int
+    ref_value: float
+
+
+class MaterialParameters:
+    mat_color: Tuple[float, float, float, float]
+    alpha_test_ref: float
+    tex_matrix: Optional[List[float]]
+    work_float4: Optional[Tuple[float, float, float, float]]
+    work_color: Optional[Tuple[float, float, float, float]]
 
 
 class Shader:
@@ -120,3 +134,23 @@ class ImageFormat:
     BC5Unorm: ClassVar[ImageFormat]
     BC7Unorm: ClassVar[ImageFormat]
     B8G8R8A8Unorm: ClassVar[ImageFormat]
+
+
+class Sampler:
+    address_mode_u: AddressMode
+    address_mode_v: AddressMode
+    address_mode_w: AddressMode
+    min_filter: FilterMode
+    mag_filter: FilterMode
+    mipmaps: bool
+
+
+class AddressMode:
+    ClampToEdge: ClassVar[AddressMode]
+    Repeat: ClassVar[AddressMode]
+    MirrorRepeat: ClassVar[AddressMode]
+
+
+class FilterMode:
+    Nearest: ClassVar[FilterMode]
+    Linear: ClassVar[FilterMode]
