@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray};
 use pyo3::prelude::*;
@@ -102,11 +100,40 @@ pub struct MaterialParameters {
     pub work_color: Option<Vec<(f32, f32, f32, f32)>>,
 }
 
-#[pyclass(get_all)]
+// TODO: Expose implementation details?
+#[pyclass]
 #[derive(Debug, Clone)]
-pub struct Shader {
-    // TODO: Why can't we use indexmap here?
-    pub output_dependencies: HashMap<String, Vec<String>>,
+pub struct Shader(xc3_model::Shader);
+
+#[pymethods]
+impl Shader {
+    pub fn sampler_channel_index(&self, output_index: usize, channel: char) -> Option<(u32, u32)> {
+        self.0.sampler_channel_index(output_index, channel)
+    }
+
+    pub fn float_constant(&self, output_index: usize, channel: char) -> Option<f32> {
+        self.0.float_constant(output_index, channel)
+    }
+
+    pub fn buffer_parameter(&self, output_index: usize, channel: char) -> Option<BufferParameter> {
+        self.0
+            .buffer_parameter(output_index, channel)
+            .map(|b| BufferParameter {
+                buffer: b.buffer,
+                uniform: b.uniform,
+                index: b.index,
+                channel: b.channel,
+            })
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct BufferParameter {
+    pub buffer: String,
+    pub uniform: String,
+    pub index: usize,
+    pub channel: char,
 }
 
 #[pyclass(get_all)]
@@ -359,12 +386,9 @@ impl ModelRoot {
 }
 
 #[pyfunction]
-fn load_model(
-    py: Python,
-    wimdo_path: &str,
-    // TODO: database?
-) -> PyResult<ModelRoot> {
-    let root = xc3_model::load_model(wimdo_path, None);
+fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
+    let database = database_path.map(xc3_model::GBufferDatabase::from_file);
+    let root = xc3_model::load_model(wimdo_path, database.as_ref());
     Ok(model_root(py, root))
 }
 
@@ -372,9 +396,10 @@ fn load_model(
 fn load_map(
     py: Python,
     wismhd_path: &str,
-    // TODO: database?
+    database_path: Option<&str>,
 ) -> PyResult<Vec<ModelRoot>> {
-    let roots = xc3_model::load_map(wismhd_path, None);
+    let database = database_path.map(xc3_model::GBufferDatabase::from_file);
+    let roots = xc3_model::load_map(wismhd_path, database.as_ref());
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
 
@@ -466,13 +491,11 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                 channel_index: a.channel_index,
                 ref_value: a.ref_value,
             }),
-            shader: material.shader.map(|shader| Shader {
-                output_dependencies: shader.output_dependencies.into_iter().collect(),
-            }),
+            shader: material.shader.map(Shader),
             parameters: MaterialParameters {
                 mat_color: material.parameters.mat_color.into(),
                 alpha_test_ref: material.parameters.alpha_test_ref,
-                tex_matrix: material.parameters.tex_matrix.into(),
+                tex_matrix: material.parameters.tex_matrix,
                 work_float4: material
                     .parameters
                     .work_float4
@@ -585,7 +608,7 @@ fn vec2_pyarray(py: Python, values: &[Vec2]) -> PyObject {
     // This avoids needing unsafe code.
     let count = values.len();
     values
-        .into_iter()
+        .iter()
         .flat_map(|v| v.to_array())
         .collect::<Vec<f32>>()
         .into_pyarray(py)
@@ -599,7 +622,7 @@ fn vec3_pyarray(py: Python, values: &[Vec3]) -> PyObject {
     // This avoids needing unsafe code.
     let count = values.len();
     values
-        .into_iter()
+        .iter()
         .flat_map(|v| v.to_array())
         .collect::<Vec<f32>>()
         .into_pyarray(py)
@@ -613,7 +636,7 @@ fn vec4_pyarray(py: Python, values: &[Vec4]) -> PyObject {
     // This avoids needing unsafe code.
     let count = values.len();
     values
-        .into_iter()
+        .iter()
         .flat_map(|v| v.to_array())
         .collect::<Vec<f32>>()
         .into_pyarray(py)
@@ -627,7 +650,7 @@ fn uvec4_pyarray(py: Python, values: &[[u8; 4]]) -> PyObject {
     // This avoids needing unsafe code.
     let count = values.len();
     values
-        .into_iter()
+        .iter()
         .flatten()
         .copied()
         .collect::<Vec<u8>>()
@@ -642,7 +665,7 @@ fn transforms_pyarray(py: Python, transforms: &[Mat4]) -> PyObject {
     // This avoids needing unsafe code.
     let transform_count = transforms.len();
     transforms
-        .into_iter()
+        .iter()
         .flat_map(|v| v.to_cols_array())
         .collect::<Vec<f32>>()
         .into_pyarray(py)
@@ -674,6 +697,7 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<TextureAlphaTest>()?;
     m.add_class::<MaterialParameters>()?;
     m.add_class::<Shader>()?;
+    m.add_class::<BufferParameter>()?;
     m.add_class::<Texture>()?;
     m.add_class::<VertexBuffer>()?;
     m.add_class::<AttributeData>()?;

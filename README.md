@@ -2,27 +2,45 @@
 Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenoblade 3.
 
 ## Introduction
-Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. 
+Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader JSON databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases).
 
 ```python
 import xc3_model_py
 
 # Get a list of model roots.
-roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd")
+roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd", database_path="xc3.json")
 for root in roots:
     for group in root.groups:
-        for material in group.materials:
-            print(material.name)
-        for model in group.models:
-            # prints (num_instances, 4, 4)
-            print(len(model.instances.shape))
+        for models in group.models:
+            for material in models.materials:
+                print(material.name)
+                # The shader contains assignment information when specifying a JSON database.
+                if material.shader is not None:
+                    # Find the image texture and channel used for the ambient occlusion output.
+                    ao = material.shader.sampler_channel_index(2, 'z')
+                    if ao is not None:
+                        sampler_index, channel_index = ao
+                        image_texture_index = material.textures[sampler_index].image_texture_index
+                        image_texture = root.image_textures[image_texture_index]
+                        print(image_texture.name, 'xyzw'[channel_index])
+
+            for model in models.models:
+                # prints (num_instances, 4, 4)
+                print(len(model.instances.shape))
 
 # This returns only a single root.
-root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo")
+root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json")
 for group in root.groups:
-    for model in group.models:
-        # prints (1, 4, 4)
-        print(len(model.instances.shape))
+    for models in group.models:
+        for model in models.models:
+            # prints (1, 4, 4)
+            print(len(model.instances.shape))
+
+            # Access vertex and index data for this model.
+            buffers = group.buffers[model.model_buffers_index]
+            for buffer in buffers.vertex_buffers:
+                for attribute in buffer.attributes:
+                    print(attribute.attribute_type, attribute.data.shape)
 ```
 
 Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
@@ -34,7 +52,7 @@ blender_mesh.vertices.foreach_set('co', positions_array.reshape(-1))
 ```
 
 ## Documentation
-See the [pyi stub file](https://github.com/ScanMountGoat/xc3_model_py/blob/main/xc3_model_py/__init__.pyi) for functions and types. This also enables autocomplete in supported editors like the Python extension for VSCode. The Python API attempts to match the Rust functions and types in xc3_model as closely as possible. 
+See the [pyi stub file](https://github.com/ScanMountGoat/xc3_model_py/blob/main/xc3_model_py/__init__.pyi) for complete function and type information. This also enables autocomplete in supported editors like the Python extension for VSCode. The Python API attempts to match the Rust functions and types in xc3_model as closely as possible. 
 
 ## Installation
 The compiled extension module can be imported just like any other Python file. On Windows, rename `xc3_model_py.dll` to `xc3_model_py.pyd`. If importing `xc3_model_py` fails, make sure the import path is specified correctly and the current Python version matches the version used when building. For installing in the current Python environment, install [maturin](https://github.com/PyO3/maturin) and use `maturin develop --release`.

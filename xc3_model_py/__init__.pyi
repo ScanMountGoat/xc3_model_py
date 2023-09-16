@@ -2,10 +2,10 @@ from typing import List, Optional, ClassVar, Tuple
 import numpy
 
 
-def load_model(wimdo_path: str) -> ModelRoot: ...
+def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
 
 
-def load_map(wismhd: str) -> List[ModelRoot]: ...
+def load_map(wismhd: str, database_path: Optional[str]) -> List[ModelRoot]: ...
 
 
 class ModelRoot:
@@ -14,16 +14,27 @@ class ModelRoot:
 
 
 class ModelGroup:
+    models: List[Models]
+    buffers: List[ModelBuffers]
+
+
+class ModelBuffers:
+    vertex_buffers: List[VertexBuffer]
+    index_buffers: List[IndexBuffer]
+
+
+class Models:
     models: List[Model]
     materials: List[Material]
+    samplers: List[Sampler]
     skeleton: Optional[Skeleton]
+    base_lod_indices: Optional[List[int]]
 
 
 class Model:
     meshes: List[Mesh]
-    vertex_buffers: List[VertexBuffer]
-    index_buffers: List[IndexBuffer]
     instances: numpy.ndarray
+    model_buffers_index: int
 
 
 class Mesh:
@@ -63,7 +74,21 @@ class MaterialParameters:
 
 
 class Shader:
-    output_dependencies: dict[str, List[str]]
+    def sampler_channel_index(self, output_index: int,
+                              channel: str) -> Optional[Tuple[int, int]]: ...
+
+    def float_constant(self, output_index: int,
+                       channel: str) -> Optional[float]: ...
+
+    def buffer_parameter(self, output_index: int,
+                         channel: str) -> Optional[BufferParameter]: ...
+
+
+class BufferParameter:
+    buffer: str
+    uniform: str
+    index: int
+    channel: str
 
 
 class Texture:
