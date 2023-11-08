@@ -21,6 +21,17 @@ class ModelGroup:
 class ModelBuffers:
     vertex_buffers: List[VertexBuffer]
     index_buffers: List[IndexBuffer]
+    weights: Optional[Weights]
+
+
+class Weights:
+    skin_weights: SkinWeights
+
+
+class SkinWeights:
+    bone_indices: numpy.ndarray
+    weights: numpy.ndarray
+    bone_names: List[str]
 
 
 class Models:
@@ -115,6 +126,10 @@ class AttributeType:
     WeightIndex: ClassVar[AttributeType]
     SkinWeights: ClassVar[AttributeType]
     BoneIndices: ClassVar[AttributeType]
+
+
+class MorphTarget:
+    attributes: List[AttributeData]
 
 
 class Influence:

@@ -25,6 +25,28 @@ pub struct ModelGroup {
 pub struct ModelBuffers {
     pub vertex_buffers: Vec<VertexBuffer>,
     pub index_buffers: Vec<IndexBuffer>,
+    pub weights: Option<Weights>,
+}
+
+// TODO: Add methods to convert to influences.
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct Weights {
+    pub skin_weights: SkinWeights,
+    // TODO: how to handle this?
+    // pub weight_groups: Vec<WeightGroup>,
+    // pub weight_lods: Vec<WeightLod>,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct SkinWeights {
+    // N x 4 numpy.ndarray
+    pub bone_indices: PyObject,
+    // N x 4 numpy.ndarray
+    pub weights: PyObject,
+    /// The name list for the indices in [bone_indices](#structfield.bone_indices).
+    pub bone_names: Vec<String>,
 }
 
 #[pyclass(get_all)]
@@ -103,7 +125,7 @@ pub struct MaterialParameters {
 // TODO: Expose implementation details?
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Shader(xc3_model::Shader);
+pub struct Shader(xc3_model::shader_database::Shader);
 
 #[pymethods]
 impl Shader {
@@ -145,9 +167,8 @@ pub struct Texture {
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct VertexBuffer {
-    // TODO: Types for this?
     pub attributes: Vec<AttributeData>,
-    pub influences: Vec<Influence>,
+    pub morph_targets: Vec<MorphTarget>,
 }
 
 #[pyclass(get_all)]
@@ -170,6 +191,12 @@ pub enum AttributeType {
     WeightIndex,
     SkinWeights,
     BoneIndices,
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct MorphTarget {
+    pub attributes: Vec<AttributeData>,
 }
 
 #[pyclass(get_all)]
@@ -387,7 +414,7 @@ impl ModelRoot {
 
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
-    let database = database_path.map(xc3_model::GBufferDatabase::from_file);
+    let database = database_path.map(xc3_model::shader_database::ShaderDatabase::from_file);
     let root = xc3_model::load_model(wimdo_path, database.as_ref());
     Ok(model_root(py, root))
 }
@@ -398,7 +425,7 @@ fn load_map(
     wismhd_path: &str,
     database_path: Option<&str>,
 ) -> PyResult<Vec<ModelRoot>> {
-    let database = database_path.map(xc3_model::GBufferDatabase::from_file);
+    let database = database_path.map(xc3_model::shader_database::ShaderDatabase::from_file);
     let roots = xc3_model::load_map(wismhd_path, database.as_ref());
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
@@ -436,6 +463,13 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                     .map(|buffer| ModelBuffers {
                         vertex_buffers: vertex_buffers(py, buffer.vertex_buffers),
                         index_buffers: index_buffers(py, buffer.index_buffers),
+                        weights: buffer.weights.map(|weights| Weights {
+                            skin_weights: SkinWeights {
+                                bone_indices: uvec4_pyarray(py, &weights.skin_weights.bone_indices),
+                                weights: vec4_pyarray(py, &weights.skin_weights.weights),
+                                bone_names: weights.skin_weights.bone_names,
+                            },
+                        }),
                     })
                     .collect(),
             })
@@ -528,21 +562,7 @@ fn vertex_buffers(py: Python, vertex_buffers: Vec<xc3_model::VertexBuffer>) -> V
         .into_iter()
         .map(|buffer| VertexBuffer {
             attributes: vertex_attributes(py, buffer.attributes),
-            influences: buffer
-                .influences
-                .into_iter()
-                .map(|influence| Influence {
-                    bone_name: influence.bone_name,
-                    weights: influence
-                        .weights
-                        .into_iter()
-                        .map(|weight| SkinWeight {
-                            vertex_index: weight.vertex_index,
-                            weight: weight.weight,
-                        })
-                        .collect(),
-                })
-                .collect(),
+            morph_targets: morph_targets(py, buffer.morph_targets),
         })
         .collect()
 }
@@ -553,43 +573,60 @@ fn vertex_attributes(
 ) -> Vec<AttributeData> {
     attributes
         .into_iter()
-        .map(|attribute| match attribute {
-            xc3_model::vertex::AttributeData::Position(values) => AttributeData {
-                attribute_type: AttributeType::Position,
-                data: vec3_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::Normal(values) => AttributeData {
-                attribute_type: AttributeType::Normal,
-                data: vec4_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::Tangent(values) => AttributeData {
-                attribute_type: AttributeType::Tangent,
-                data: vec4_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::Uv1(values) => AttributeData {
-                attribute_type: AttributeType::Uv1,
-                data: vec2_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::Uv2(values) => AttributeData {
-                attribute_type: AttributeType::Uv2,
-                data: vec2_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::VertexColor(values) => AttributeData {
-                attribute_type: AttributeType::VertexColor,
-                data: vec4_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::WeightIndex(values) => AttributeData {
-                attribute_type: AttributeType::WeightIndex,
-                data: values.into_pyarray(py).into(),
-            },
-            xc3_model::vertex::AttributeData::SkinWeights(values) => AttributeData {
-                attribute_type: AttributeType::SkinWeights,
-                data: vec4_pyarray(py, &values),
-            },
-            xc3_model::vertex::AttributeData::BoneIndices(values) => AttributeData {
-                attribute_type: AttributeType::BoneIndices,
-                data: uvec4_pyarray(py, &values),
-            },
+        .map(|attribute| attribute_data(py, attribute))
+        .collect()
+}
+
+fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> AttributeData {
+    match attribute {
+        xc3_model::vertex::AttributeData::Position(values) => AttributeData {
+            attribute_type: AttributeType::Position,
+            data: vec3_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Normal(values) => AttributeData {
+            attribute_type: AttributeType::Normal,
+            data: vec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Tangent(values) => AttributeData {
+            attribute_type: AttributeType::Tangent,
+            data: vec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv1(values) => AttributeData {
+            attribute_type: AttributeType::Uv1,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv2(values) => AttributeData {
+            attribute_type: AttributeType::Uv2,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::VertexColor(values) => AttributeData {
+            attribute_type: AttributeType::VertexColor,
+            data: vec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::WeightIndex(values) => AttributeData {
+            attribute_type: AttributeType::WeightIndex,
+            data: values.into_pyarray(py).into(),
+        },
+        xc3_model::vertex::AttributeData::SkinWeights(values) => AttributeData {
+            attribute_type: AttributeType::SkinWeights,
+            data: vec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::BoneIndices(values) => AttributeData {
+            attribute_type: AttributeType::BoneIndices,
+            data: uvec4_pyarray(py, &values),
+        },
+    }
+}
+
+fn morph_targets(py: Python, targets: Vec<xc3_model::MorphTarget>) -> Vec<MorphTarget> {
+    targets
+        .into_iter()
+        .map(|target| MorphTarget {
+            attributes: target
+                .attributes
+                .into_iter()
+                .map(|attribute| attribute_data(py, attribute))
+                .collect(),
         })
         .collect()
 }
@@ -688,6 +725,8 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
     m.add_class::<ModelBuffers>()?;
+    m.add_class::<Weights>()?;
+    m.add_class::<SkinWeights>()?;
     m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
@@ -702,6 +741,7 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<VertexBuffer>()?;
     m.add_class::<AttributeData>()?;
     m.add_class::<AttributeType>()?;
+    m.add_class::<MorphTarget>()?;
     m.add_class::<Influence>()?;
     m.add_class::<SkinWeight>()?;
     m.add_class::<IndexBuffer>()?;
