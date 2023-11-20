@@ -11,6 +11,9 @@ def load_map(wismhd: str, database_path: Optional[str]) -> List[ModelRoot]: ...
 def load_animations(anim_path: str) -> List[Animation]: ...
 
 
+def murmur3(name: str) -> int: ...
+
+
 class ModelRoot:
     groups: List[ModelGroup]
     image_textures: List[ImageTexture]
@@ -216,11 +219,18 @@ class Animation:
 
 
 class Track:
-    def sample_translation(self, frame: float) -> Tuple[float, float, float]: ...
+    def sample_translation(
+        self, frame: float) -> Tuple[float, float, float]: ...
 
     def sample_rotation(self, frame: float) -> Tuple[float, float, float]: ...
 
     def sample_scale(self, frame: float) -> Tuple[float, float, float]: ...
+
+    def bone_index(self) -> Optional[int]: ...
+
+    def bone_hash(self) -> Optional[int]: ...
+
+    def bone_name(self) -> Optional[str]: ...
 
 
 class KeyFrame:
@@ -243,4 +253,3 @@ class PlayMode:
 class BlendMode:
     Blend: ClassVar[BlendMode]
     Add: ClassVar[BlendMode]
-

@@ -2,6 +2,7 @@ use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray};
 use pyo3::prelude::*;
 use rayon::prelude::*;
+use xc3_model::animation::BoneIndex;
 
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
@@ -519,6 +520,27 @@ impl Track {
     pub fn sample_scale(&self, frame: f32) -> (f32, f32, f32) {
         self.0.sample_scale(frame).into()
     }
+
+    pub fn bone_index(&self) -> Option<usize> {
+        match &self.0.bone_index {
+            BoneIndex::Index(index) => Some(*index),
+            _ => None,
+        }
+    }
+
+    pub fn bone_hash(&self) -> Option<u32> {
+        match &self.0.bone_index {
+            BoneIndex::Hash(hash) => Some(*hash),
+            _ => None,
+        }
+    }
+
+    pub fn bone_name(&self) -> Option<&str> {
+        match &self.0.bone_index {
+            BoneIndex::Name(name) => Some(name),
+            _ => None,
+        }
+    }
 }
 
 #[pymethods]
@@ -581,6 +603,11 @@ fn load_map(
 fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<Animation>> {
     let animations = xc3_model::load_animations(anim_path);
     Ok(animations.into_iter().map(animation).collect())
+}
+
+#[pyfunction]
+fn murmur3(name: &str) -> u32 {
+    xc3_model::animation::murmur3(name.as_bytes())
 }
 
 fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
@@ -963,6 +990,7 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
     m.add_function(wrap_pyfunction!(load_animations, m)?)?;
+    m.add_function(wrap_pyfunction!(murmur3, m)?)?;
 
     Ok(())
 }
