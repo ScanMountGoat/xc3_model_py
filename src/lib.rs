@@ -129,7 +129,11 @@ pub struct Shader(xc3_model::shader_database::Shader);
 
 #[pymethods]
 impl Shader {
-    pub fn sampler_channel_index(&self, output_index: usize, channel: char) -> Option<(u32, u32)> {
+    pub fn sampler_channel_index(
+        &self,
+        output_index: usize,
+        channel: char,
+    ) -> Option<(usize, usize)> {
         self.0.sampler_channel_index(output_index, channel)
     }
 
@@ -187,7 +191,15 @@ pub enum AttributeType {
     Tangent,
     Uv1,
     Uv2,
+    Uv3,
+    Uv4,
+    Uv5,
+    Uv6,
+    Uv7,
+    Uv8,
+    Uv9,
     VertexColor,
+    VertexColor2,
     WeightIndex,
     SkinWeights,
     BoneIndices,
@@ -196,7 +208,12 @@ pub enum AttributeType {
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct MorphTarget {
-    pub attributes: Vec<AttributeData>,
+    // N x 3 numpy.ndarray
+    pub position_deltas: PyObject,
+    // N x 4 numpy.ndarray
+    pub normal_deltas: PyObject,
+    // N x 4 numpy.ndarray
+    pub tangent_deltas: PyObject,
 }
 
 #[pyclass(get_all)]
@@ -267,11 +284,13 @@ pub enum ImageFormat {
     R8Unorm,
     R8G8B8A8Unorm,
     R16G16B16A16Float,
+    R4G4B4A4Unorm,
     BC1Unorm,
     BC2Unorm,
     BC3Unorm,
     BC4Unorm,
     BC5Unorm,
+    BC6UFloat,
     BC7Unorm,
     B8G8R8A8Unorm,
 }
@@ -282,11 +301,13 @@ impl From<xc3_model::ImageFormat> for ImageFormat {
             xc3_model::ImageFormat::R8Unorm => Self::R8Unorm,
             xc3_model::ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
             xc3_model::ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
+            xc3_model::ImageFormat::R4G4B4A4Unorm => Self::R4G4B4A4Unorm,
             xc3_model::ImageFormat::BC1Unorm => Self::BC1Unorm,
             xc3_model::ImageFormat::BC2Unorm => Self::BC2Unorm,
             xc3_model::ImageFormat::BC3Unorm => Self::BC3Unorm,
             xc3_model::ImageFormat::BC4Unorm => Self::BC4Unorm,
             xc3_model::ImageFormat::BC5Unorm => Self::BC5Unorm,
+            xc3_model::ImageFormat::BC6UFloat => Self::BC6UFloat,
             xc3_model::ImageFormat::BC7Unorm => Self::BC7Unorm,
             xc3_model::ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
         }
@@ -299,11 +320,13 @@ impl From<ImageFormat> for xc3_model::ImageFormat {
             ImageFormat::R8Unorm => Self::R8Unorm,
             ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
             ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
+            ImageFormat::R4G4B4A4Unorm => Self::R4G4B4A4Unorm,
             ImageFormat::BC1Unorm => Self::BC1Unorm,
             ImageFormat::BC2Unorm => Self::BC2Unorm,
             ImageFormat::BC3Unorm => Self::BC3Unorm,
             ImageFormat::BC4Unorm => Self::BC4Unorm,
             ImageFormat::BC5Unorm => Self::BC5Unorm,
+            ImageFormat::BC6UFloat => Self::BC6UFloat,
             ImageFormat::BC7Unorm => Self::BC7Unorm,
             ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
         }
@@ -374,6 +397,130 @@ impl From<FilterMode> for xc3_model::FilterMode {
     }
 }
 
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct Animation {
+    pub name: String,
+    pub space_mode: SpaceMode,
+    pub play_mode: PlayMode,
+    pub blend_mode: BlendMode,
+    pub frames_per_second: f32,
+    pub frame_count: u32,
+    pub tracks: Vec<Track>,
+}
+
+// TODO: Expose implementation details?
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct Track(xc3_model::animation::Track);
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct Keyframe {
+    pub x_coeffs: (f32, f32, f32, f32),
+    pub y_coeffs: (f32, f32, f32, f32),
+    pub z_coeffs: (f32, f32, f32, f32),
+    pub w_coeffs: (f32, f32, f32, f32),
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum SpaceMode {
+    Local,
+    Model,
+}
+
+impl From<xc3_model::animation::SpaceMode> for SpaceMode {
+    fn from(value: xc3_model::animation::SpaceMode) -> Self {
+        match value {
+            xc3_model::animation::SpaceMode::Local => Self::Local,
+            xc3_model::animation::SpaceMode::Model => Self::Model,
+        }
+    }
+}
+
+impl From<SpaceMode> for xc3_model::animation::SpaceMode {
+    fn from(value: SpaceMode) -> Self {
+        match value {
+            SpaceMode::Local => Self::Local,
+            SpaceMode::Model => Self::Model,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum PlayMode {
+    Loop,
+    Single,
+}
+
+impl From<xc3_model::animation::PlayMode> for PlayMode {
+    fn from(value: xc3_model::animation::PlayMode) -> Self {
+        match value {
+            xc3_model::animation::PlayMode::Loop => Self::Loop,
+            xc3_model::animation::PlayMode::Single => Self::Single,
+        }
+    }
+}
+
+impl From<PlayMode> for xc3_model::animation::PlayMode {
+    fn from(value: PlayMode) -> Self {
+        match value {
+            PlayMode::Loop => Self::Loop,
+            PlayMode::Single => Self::Single,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum BlendMode {
+    Blend,
+    Add,
+}
+
+impl From<xc3_model::animation::BlendMode> for BlendMode {
+    fn from(value: xc3_model::animation::BlendMode) -> Self {
+        match value {
+            xc3_model::animation::BlendMode::Blend => Self::Blend,
+            xc3_model::animation::BlendMode::Add => Self::Add,
+        }
+    }
+}
+
+impl From<BlendMode> for xc3_model::animation::BlendMode {
+    fn from(value: BlendMode) -> Self {
+        match value {
+            BlendMode::Blend => Self::Blend,
+            BlendMode::Add => Self::Add,
+        }
+    }
+}
+
+#[pymethods]
+impl Animation {
+    pub fn current_frame(&self, current_time_seconds: f32) -> f32 {
+        // TODO: looping?
+        current_time_seconds * self.frames_per_second
+    }
+}
+
+#[pymethods]
+impl Track {
+    pub fn sample_translation(&self, frame: f32) -> (f32, f32, f32) {
+        self.0.sample_translation(frame).into()
+    }
+
+    pub fn sample_rotation(&self, frame: f32) -> (f32, f32, f32, f32) {
+        self.0.sample_rotation(frame).into()
+    }
+
+    pub fn sample_scale(&self, frame: f32) -> (f32, f32, f32) {
+        self.0.sample_scale(frame).into()
+    }
+}
+
 #[pymethods]
 impl ModelRoot {
     pub fn decode_images_rgbaf32(&self, py: Python) -> Vec<PyObject> {
@@ -428,6 +575,12 @@ fn load_map(
     let database = database_path.map(xc3_model::shader_database::ShaderDatabase::from_file);
     let roots = xc3_model::load_map(wismhd_path, database.as_ref());
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
+}
+
+#[pyfunction]
+fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<Animation>> {
+    let animations = xc3_model::load_animations(anim_path);
+    Ok(animations.into_iter().map(animation).collect())
 }
 
 fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
@@ -599,8 +752,40 @@ fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> At
             attribute_type: AttributeType::Uv2,
             data: vec2_pyarray(py, &values),
         },
+        xc3_model::vertex::AttributeData::Uv3(values) => AttributeData {
+            attribute_type: AttributeType::Uv3,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv4(values) => AttributeData {
+            attribute_type: AttributeType::Uv4,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv5(values) => AttributeData {
+            attribute_type: AttributeType::Uv5,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv6(values) => AttributeData {
+            attribute_type: AttributeType::Uv6,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv7(values) => AttributeData {
+            attribute_type: AttributeType::Uv7,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv8(values) => AttributeData {
+            attribute_type: AttributeType::Uv8,
+            data: vec2_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Uv9(values) => AttributeData {
+            attribute_type: AttributeType::Uv9,
+            data: vec2_pyarray(py, &values),
+        },
         xc3_model::vertex::AttributeData::VertexColor(values) => AttributeData {
             attribute_type: AttributeType::VertexColor,
+            data: vec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::VertexColor2(values) => AttributeData {
+            attribute_type: AttributeType::VertexColor2,
             data: vec4_pyarray(py, &values),
         },
         xc3_model::vertex::AttributeData::WeightIndex(values) => AttributeData {
@@ -622,11 +807,9 @@ fn morph_targets(py: Python, targets: Vec<xc3_model::MorphTarget>) -> Vec<MorphT
     targets
         .into_iter()
         .map(|target| MorphTarget {
-            attributes: target
-                .attributes
-                .into_iter()
-                .map(|attribute| attribute_data(py, attribute))
-                .collect(),
+            position_deltas: vec3_pyarray(py, &target.position_deltas),
+            normal_deltas: vec4_pyarray(py, &target.normal_deltas),
+            tangent_deltas: vec4_pyarray(py, &target.tangent_deltas),
         })
         .collect()
 }
@@ -638,6 +821,18 @@ fn index_buffers(py: Python, index_buffers: Vec<xc3_model::IndexBuffer>) -> Vec<
             indices: buffer.indices.into_pyarray(py).into(),
         })
         .collect()
+}
+
+fn animation(animation: xc3_model::animation::Animation) -> Animation {
+    Animation {
+        name: animation.name.clone(),
+        space_mode: animation.space_mode.into(),
+        play_mode: animation.play_mode.into(),
+        blend_mode: animation.blend_mode.into(),
+        frames_per_second: animation.frames_per_second,
+        frame_count: animation.frame_count,
+        tracks: animation.tracks.into_iter().map(Track).collect(),
+    }
 }
 
 fn vec2_pyarray(py: Python, values: &[Vec2]) -> PyObject {
@@ -722,6 +917,7 @@ fn mat4_pyarray(py: Python, transform: Mat4) -> PyObject {
 #[pymodule]
 fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     // TODO: automate registering every type?
+    // TODO: split into submodules?
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
     m.add_class::<ModelBuffers>()?;
@@ -730,14 +926,17 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
+
     m.add_class::<Skeleton>()?;
     m.add_class::<Bone>()?;
+
     m.add_class::<Material>()?;
     m.add_class::<TextureAlphaTest>()?;
     m.add_class::<MaterialParameters>()?;
     m.add_class::<Shader>()?;
     m.add_class::<BufferParameter>()?;
     m.add_class::<Texture>()?;
+
     m.add_class::<VertexBuffer>()?;
     m.add_class::<AttributeData>()?;
     m.add_class::<AttributeType>()?;
@@ -745,24 +944,29 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Influence>()?;
     m.add_class::<SkinWeight>()?;
     m.add_class::<IndexBuffer>()?;
+
     m.add_class::<ImageTexture>()?;
     m.add_class::<ViewDimension>()?;
     m.add_class::<ImageFormat>()?;
+
     m.add_class::<Sampler>()?;
     m.add_class::<AddressMode>()?;
     m.add_class::<FilterMode>()?;
 
+    m.add_class::<Animation>()?;
+    m.add_class::<Track>()?;
+    m.add_class::<Keyframe>()?;
+    m.add_class::<SpaceMode>()?;
+    m.add_class::<PlayMode>()?;
+    m.add_class::<BlendMode>()?;
+
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
+    m.add_function(wrap_pyfunction!(load_animations, m)?)?;
 
     Ok(())
 }
 
 // TODO: Test cases for certain conversions?
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {}
-}
+mod tests {}

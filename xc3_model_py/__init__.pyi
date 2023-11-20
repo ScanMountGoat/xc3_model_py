@@ -1,4 +1,4 @@
-from typing import List, Optional, ClassVar, Tuple
+from typing import List, Optional, ClassVar, Tuple, Dict
 import numpy
 
 
@@ -6,6 +6,9 @@ def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
 
 
 def load_map(wismhd: str, database_path: Optional[str]) -> List[ModelRoot]: ...
+
+
+def load_animations(anim_path: str) -> List[Animation]: ...
 
 
 class ModelRoot:
@@ -129,7 +132,9 @@ class AttributeType:
 
 
 class MorphTarget:
-    attributes: List[AttributeData]
+    position_deltas: numpy.ndarray
+    normal_deltas: numpy.ndarray
+    tangent_deltas: numpy.ndarray
 
 
 class Influence:
@@ -166,12 +171,14 @@ class ViewDimension:
 class ImageFormat:
     R8Unorm: ClassVar[ImageFormat]
     R8G8B8A8Unorm: ClassVar[ImageFormat]
+    R4G4B4A4Unorm: ClassVar[ImageFormat]
     R16G16B16A16Float: ClassVar[ImageFormat]
     BC1Unorm: ClassVar[ImageFormat]
     BC2Unorm: ClassVar[ImageFormat]
     BC3Unorm: ClassVar[ImageFormat]
     BC4Unorm: ClassVar[ImageFormat]
     BC5Unorm: ClassVar[ImageFormat]
+    BC56UFloat: ClassVar[ImageFormat]
     BC7Unorm: ClassVar[ImageFormat]
     B8G8R8A8Unorm: ClassVar[ImageFormat]
 
@@ -194,3 +201,46 @@ class AddressMode:
 class FilterMode:
     Nearest: ClassVar[FilterMode]
     Linear: ClassVar[FilterMode]
+
+
+class Animation:
+    name: str
+    space_mode: SpaceMode
+    play_mode: PlayMode
+    blend_mode: BlendMode
+    frames_per_second: float
+    frame_count: int
+    tracks: List[Track]
+
+    def current_frame(self, current_time_seconds: float) -> float: ...
+
+
+class Track:
+    def sample_translation(self, frame: float) -> Tuple[float, float, float]: ...
+
+    def sample_rotation(self, frame: float) -> Tuple[float, float, float]: ...
+
+    def sample_scale(self, frame: float) -> Tuple[float, float, float]: ...
+
+
+class KeyFrame:
+    x_coeffs: Tuple[float, float, float, float]
+    y_coeffs: Tuple[float, float, float, float]
+    z_coeffs: Tuple[float, float, float, float]
+    w_coeffs: Tuple[float, float, float, float]
+
+
+class SpaceMode:
+    Local: ClassVar[SpaceMode]
+    Model: ClassVar[SpaceMode]
+
+
+class PlayMode:
+    Loop: ClassVar[PlayMode]
+    Single: ClassVar[PlayMode]
+
+
+class BlendMode:
+    Blend: ClassVar[BlendMode]
+    Add: ClassVar[BlendMode]
+
