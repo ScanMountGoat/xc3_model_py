@@ -80,6 +80,7 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'created' && matrix.custom-target == 'true'
         env:
           MATURIN_PASSWORD: ${{ secrets.PYPI }}
+        uses: PyO3/maturin-action@v1
         with:
           command: publish
           args: --username __token__  --interpreter python${{matrix.python_version}} --target ${{matrix.target}}
