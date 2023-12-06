@@ -118,7 +118,7 @@ pub struct TextureAlphaTest {
 pub struct MaterialParameters {
     pub mat_color: (f32, f32, f32, f32),
     pub alpha_test_ref: f32,
-    pub tex_matrix: Option<Vec<[f32; 8]>>,
+    pub tex_matrix: Option<Vec<[f32; 16]>>,
     pub work_float4: Option<Vec<(f32, f32, f32, f32)>>,
     pub work_color: Option<Vec<(f32, f32, f32, f32)>>,
 }
@@ -190,17 +190,17 @@ pub enum AttributeType {
     Position,
     Normal,
     Tangent,
-    Uv1,
-    Uv2,
-    Uv3,
-    Uv4,
-    Uv5,
-    Uv6,
-    Uv7,
-    Uv8,
-    Uv9,
+    TexCoord0,
+    TexCoord1,
+    TexCoord2,
+    TexCoord3,
+    TexCoord4,
+    TexCoord5,
+    TexCoord6,
+    TexCoord7,
+    TexCoord8,
     VertexColor,
-    VertexColor2,
+    Blend,
     WeightIndex,
     SkinWeights,
     BoneIndices,
@@ -771,48 +771,48 @@ fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> At
             attribute_type: AttributeType::Tangent,
             data: vec4_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv1(values) => AttributeData {
-            attribute_type: AttributeType::Uv1,
+        xc3_model::vertex::AttributeData::TexCoord0(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord0,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv2(values) => AttributeData {
-            attribute_type: AttributeType::Uv2,
+        xc3_model::vertex::AttributeData::TexCoord1(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord1,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv3(values) => AttributeData {
-            attribute_type: AttributeType::Uv3,
+        xc3_model::vertex::AttributeData::TexCoord2(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord2,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv4(values) => AttributeData {
-            attribute_type: AttributeType::Uv4,
+        xc3_model::vertex::AttributeData::TexCoord3(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord3,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv5(values) => AttributeData {
-            attribute_type: AttributeType::Uv5,
+        xc3_model::vertex::AttributeData::TexCoord4(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord4,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv6(values) => AttributeData {
-            attribute_type: AttributeType::Uv6,
+        xc3_model::vertex::AttributeData::TexCoord5(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord5,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv7(values) => AttributeData {
-            attribute_type: AttributeType::Uv7,
+        xc3_model::vertex::AttributeData::TexCoord6(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord6,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv8(values) => AttributeData {
-            attribute_type: AttributeType::Uv8,
+        xc3_model::vertex::AttributeData::TexCoord7(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord7,
             data: vec2_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::Uv9(values) => AttributeData {
-            attribute_type: AttributeType::Uv9,
+        xc3_model::vertex::AttributeData::TexCoord8(values) => AttributeData {
+            attribute_type: AttributeType::TexCoord8,
             data: vec2_pyarray(py, &values),
         },
         xc3_model::vertex::AttributeData::VertexColor(values) => AttributeData {
             attribute_type: AttributeType::VertexColor,
             data: vec4_pyarray(py, &values),
         },
-        xc3_model::vertex::AttributeData::VertexColor2(values) => AttributeData {
-            attribute_type: AttributeType::VertexColor2,
+        xc3_model::vertex::AttributeData::Blend(values) => AttributeData {
+            attribute_type: AttributeType::Blend,
             data: vec4_pyarray(py, &values),
         },
         xc3_model::vertex::AttributeData::WeightIndex(values) => AttributeData {
