@@ -1,5 +1,11 @@
-# xc3_model_py
+# xc3_model_py [![PyPI](https://img.shields.io/pypi/v/xc3_model_py)](https://pypi.org/project/xc3_model_py/)
 Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenoblade 3.
+
+## Installation
+The package can be installed for a supported python version using pip on the latest version of Windows or MacOS. Linux builds for PyPi will be added in a future release. The prebuilt wheels (.whl files) are included only for situations where pip might not be available such as for plugin development for applications. The wheels are zip archives and can be extracted to obtain the compiled .pyd or .so file.
+
+Installing: `pip install xc3_model_py`
+Updating: `pip install xc3_model_py--upgrade`
 
 ## Introduction
 Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader JSON databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases).
