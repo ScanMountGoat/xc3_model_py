@@ -4,7 +4,7 @@ Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for hig
 ## Installation
 The package can be installed for a supported python version using pip on the latest version of Windows or MacOS. Linux builds for PyPi will be added in a future release. The prebuilt wheels (.whl files) are included only for situations where pip might not be available such as for plugin development for applications. The wheels are zip archives and can be extracted to obtain the compiled .pyd or .so file.
 
-Installing: `pip install xc3_model_py`
+Installing: `pip install xc3_model_py`  
 Updating: `pip install xc3_model_py--upgrade`
 
 ## Introduction
