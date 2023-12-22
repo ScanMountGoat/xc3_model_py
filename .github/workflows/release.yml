@@ -74,6 +74,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: publish
+          container: off
           args: --username __token__  --interpreter python${{matrix.python_version}}
 
       - name: PyPi publish
@@ -83,4 +84,5 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: publish
+          container: off
           args: --username __token__  --interpreter python${{matrix.python_version}} --target ${{matrix.target}}
