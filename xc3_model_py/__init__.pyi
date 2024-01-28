@@ -33,6 +33,9 @@ class ModelBuffers:
 class Weights:
     skin_weights: SkinWeights
 
+    def weights_start_index(self, skin_flags: int,
+                            lod: int, unk_type: RenderPassType) -> int: ...
+
 
 class SkinWeights:
     bone_indices: numpy.ndarray
@@ -58,6 +61,7 @@ class Mesh:
     vertex_buffer_index: int
     index_buffer_index: int
     material_index: int
+    skin_flags: int
 
 
 class Skeleton:
@@ -74,6 +78,15 @@ class Material:
     name: str
     textures: List[Texture]
     shader: Optional[Shader]
+    unk_type: RenderPassType
+
+
+class RenderPassType:
+    Unk0: ClassVar[RenderPassType]
+    Unk1: ClassVar[RenderPassType]
+    Unk6: ClassVar[RenderPassType]
+    Unk7: ClassVar[RenderPassType]
+    Unk9: ClassVar[RenderPassType]
 
 
 class TextureAlphaTest:
@@ -164,6 +177,7 @@ class IndexBuffer:
 
 class ImageTexture:
     name: Optional[str]
+    usage: Optional[TextureUsage]
     width: int
     height: int
     depth: int
@@ -171,6 +185,10 @@ class ImageTexture:
     image_format: ImageFormat
     mipmap_count: int
     image_data: bytes
+
+
+class TextureUsage:
+    pass
 
 
 class ViewDimension:

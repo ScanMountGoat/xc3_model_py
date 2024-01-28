@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 use xc3_model::animation::BoneIndex;
 
+// TODO: Match the module structure of xc3_model as closely as possible.
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
 // This flexibility allows more efficient and idiomatic bindings.
@@ -30,13 +31,38 @@ pub struct ModelBuffers {
 }
 
 // TODO: Add methods to convert to influences.
-#[pyclass(get_all)]
+
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct Weights {
+    #[pyo3(get)]
     pub skin_weights: SkinWeights,
     // TODO: how to handle this?
-    // pub weight_groups: Vec<WeightGroup>,
-    // pub weight_lods: Vec<WeightLod>,
+    weight_groups: Vec<xc3_lib::vertex::WeightGroup>,
+    weight_lods: Vec<xc3_lib::vertex::WeightLod>,
+}
+
+#[pymethods]
+impl Weights {
+    // TODO: Is it worth including the weight_group method?
+    pub fn weights_start_index(
+        &self,
+        skin_flags: u32,
+        lod: u16,
+        unk_type: RenderPassType,
+    ) -> usize {
+        // TODO: find a cleaner way of doing this.
+        xc3_model::Weights {
+            skin_weights: xc3_model::skinning::SkinWeights {
+                bone_indices: Vec::new(),
+                weights: Vec::new(),
+                bone_names: Vec::new(),
+            },
+            weight_groups: self.weight_groups.clone(),
+            weight_lods: self.weight_lods.clone(),
+        }
+        .weights_start_index(skin_flags, lod, unk_type.into())
+    }
 }
 
 #[pyclass(get_all)]
@@ -76,6 +102,7 @@ pub struct Mesh {
     pub index_buffer_index: usize,
     pub material_index: usize,
     pub lod: u16,
+    pub skin_flags: u32,
 }
 
 #[pyclass(get_all)]
@@ -101,8 +128,42 @@ pub struct Material {
     pub textures: Vec<Texture>,
     pub alpha_test: Option<TextureAlphaTest>,
     pub shader: Option<Shader>,
-    // pub unk_type: ShaderUnkType,
+    pub unk_type: RenderPassType,
     pub parameters: MaterialParameters,
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub enum RenderPassType {
+    Unk0,
+    Unk1,
+    Unk6,
+    Unk7,
+    Unk9,
+}
+
+impl From<xc3_model::RenderPassType> for RenderPassType {
+    fn from(value: xc3_model::RenderPassType) -> Self {
+        match value {
+            xc3_model::RenderPassType::Unk0 => Self::Unk0,
+            xc3_model::RenderPassType::Unk1 => Self::Unk1,
+            xc3_model::RenderPassType::Unk6 => Self::Unk6,
+            xc3_model::RenderPassType::Unk7 => Self::Unk7,
+            xc3_model::RenderPassType::Unk9 => Self::Unk9,
+        }
+    }
+}
+
+impl From<RenderPassType> for xc3_model::RenderPassType {
+    fn from(value: RenderPassType) -> Self {
+        match value {
+            RenderPassType::Unk0 => Self::Unk0,
+            RenderPassType::Unk1 => Self::Unk1,
+            RenderPassType::Unk6 => Self::Unk6,
+            RenderPassType::Unk7 => Self::Unk7,
+            RenderPassType::Unk9 => Self::Unk9,
+        }
+    }
 }
 
 #[pyclass(get_all)]
@@ -237,10 +298,12 @@ pub struct IndexBuffer {
     pub indices: PyObject,
 }
 
+// TODO: export texture usage from xc3_model?
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct ImageTexture {
     pub name: Option<String>,
+    pub usage: Option<TextureUsage>,
     pub width: u32,
     pub height: u32,
     pub depth: u32,
@@ -250,7 +313,12 @@ pub struct ImageTexture {
     pub image_data: Vec<u8>,
 }
 
-// TODO: Create a macro for this?
+// TODO: Find a better way to automatically generate enums.
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub struct TextureUsage(pub u32);
+
+// TODO: Create a macro_rules macro for enum conversions using strum?
 #[pyclass]
 #[derive(Debug, Clone, Copy)]
 pub enum ViewDimension {
@@ -555,6 +623,7 @@ impl ModelRoot {
                 // TODO: Use image_dds directly to avoid cloning?
                 let bytes = xc3_model::ImageTexture {
                     name: image.name.clone(),
+                    usage: None, // TODO: add to Python bindings
                     width: image.width,
                     height: image.height,
                     depth: image.depth,
@@ -581,10 +650,12 @@ impl ModelRoot {
     }
 }
 
+// TODO: avoid unwrap?
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
-    let database = database_path.map(xc3_model::shader_database::ShaderDatabase::from_file);
-    let root = xc3_model::load_model(wimdo_path, database.as_ref());
+    let database =
+        database_path.map(|p| xc3_model::shader_database::ShaderDatabase::from_file(p).unwrap());
+    let root = xc3_model::load_model(wimdo_path, database.as_ref()).unwrap();
     Ok(model_root(py, root))
 }
 
@@ -594,14 +665,15 @@ fn load_map(
     wismhd_path: &str,
     database_path: Option<&str>,
 ) -> PyResult<Vec<ModelRoot>> {
-    let database = database_path.map(xc3_model::shader_database::ShaderDatabase::from_file);
-    let roots = xc3_model::load_map(wismhd_path, database.as_ref());
+    let database =
+        database_path.map(|p| xc3_model::shader_database::ShaderDatabase::from_file(p).unwrap());
+    let roots = xc3_model::load_map(wismhd_path, database.as_ref()).unwrap();
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
 
 #[pyfunction]
 fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<Animation>> {
-    let animations = xc3_model::load_animations(anim_path);
+    let animations = xc3_model::load_animations(anim_path).unwrap();
     Ok(animations.into_iter().map(animation).collect())
 }
 
@@ -649,6 +721,8 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                                 weights: vec4_pyarray(py, &weights.skin_weights.weights),
                                 bone_names: weights.skin_weights.bone_names,
                             },
+                            weight_groups: weights.weight_groups,
+                            weight_lods: weights.weight_lods,
                         }),
                     })
                     .collect(),
@@ -659,6 +733,7 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
             .into_iter()
             .map(|image| ImageTexture {
                 name: image.name,
+                usage: image.usage.map(|u| TextureUsage(u as u32)),
                 width: image.width,
                 height: image.height,
                 depth: image.depth,
@@ -681,6 +756,7 @@ fn model(py: Python, model: xc3_model::Model) -> Model {
                 index_buffer_index: mesh.index_buffer_index,
                 material_index: mesh.material_index,
                 lod: mesh.lod,
+                skin_flags: mesh.skin_flags,
             })
             .collect(),
         instances: transforms_pyarray(py, &model.instances),
@@ -719,6 +795,7 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                     .work_color
                     .map(|v| v.into_iter().map(|v| v.into()).collect()),
             },
+            unk_type: material.unk_type.into(),
         })
         .collect()
 }
@@ -973,6 +1050,7 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<IndexBuffer>()?;
 
     m.add_class::<ImageTexture>()?;
+    m.add_class::<TextureUsage>()?;
     m.add_class::<ViewDimension>()?;
     m.add_class::<ImageFormat>()?;
 
