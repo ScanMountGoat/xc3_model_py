@@ -90,6 +90,17 @@ for animation in animations:
     print()
 ```
 
+xc3_model_py enables Rust log output by default to use with Python's `logging` module.
+Logging can be disabled entirely if not needed using `logging.disable()`.
+
+```python
+import logging
+
+# Configure log messages to include more information.
+FORMAT = '%(levelname)s %(name)s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(format=FORMAT, level=logging.INFO)
+```
+
 ## Documentation
 See the [pyi stub file](https://github.com/ScanMountGoat/xc3_model_py/blob/main/xc3_model_py/__init__.pyi) for complete function and type information. This also enables autocomplete in supported editors like the Python extension for VSCode. The Python API attempts to match the Rust functions and types in xc3_model as closely as possible. 
 

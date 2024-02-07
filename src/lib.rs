@@ -4,7 +4,6 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 use xc3_model::animation::BoneIndex;
 
-// TODO: Match the module structure of xc3_model as closely as possible.
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
 // This flexibility allows more efficient and idiomatic bindings.
@@ -763,6 +762,7 @@ fn animation(animation: xc3_model::animation::Animation) -> Animation {
     }
 }
 
+// TODO: Share code?
 fn vec2_pyarray(py: Python, values: &[Vec2]) -> PyObject {
     // This flatten will be optimized in Release mode.
     // This avoids needing unsafe code.
@@ -844,8 +844,11 @@ fn mat4_pyarray(py: Python, transform: Mat4) -> PyObject {
 
 #[pymodule]
 fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
+    pyo3_log::init();
+
     // TODO: automate registering every type?
     // TODO: split into submodules?
+    // TODO: Match the module structure of xc3_model as closely as possible.
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
     m.add_class::<ModelBuffers>()?;
