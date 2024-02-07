@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added support for accessing Rust logs from Python's `logging` module.
+* Added `Xc3ModelError` exception type to represent Rust errors.
 
 ## 0.2.0 - 2024-01-28
 ### Added

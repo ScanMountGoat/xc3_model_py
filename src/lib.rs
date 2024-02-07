@@ -1,12 +1,14 @@
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray};
-use pyo3::prelude::*;
+use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 use xc3_model::animation::BoneIndex;
 
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
 // This flexibility allows more efficient and idiomatic bindings.
+
+create_exception!(xc3_model_py, Xc3ModelError, PyException);
 
 macro_rules! python_enum {
     ($py_ty:ident, $rust_ty:ty, $( $i:ident ),+) => {
@@ -436,10 +438,10 @@ impl Track {
 
 #[pymethods]
 impl ModelRoot {
-    pub fn decode_images_rgbaf32(&self, py: Python) -> Vec<PyObject> {
+    pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
         // TODO: make decoding optional?
         // TODO: Expose xc3_model types from root?
-        let buffers: Vec<_> = self
+        let buffers = self
             .image_textures
             .par_iter()
             .map(|image| {
@@ -456,29 +458,32 @@ impl ModelRoot {
                     image_data: image.image_data.clone(),
                 }
                 .to_image()
-                .unwrap()
+                .map_err(py_exception)?
                 .into_raw();
 
-                bytes
+                Ok(bytes
                     .into_iter()
                     .map(|u| u as f32 / 255.0)
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>())
             })
-            .collect();
+            .collect::<PyResult<Vec<_>>>()?;
 
-        buffers
+        Ok(buffers
             .into_iter()
             .map(|buffer| buffer.into_pyarray(py).into())
-            .collect()
+            .collect())
     }
 }
 
-// TODO: avoid unwrap?
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
-    let database =
-        database_path.map(|p| xc3_model::shader_database::ShaderDatabase::from_file(p).unwrap());
-    let root = xc3_model::load_model(wimdo_path, database.as_ref()).unwrap();
+    let database = match database_path {
+        Some(p) => {
+            Some(xc3_model::shader_database::ShaderDatabase::from_file(p).map_err(py_exception)?)
+        }
+        None => None,
+    };
+    let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
     Ok(model_root(py, root))
 }
 
@@ -488,21 +493,29 @@ fn load_map(
     wismhd_path: &str,
     database_path: Option<&str>,
 ) -> PyResult<Vec<ModelRoot>> {
-    let database =
-        database_path.map(|p| xc3_model::shader_database::ShaderDatabase::from_file(p).unwrap());
-    let roots = xc3_model::load_map(wismhd_path, database.as_ref()).unwrap();
+    let database = match database_path {
+        Some(p) => {
+            Some(xc3_model::shader_database::ShaderDatabase::from_file(p).map_err(py_exception)?)
+        }
+        None => None,
+    };
+    let roots = xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)?;
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
 
 #[pyfunction]
 fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<Animation>> {
-    let animations = xc3_model::load_animations(anim_path).unwrap();
+    let animations = xc3_model::load_animations(anim_path).map_err(py_exception)?;
     Ok(animations.into_iter().map(animation).collect())
 }
 
 #[pyfunction]
 fn murmur3(name: &str) -> u32 {
     xc3_model::animation::murmur3(name.as_bytes())
+}
+
+fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
+    PyErr::new::<Xc3ModelError, _>(format!("{e}"))
 }
 
 fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
@@ -843,7 +856,7 @@ fn mat4_pyarray(py: Python, transform: Mat4) -> PyObject {
 }
 
 #[pymodule]
-fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
+fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     pyo3_log::init();
 
     // TODO: automate registering every type?
@@ -891,6 +904,8 @@ fn xc3_model_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<SpaceMode>()?;
     m.add_class::<PlayMode>()?;
     m.add_class::<BlendMode>()?;
+
+    m.add("Xc3ModelError", py.get_type::<Xc3ModelError>())?;
 
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;

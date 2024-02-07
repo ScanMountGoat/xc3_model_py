@@ -14,6 +14,10 @@ def load_animations(anim_path: str) -> List[Animation]: ...
 def murmur3(name: str) -> int: ...
 
 
+class Xc3ModelError(Exception):
+    pass
+
+
 class ModelRoot:
     groups: List[ModelGroup]
     image_textures: List[ImageTexture]
