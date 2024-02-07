@@ -61,6 +61,7 @@ class Mesh:
     vertex_buffer_index: int
     index_buffer_index: int
     material_index: int
+    lod: int
     skin_flags: int
 
 
