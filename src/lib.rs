@@ -8,6 +8,34 @@ use xc3_model::animation::BoneIndex;
 // Create a Python class for every public xc3_model type.
 // We don't define these conversions on the xc3_model types themselves.
 // This flexibility allows more efficient and idiomatic bindings.
+
+macro_rules! python_enum {
+    ($py_ty:ident, $rust_ty:ty, $( $i:ident ),+) => {
+        #[pyclass]
+        #[derive(Debug, Clone, Copy)]
+        pub enum $py_ty {
+            $($i),*
+        }
+
+        // These will generate a compile error if variant names don't match.
+        impl From<$rust_ty> for $py_ty {
+            fn from(value: $rust_ty) -> Self {
+                match value {
+                    $(<$rust_ty>::$i => Self::$i),*
+                }
+            }
+        }
+
+        impl From<$py_ty> for $rust_ty {
+            fn from(value: $py_ty) -> Self {
+                match value {
+                    $(<$py_ty>::$i => Self::$i),*
+                }
+            }
+        }
+    };
+}
+
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct ModelRoot {
@@ -132,39 +160,15 @@ pub struct Material {
     pub parameters: MaterialParameters,
 }
 
-#[pyclass]
-#[derive(Debug, Clone)]
-pub enum RenderPassType {
+python_enum!(
+    RenderPassType,
+    xc3_model::RenderPassType,
     Unk0,
     Unk1,
     Unk6,
     Unk7,
-    Unk9,
-}
-
-impl From<xc3_model::RenderPassType> for RenderPassType {
-    fn from(value: xc3_model::RenderPassType) -> Self {
-        match value {
-            xc3_model::RenderPassType::Unk0 => Self::Unk0,
-            xc3_model::RenderPassType::Unk1 => Self::Unk1,
-            xc3_model::RenderPassType::Unk6 => Self::Unk6,
-            xc3_model::RenderPassType::Unk7 => Self::Unk7,
-            xc3_model::RenderPassType::Unk9 => Self::Unk9,
-        }
-    }
-}
-
-impl From<RenderPassType> for xc3_model::RenderPassType {
-    fn from(value: RenderPassType) -> Self {
-        match value {
-            RenderPassType::Unk0 => Self::Unk0,
-            RenderPassType::Unk1 => Self::Unk1,
-            RenderPassType::Unk6 => Self::Unk6,
-            RenderPassType::Unk7 => Self::Unk7,
-            RenderPassType::Unk9 => Self::Unk9,
-        }
-    }
-}
+    Unk9
+);
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
@@ -313,43 +317,15 @@ pub struct ImageTexture {
     pub image_data: Vec<u8>,
 }
 
-// TODO: Find a better way to automatically generate enums.
 #[pyclass]
 #[derive(Debug, Clone, Copy)]
 pub struct TextureUsage(pub u32);
 
-// TODO: Create a macro_rules macro for enum conversions using strum?
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum ViewDimension {
-    D2,
-    D3,
-    Cube,
-}
+python_enum!(ViewDimension, xc3_model::ViewDimension, D2, D3, Cube);
 
-impl From<xc3_model::ViewDimension> for ViewDimension {
-    fn from(value: xc3_model::ViewDimension) -> Self {
-        match value {
-            xc3_model::ViewDimension::D2 => Self::D2,
-            xc3_model::ViewDimension::D3 => Self::D3,
-            xc3_model::ViewDimension::Cube => Self::Cube,
-        }
-    }
-}
-
-impl From<ViewDimension> for xc3_model::ViewDimension {
-    fn from(value: ViewDimension) -> Self {
-        match value {
-            ViewDimension::D2 => Self::D2,
-            ViewDimension::D3 => Self::D3,
-            ViewDimension::Cube => Self::Cube,
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum ImageFormat {
+python_enum!(
+    ImageFormat,
+    xc3_model::ImageFormat,
     R8Unorm,
     R8G8B8A8Unorm,
     R16G16B16A16Float,
@@ -361,46 +337,8 @@ pub enum ImageFormat {
     BC5Unorm,
     BC6UFloat,
     BC7Unorm,
-    B8G8R8A8Unorm,
-}
-
-impl From<xc3_model::ImageFormat> for ImageFormat {
-    fn from(value: xc3_model::ImageFormat) -> Self {
-        match value {
-            xc3_model::ImageFormat::R8Unorm => Self::R8Unorm,
-            xc3_model::ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
-            xc3_model::ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
-            xc3_model::ImageFormat::R4G4B4A4Unorm => Self::R4G4B4A4Unorm,
-            xc3_model::ImageFormat::BC1Unorm => Self::BC1Unorm,
-            xc3_model::ImageFormat::BC2Unorm => Self::BC2Unorm,
-            xc3_model::ImageFormat::BC3Unorm => Self::BC3Unorm,
-            xc3_model::ImageFormat::BC4Unorm => Self::BC4Unorm,
-            xc3_model::ImageFormat::BC5Unorm => Self::BC5Unorm,
-            xc3_model::ImageFormat::BC6UFloat => Self::BC6UFloat,
-            xc3_model::ImageFormat::BC7Unorm => Self::BC7Unorm,
-            xc3_model::ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
-        }
-    }
-}
-
-impl From<ImageFormat> for xc3_model::ImageFormat {
-    fn from(value: ImageFormat) -> Self {
-        match value {
-            ImageFormat::R8Unorm => Self::R8Unorm,
-            ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
-            ImageFormat::R16G16B16A16Float => Self::R16G16B16A16Float,
-            ImageFormat::R4G4B4A4Unorm => Self::R4G4B4A4Unorm,
-            ImageFormat::BC1Unorm => Self::BC1Unorm,
-            ImageFormat::BC2Unorm => Self::BC2Unorm,
-            ImageFormat::BC3Unorm => Self::BC3Unorm,
-            ImageFormat::BC4Unorm => Self::BC4Unorm,
-            ImageFormat::BC5Unorm => Self::BC5Unorm,
-            ImageFormat::BC6UFloat => Self::BC6UFloat,
-            ImageFormat::BC7Unorm => Self::BC7Unorm,
-            ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
-        }
-    }
-}
+    B8G8R8A8Unorm
+);
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
@@ -413,58 +351,15 @@ pub struct Sampler {
     pub mipmaps: bool,
 }
 
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum AddressMode {
+python_enum!(
+    AddressMode,
+    xc3_model::AddressMode,
     ClampToEdge,
     Repeat,
-    MirrorRepeat,
-}
+    MirrorRepeat
+);
 
-impl From<xc3_model::AddressMode> for AddressMode {
-    fn from(value: xc3_model::AddressMode) -> Self {
-        match value {
-            xc3_model::AddressMode::ClampToEdge => Self::ClampToEdge,
-            xc3_model::AddressMode::Repeat => Self::Repeat,
-            xc3_model::AddressMode::MirrorRepeat => Self::MirrorRepeat,
-        }
-    }
-}
-
-impl From<AddressMode> for xc3_model::AddressMode {
-    fn from(value: AddressMode) -> Self {
-        match value {
-            AddressMode::ClampToEdge => Self::ClampToEdge,
-            AddressMode::Repeat => Self::Repeat,
-            AddressMode::MirrorRepeat => Self::MirrorRepeat,
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum FilterMode {
-    Nearest,
-    Linear,
-}
-
-impl From<xc3_model::FilterMode> for FilterMode {
-    fn from(value: xc3_model::FilterMode) -> Self {
-        match value {
-            xc3_model::FilterMode::Nearest => Self::Nearest,
-            xc3_model::FilterMode::Linear => Self::Linear,
-        }
-    }
-}
-
-impl From<FilterMode> for xc3_model::FilterMode {
-    fn from(value: FilterMode) -> Self {
-        match value {
-            FilterMode::Nearest => Self::Nearest,
-            FilterMode::Linear => Self::Linear,
-        }
-    }
-}
+python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
@@ -492,80 +387,9 @@ pub struct Keyframe {
     pub w_coeffs: (f32, f32, f32, f32),
 }
 
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum SpaceMode {
-    Local,
-    Model,
-}
-
-impl From<xc3_model::animation::SpaceMode> for SpaceMode {
-    fn from(value: xc3_model::animation::SpaceMode) -> Self {
-        match value {
-            xc3_model::animation::SpaceMode::Local => Self::Local,
-            xc3_model::animation::SpaceMode::Model => Self::Model,
-        }
-    }
-}
-
-impl From<SpaceMode> for xc3_model::animation::SpaceMode {
-    fn from(value: SpaceMode) -> Self {
-        match value {
-            SpaceMode::Local => Self::Local,
-            SpaceMode::Model => Self::Model,
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum PlayMode {
-    Loop,
-    Single,
-}
-
-impl From<xc3_model::animation::PlayMode> for PlayMode {
-    fn from(value: xc3_model::animation::PlayMode) -> Self {
-        match value {
-            xc3_model::animation::PlayMode::Loop => Self::Loop,
-            xc3_model::animation::PlayMode::Single => Self::Single,
-        }
-    }
-}
-
-impl From<PlayMode> for xc3_model::animation::PlayMode {
-    fn from(value: PlayMode) -> Self {
-        match value {
-            PlayMode::Loop => Self::Loop,
-            PlayMode::Single => Self::Single,
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub enum BlendMode {
-    Blend,
-    Add,
-}
-
-impl From<xc3_model::animation::BlendMode> for BlendMode {
-    fn from(value: xc3_model::animation::BlendMode) -> Self {
-        match value {
-            xc3_model::animation::BlendMode::Blend => Self::Blend,
-            xc3_model::animation::BlendMode::Add => Self::Add,
-        }
-    }
-}
-
-impl From<BlendMode> for xc3_model::animation::BlendMode {
-    fn from(value: BlendMode) -> Self {
-        match value {
-            BlendMode::Blend => Self::Blend,
-            BlendMode::Add => Self::Add,
-        }
-    }
-}
+python_enum!(SpaceMode, xc3_model::animation::SpaceMode, Local, Model);
+python_enum!(PlayMode, xc3_model::animation::PlayMode, Loop, Single);
+python_enum!(BlendMode, xc3_model::animation::BlendMode, Blend, Add);
 
 #[pymethods]
 impl Animation {
