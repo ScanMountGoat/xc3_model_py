@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for accessing Rust logs from Python's `logging` module.
 * Added `Xc3ModelError` exception type to represent Rust errors.
 
+### Changed
+* Moved field `skeleton` from `Models` to `ModelRoot`.
+
+### Removed
+* Removed methods `sampler_channel_index`, `float_constant`, and `buffer_parameter` from `Shader`.
+
 ## 0.2.0 - 2024-01-28
 ### Added
 * Added field `usage` of type `TextureUsage` to `ImageTexture`

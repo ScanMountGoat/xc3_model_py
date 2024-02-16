@@ -21,6 +21,7 @@ class Xc3ModelError(Exception):
 class ModelRoot:
     groups: List[ModelGroup]
     image_textures: List[ImageTexture]
+    skeleton: Optional[Skeleton]
 
 
 class ModelGroup:
@@ -51,7 +52,6 @@ class Models:
     models: List[Model]
     materials: List[Material]
     samplers: List[Sampler]
-    skeleton: Optional[Skeleton]
     base_lod_indices: Optional[List[int]]
 
 
@@ -109,14 +109,7 @@ class MaterialParameters:
 
 
 class Shader:
-    def sampler_channel_index(self, output_index: int,
-                              channel: str) -> Optional[Tuple[int, int]]: ...
-
-    def float_constant(self, output_index: int,
-                       channel: str) -> Optional[float]: ...
-
-    def buffer_parameter(self, output_index: int,
-                         channel: str) -> Optional[BufferParameter]: ...
+    pass
 
 
 class BufferParameter:

@@ -42,6 +42,7 @@ macro_rules! python_enum {
 pub struct ModelRoot {
     pub groups: Vec<ModelGroup>,
     pub image_textures: Vec<ImageTexture>,
+    pub skeleton: Option<Skeleton>,
 }
 
 #[pyclass(get_all)]
@@ -67,8 +68,8 @@ pub struct Weights {
     #[pyo3(get)]
     pub skin_weights: SkinWeights,
     // TODO: how to handle this?
-    weight_groups: Vec<xc3_lib::vertex::WeightGroup>,
-    weight_lods: Vec<xc3_lib::vertex::WeightLod>,
+    weight_groups: Vec<xc3_model::vertex::WeightGroup>,
+    weight_lods: Vec<xc3_model::vertex::WeightLod>,
 }
 
 #[pymethods]
@@ -111,7 +112,6 @@ pub struct Models {
     pub models: Vec<Model>,
     pub materials: Vec<Material>,
     pub samplers: Vec<Sampler>,
-    pub skeleton: Option<Skeleton>,
     pub base_lod_indices: Option<Vec<u16>>,
 }
 
@@ -193,32 +193,6 @@ pub struct MaterialParameters {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Shader(xc3_model::shader_database::Shader);
-
-#[pymethods]
-impl Shader {
-    pub fn sampler_channel_index(
-        &self,
-        output_index: usize,
-        channel: char,
-    ) -> Option<(usize, usize)> {
-        self.0.sampler_channel_index(output_index, channel)
-    }
-
-    pub fn float_constant(&self, output_index: usize, channel: char) -> Option<f32> {
-        self.0.float_constant(output_index, channel)
-    }
-
-    pub fn buffer_parameter(&self, output_index: usize, channel: char) -> Option<BufferParameter> {
-        self.0
-            .buffer_parameter(output_index, channel)
-            .map(|b| BufferParameter {
-                buffer: b.buffer,
-                uniform: b.uniform,
-                index: b.index,
-                channel: b.channel,
-            })
-    }
-}
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -531,17 +505,6 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                         models: models.models.into_iter().map(|m| model(py, m)).collect(),
                         materials: materials(models.materials),
                         samplers: samplers(models.samplers),
-                        skeleton: models.skeleton.map(|skeleton| Skeleton {
-                            bones: skeleton
-                                .bones
-                                .into_iter()
-                                .map(|bone| Bone {
-                                    name: bone.name,
-                                    transform: mat4_pyarray(py, bone.transform),
-                                    parent_index: bone.parent_index,
-                                })
-                                .collect(),
-                        }),
                         base_lod_indices: models.base_lod_indices,
                     })
                     .collect(),
@@ -579,6 +542,17 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                 image_data: image.image_data,
             })
             .collect(),
+        skeleton: root.skeleton.map(|skeleton| Skeleton {
+            bones: skeleton
+                .bones
+                .into_iter()
+                .map(|bone| Bone {
+                    name: bone.name,
+                    transform: mat4_pyarray(py, bone.transform),
+                    parent_index: bone.parent_index,
+                })
+                .collect(),
+        }),
     }
 }
 
@@ -650,7 +624,10 @@ fn samplers(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
         .collect()
 }
 
-fn vertex_buffers(py: Python, vertex_buffers: Vec<xc3_model::VertexBuffer>) -> Vec<VertexBuffer> {
+fn vertex_buffers(
+    py: Python,
+    vertex_buffers: Vec<xc3_model::vertex::VertexBuffer>,
+) -> Vec<VertexBuffer> {
     vertex_buffers
         .into_iter()
         .map(|buffer| VertexBuffer {
@@ -743,7 +720,7 @@ fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> At
     }
 }
 
-fn morph_targets(py: Python, targets: Vec<xc3_model::MorphTarget>) -> Vec<MorphTarget> {
+fn morph_targets(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Vec<MorphTarget> {
     targets
         .into_iter()
         .map(|target| MorphTarget {
@@ -754,7 +731,10 @@ fn morph_targets(py: Python, targets: Vec<xc3_model::MorphTarget>) -> Vec<MorphT
         .collect()
 }
 
-fn index_buffers(py: Python, index_buffers: Vec<xc3_model::IndexBuffer>) -> Vec<IndexBuffer> {
+fn index_buffers(
+    py: Python,
+    index_buffers: Vec<xc3_model::vertex::IndexBuffer>,
+) -> Vec<IndexBuffer> {
     index_buffers
         .into_iter()
         .map(|buffer| IndexBuffer {
