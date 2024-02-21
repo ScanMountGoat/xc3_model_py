@@ -451,12 +451,10 @@ impl ModelRoot {
 
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
-    let database = match database_path {
-        Some(p) => {
-            Some(xc3_model::shader_database::ShaderDatabase::from_file(p).map_err(py_exception)?)
-        }
-        None => None,
-    };
+    let database = database_path
+        .map(xc3_model::shader_database::ShaderDatabase::from_file)
+        .transpose()
+        .map_err(py_exception)?;
     let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
     Ok(model_root(py, root))
 }
@@ -467,12 +465,10 @@ fn load_map(
     wismhd_path: &str,
     database_path: Option<&str>,
 ) -> PyResult<Vec<ModelRoot>> {
-    let database = match database_path {
-        Some(p) => {
-            Some(xc3_model::shader_database::ShaderDatabase::from_file(p).map_err(py_exception)?)
-        }
-        None => None,
-    };
+    let database = database_path
+        .map(xc3_model::shader_database::ShaderDatabase::from_file)
+        .transpose()
+        .map_err(py_exception)?;
     let roots = xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)?;
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
