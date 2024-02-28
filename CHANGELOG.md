@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Xc3ModelError` exception type to represent Rust errors.
 
 ### Changed
+* Update xc3_model to 0.6.0.
 * Moved field `skeleton` from `Models` to `ModelRoot`.
 
 ### Removed

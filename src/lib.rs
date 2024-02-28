@@ -469,7 +469,10 @@ fn load_map(
         .map(xc3_model::shader_database::ShaderDatabase::from_file)
         .transpose()
         .map_err(py_exception)?;
-    let roots = xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)?;
+    // Prevent Python from locking up while Rust processes map data in parallel.
+    let roots = py.allow_threads(move || {
+        xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)
+    })?;
     Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
 }
 
