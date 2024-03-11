@@ -47,6 +47,24 @@ for group in root.groups:
             for buffer in buffers.vertex_buffers:
                 for attribute in buffer.attributes:
                     print(attribute.attribute_type, attribute.data.shape)
+
+            # Access vertex skinning data for each mesh.
+            for mesh in model.meshes:
+                vertex_buffer = buffers.vertex_buffers[mesh.vertex_buffer_index]
+
+                if buffers.weights is not None:
+                    # Calculate the index offset based on the weight group for this mesh.
+                    unk_type = models.materials[mesh.material_index].unk_type
+                    start_index = buffers.weights.weights_start_index(mesh.skin_flags, mesh.lod, unk_type)
+
+                    # Get vertex skinning attributes.
+                    for attribute in vertex_buffer.attributes:
+                        if attribute.attribute_type == xc3_model_py.AttributeType.WeightIndex:
+                            # Find the actual per vertex skinning information.
+                            weight_indices = attribute.data + start_index
+                            skin_weights = buffers.weights.skin_weights.weights[weight_indices]
+                            bone_indices = buffers.weights.skin_weights.bone_indices[weight_indices]
+
 ```
 
 Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
