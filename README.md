@@ -63,7 +63,9 @@ for group in root.groups:
                             # Find the actual per vertex skinning information.
                             weight_indices = attribute.data + start_index
                             skin_weights = buffers.weights.skin_weights.weights[weight_indices]
+                            # Note that these indices index into a different bone list than the skeleton.
                             bone_indices = buffers.weights.skin_weights.bone_indices[weight_indices]
+                            bone_name = buffers.weights.skin_weights.bone_names[bone_indices[0]]
 
 ```
 
