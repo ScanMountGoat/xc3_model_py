@@ -128,19 +128,7 @@ See the [pyi stub file](https://github.com/ScanMountGoat/xc3_model_py/blob/main/
 The compiled extension module can be imported just like any other Python file. On Windows, rename `xc3_model_py.dll` to `xc3_model_py.pyd`. If importing `xc3_model_py` fails, make sure the import path is specified correctly and the current Python version matches the version used when building. For installing in the current Python environment, install [maturin](https://github.com/PyO3/maturin) and use `maturin develop --release`.
 
 ## Building
-Build the project with `cargo build --release`. This will compile a native python module for the current Python interpreter. For use with Blender, make sure to build for the Python version used by Blender. The easiest way to do this is to use the Python interpreter bundled with Blender. See the [PyO3 guide](https://pyo3.rs/main/building_and_distribution) for details. Some example commands are listed below for different operating systems. 
-
-**Blender 4.0 on Windows**  
-```
-set PYO3_PYTHON=C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe
-cargo build --release
-```
-
-**Blender 4.0 on MacOS**  
-```
-export PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10"
-cargo build --release
-```
+Build the project with `cargo build --release`. This will compile a native python module for the current Python interpreter. For use with Blender, make sure to build for the Python version used by Blender. This can be achieved by activating a virtual environment with the appropriate Python version or setting the Python interpeter using the `PYO3_PYTHON` environment variable. See the [PyO3 guide](https://pyo3.rs) for details.
 
 ## Limitations
 All data should be treated as immutable. Attempting to set fields will result in an error. Modifying list elements will appear to work, but changes will not be reflected when accessing the elements again. Types from `xc3_model_py` also cannot be constructed in any way from Python. These limitations may be lifted in the future. Write support may be added in the future as xc3_lib and xc3_model develop. 
