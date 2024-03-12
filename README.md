@@ -138,7 +138,8 @@ cargo build --release
 
 **Blender 4.0 on MacOS**  
 ```
-PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10" cargo build --release
+export PYO3_PYTHON="/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10"
+cargo build --release
 ```
 
 ## Limitations
