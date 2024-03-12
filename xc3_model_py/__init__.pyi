@@ -1,14 +1,14 @@
-from typing import List, Optional, ClassVar, Tuple, Dict
+from typing import Optional, ClassVar, Tuple
 import numpy
 
 
 def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
 
 
-def load_map(wismhd: str, database_path: Optional[str]) -> List[ModelRoot]: ...
+def load_map(wismhd: str, database_path: Optional[str]) -> list[ModelRoot]: ...
 
 
-def load_animations(anim_path: str) -> List[Animation]: ...
+def load_animations(anim_path: str) -> list[Animation]: ...
 
 
 def murmur3(name: str) -> int: ...
@@ -19,19 +19,19 @@ class Xc3ModelError(Exception):
 
 
 class ModelRoot:
-    groups: List[ModelGroup]
-    image_textures: List[ImageTexture]
+    groups: list[ModelGroup]
+    image_textures: list[ImageTexture]
     skeleton: Optional[Skeleton]
 
 
 class ModelGroup:
-    models: List[Models]
-    buffers: List[ModelBuffers]
+    models: list[Models]
+    buffers: list[ModelBuffers]
 
 
 class ModelBuffers:
-    vertex_buffers: List[VertexBuffer]
-    index_buffers: List[IndexBuffer]
+    vertex_buffers: list[VertexBuffer]
+    index_buffers: list[IndexBuffer]
     weights: Optional[Weights]
 
 
@@ -45,18 +45,18 @@ class Weights:
 class SkinWeights:
     bone_indices: numpy.ndarray
     weights: numpy.ndarray
-    bone_names: List[str]
+    bone_names: list[str]
 
 
 class Models:
-    models: List[Model]
-    materials: List[Material]
-    samplers: List[Sampler]
-    base_lod_indices: Optional[List[int]]
+    models: list[Model]
+    materials: list[Material]
+    samplers: list[Sampler]
+    base_lod_indices: Optional[list[int]]
 
 
 class Model:
-    meshes: List[Mesh]
+    meshes: list[Mesh]
     instances: numpy.ndarray
     model_buffers_index: int
 
@@ -70,7 +70,7 @@ class Mesh:
 
 
 class Skeleton:
-    bones: List[Bone]
+    bones: list[Bone]
 
 
 class Bone:
@@ -81,9 +81,12 @@ class Bone:
 
 class Material:
     name: str
-    textures: List[Texture]
+    textures: list[Texture]
     shader: Optional[Shader]
     unk_type: RenderPassType
+
+    def output_assignments(
+        self, textures: list[ImageTexture]) -> OutputAssignments: ...
 
 
 class RenderPassType:
@@ -101,22 +104,15 @@ class TextureAlphaTest:
 
 
 class MaterialParameters:
-    mat_color: Tuple[float, float, float, float]
+    mat_color: list[float]
     alpha_test_ref: float
-    tex_matrix: Optional[List[float]]
-    work_float4: Optional[Tuple[float, float, float, float]]
-    work_color: Optional[Tuple[float, float, float, float]]
+    tex_matrix: Optional[list[float]]
+    work_float4: Optional[list[float]]
+    work_color: Optional[list[float]]
 
 
 class Shader:
     pass
-
-
-class BufferParameter:
-    buffer: str
-    uniform: str
-    index: int
-    channel: str
 
 
 class Texture:
@@ -124,8 +120,8 @@ class Texture:
 
 
 class VertexBuffer:
-    attributes: List[AttributeData]
-    influences: List[Influence]
+    attributes: list[AttributeData]
+    influences: list[Influence]
 
 
 class AttributeData:
@@ -161,7 +157,7 @@ class MorphTarget:
 
 class Influence:
     bone_name: str
-    weights: List[SkinWeight]
+    weights: list[SkinWeight]
 
 
 class SkinWeight:
@@ -230,6 +226,29 @@ class FilterMode:
     Linear: ClassVar[FilterMode]
 
 
+class OutputAssignments:
+    assignments: list[OutputAssignment]
+
+
+class OutputAssignment:
+    x: Optional[ChannelAssignment]
+    y: Optional[ChannelAssignment]
+    z: Optional[ChannelAssignment]
+    w: Optional[ChannelAssignment]
+
+
+class ChannelAssignment:
+    def texture(self) -> Optional[ChannelAssignmentTexture]: ...
+
+    def value(self) -> Optional[float]: ...
+
+
+class ChannelAssignmentTexture:
+    name: str
+    channel_index: int
+    texcoord_scale: Optional[Tuple[float, float]]
+
+
 class Animation:
     name: str
     space_mode: SpaceMode
@@ -237,7 +256,7 @@ class Animation:
     blend_mode: BlendMode
     frames_per_second: float
     frame_count: int
-    tracks: List[Track]
+    tracks: list[Track]
 
     def current_frame(self, current_time_seconds: float) -> float: ...
 

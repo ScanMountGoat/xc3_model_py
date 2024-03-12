@@ -157,7 +157,7 @@ pub struct Material {
     pub textures: Vec<Texture>,
     pub alpha_test: Option<TextureAlphaTest>,
     pub shader: Option<Shader>,
-    pub unk_type: RenderPassType,
+    pub pass_type: RenderPassType,
     pub parameters: MaterialParameters,
 }
 
@@ -182,26 +182,17 @@ pub struct TextureAlphaTest {
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct MaterialParameters {
-    pub mat_color: (f32, f32, f32, f32),
+    pub mat_color: [f32; 4],
     pub alpha_test_ref: f32,
-    pub tex_matrix: Option<Vec<[f32; 16]>>,
-    pub work_float4: Option<Vec<(f32, f32, f32, f32)>>,
-    pub work_color: Option<Vec<(f32, f32, f32, f32)>>,
+    pub tex_matrix: Option<Vec<[f32; 8]>>,
+    pub work_float4: Option<Vec<[f32; 4]>>,
+    pub work_color: Option<Vec<[f32; 4]>>,
 }
 
 // TODO: Expose implementation details?
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Shader(xc3_model::shader_database::Shader);
-
-#[pyclass]
-#[derive(Debug, Clone)]
-pub struct BufferParameter {
-    pub buffer: String,
-    pub uniform: String,
-    pub index: usize,
-    pub channel: char,
-}
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
@@ -277,7 +268,6 @@ pub struct IndexBuffer {
     pub indices: PyObject,
 }
 
-// TODO: export texture usage from xc3_model?
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct ImageTexture {
@@ -292,6 +282,7 @@ pub struct ImageTexture {
     pub image_data: Vec<u8>,
 }
 
+// TODO: export texture usage from xc3_model?
 #[pyclass]
 #[derive(Debug, Clone, Copy)]
 pub struct TextureUsage(pub u32);
@@ -335,6 +326,33 @@ python_enum!(
 );
 
 python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct OutputAssignments {
+    pub assignments: [OutputAssignment; 6],
+}
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct OutputAssignment {
+    pub x: Option<ChannelAssignment>,
+    pub y: Option<ChannelAssignment>,
+    pub z: Option<ChannelAssignment>,
+    pub w: Option<ChannelAssignment>,
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct ChannelAssignment(xc3_model::ChannelAssignment);
+
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
+pub struct ChannelAssignmentTexture {
+    pub name: String,
+    pub channel_index: usize,
+    pub texcoord_scale: Option<(f32, f32)>,
+}
 
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
@@ -388,6 +406,7 @@ impl Track {
         self.0.sample_scale(frame).into()
     }
 
+    // Workaround for representing Rust enums in Python.
     pub fn bone_index(&self) -> Option<usize> {
         match &self.0.bone_index {
             BoneIndex::Index(index) => Some(*index),
@@ -446,6 +465,74 @@ impl ModelRoot {
             .into_iter()
             .map(|buffer| buffer.into_pyarray(py).into())
             .collect())
+    }
+}
+
+#[pymethods]
+impl Material {
+    pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
+        // TODO: Is there a better way than creating the entire type?
+        // TODO: What to do about the image textures?
+        let assignments = xc3_model::Material {
+            name: self.name.clone(),
+            flags: xc3_model::StateFlags {
+                depth_write_mode: 0,
+                blend_mode: xc3_model::BlendMode::Disabled,
+                cull_mode: xc3_model::CullMode::Disabled,
+                unk4: 0,
+                stencil_value: xc3_model::StencilValue::Unk0,
+                stencil_mode: xc3_model::StencilMode::Unk0,
+                depth_func: xc3_model::DepthFunc::Equal,
+                color_write_mode: 0,
+            },
+            textures: Vec::new(),
+            alpha_test: None,
+            shader: self.shader.clone().map(|s| s.0),
+            pass_type: xc3_model::RenderPassType::Unk0,
+            parameters: xc3_model::MaterialParameters {
+                mat_color: self.parameters.mat_color.into(),
+                alpha_test_ref: self.parameters.alpha_test_ref,
+                tex_matrix: self.parameters.tex_matrix.clone(),
+                work_float4: self.parameters.work_float4.clone(),
+                work_color: self.parameters.work_color.clone(),
+            },
+        }
+        .output_assignments(&[]);
+
+        OutputAssignments {
+            assignments: assignments.assignments.map(|a| OutputAssignment {
+                x: a.x.map(ChannelAssignment),
+                y: a.y.map(ChannelAssignment),
+                z: a.z.map(ChannelAssignment),
+                w: a.w.map(ChannelAssignment),
+            }),
+        }
+    }
+}
+
+#[pymethods]
+impl ChannelAssignment {
+    // Workaround for representing Rust enums in Python.
+    pub fn texture(&self) -> Option<ChannelAssignmentTexture> {
+        match self.0.clone() {
+            xc3_model::ChannelAssignment::Texture {
+                name,
+                channel_index,
+                texcoord_scale,
+            } => Some(ChannelAssignmentTexture {
+                name,
+                channel_index,
+                texcoord_scale,
+            }),
+            xc3_model::ChannelAssignment::Value(_) => None,
+        }
+    }
+
+    pub fn value(&self) -> Option<f32> {
+        match self.0 {
+            xc3_model::ChannelAssignment::Texture { .. } => None,
+            xc3_model::ChannelAssignment::Value(f) => Some(f),
+        }
     }
 }
 
@@ -604,7 +691,7 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                     .work_color
                     .map(|v| v.into_iter().map(|v| v.into()).collect()),
             },
-            unk_type: material.unk_type.into(),
+            pass_type: material.pass_type.into(),
         })
         .collect()
 }
@@ -857,7 +944,6 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<TextureAlphaTest>()?;
     m.add_class::<MaterialParameters>()?;
     m.add_class::<Shader>()?;
-    m.add_class::<BufferParameter>()?;
     m.add_class::<Texture>()?;
 
     m.add_class::<VertexBuffer>()?;
@@ -876,6 +962,11 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Sampler>()?;
     m.add_class::<AddressMode>()?;
     m.add_class::<FilterMode>()?;
+
+    m.add_class::<OutputAssignments>()?;
+    m.add_class::<OutputAssignment>()?;
+    m.add_class::<ChannelAssignment>()?;
+    m.add_class::<ChannelAssignmentTexture>()?;
 
     m.add_class::<Animation>()?;
     m.add_class::<Track>()?;
