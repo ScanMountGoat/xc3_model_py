@@ -132,7 +132,7 @@ Build the project with `cargo build --release`. This will compile a native pytho
 
 **Blender 4.0 on Windows**  
 ```
-set PYO3_PYTHON = "C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe"
+set PYO3_PYTHON=C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe
 cargo build --release
 ```
 
