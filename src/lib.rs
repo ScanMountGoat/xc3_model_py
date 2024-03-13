@@ -678,6 +678,7 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                 ref_value: a.ref_value,
             }),
             shader: material.shader.map(Shader),
+            pass_type: material.pass_type.into(),
             parameters: MaterialParameters {
                 mat_color: material.parameters.mat_color.into(),
                 alpha_test_ref: material.parameters.alpha_test_ref,
@@ -691,7 +692,6 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                     .work_color
                     .map(|v| v.into_iter().map(|v| v.into()).collect()),
             },
-            pass_type: material.pass_type.into(),
         })
         .collect()
 }

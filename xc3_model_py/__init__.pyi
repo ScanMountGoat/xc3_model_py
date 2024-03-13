@@ -82,8 +82,9 @@ class Bone:
 class Material:
     name: str
     textures: list[Texture]
+    alpha_test: Optional[TextureAlphaTest]
     shader: Optional[Shader]
-    unk_type: RenderPassType
+    pass_type: RenderPassType
 
     def output_assignments(
         self, textures: list[ImageTexture]) -> OutputAssignments: ...
