@@ -470,7 +470,7 @@ impl ModelRoot {
 
 #[pymethods]
 impl Material {
-    pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
+    pub fn output_assignments(&self, _textures: Vec<ImageTexture>) -> OutputAssignments {
         // TODO: Is there a better way than creating the entire type?
         // TODO: What to do about the image textures?
         let assignments = xc3_model::Material {
