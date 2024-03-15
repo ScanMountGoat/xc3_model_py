@@ -8,7 +8,7 @@ Installing: `pip install xc3_model_py`
 Updating: `pip install xc3_model_py --upgrade`
 
 ## Introduction
-Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader JSON databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases).
+Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader JSON databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases). For more advanced usage, see [xenoblade_blender](https://github.com/ScanMountGoat/xenoblade_blender).
 
 ```python
 import xc3_model_py
@@ -106,7 +106,9 @@ for animation in animations:
     # Sample the transform for a given track at each frame.
     # This essentially "bakes" the keyframes of the animation.
     for frame in range(animation.frame_count:)
-        print(track.sample_scale(frame), track.sample_rotation(frame), track.sample_translation(frame))
+        print(track.sample_scale(frame))
+        print(track.sample_rotation(frame))
+        print(track.sample_translation(frame))
     print()
 ```
 
