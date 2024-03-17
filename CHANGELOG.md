@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### unreleased
+### Added
+* Added method `model_space_transforms` to `Skeleton`.
+* Added method `model_space_transforms` to `Animation`.
+* Added method `skinning_transforms` to `Animation`.
+
 ## 0.4.0 - 2024-03-15
 ### Added
 * Added `OutputAssignments`, `OutputAssignment`, `ChannelAssignment`, and `ChanelAssignmentTexture`.
@@ -34,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `usage` of type `TextureUsage` to `ImageTexture`
 * Added `RenderPassType` and `TextureUsage` types
 * Added field `skin_flags` of type `int` to `Mesh`
-* Added `weights_start_index` to `Weights`
+* Added method `weights_start_index` to `Weights`
 
 ### Changed
 * Updated xc3_model to 0.5.0

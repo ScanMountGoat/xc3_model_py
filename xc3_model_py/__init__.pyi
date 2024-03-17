@@ -72,6 +72,8 @@ class Mesh:
 class Skeleton:
     bones: list[Bone]
 
+    def model_space_transforms(self) -> numpy.ndarray: ...
+
 
 class Bone:
     name: str
@@ -260,6 +262,12 @@ class Animation:
     tracks: list[Track]
 
     def current_frame(self, current_time_seconds: float) -> float: ...
+
+    def skinning_transforms(self, skeleton: Skeleton,
+                            frame: float) -> numpy.ndarray: ...
+
+    def model_space_transforms(
+        self, skeleton: Skeleton, frame: float) -> numpy.ndarray: ...
 
 
 class Track:

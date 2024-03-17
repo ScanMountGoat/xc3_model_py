@@ -2,7 +2,7 @@
 Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenoblade 3.
 
 ## Installation
-The package can be installed for Python version 3.9, 3.10, 3.11, or 3.12 using pip on newer versions of Windows, Linux, or MacOS. The prebuilt wheels (.whl files) are included only for situations where pip might not be available such as for plugin development for applications. The wheels are zip archives and can be extracted to obtain the compiled .pyd or .so file.
+The package can be installed for Python version 3.9, 3.10, 3.11, or 3.12 using pip on newer versions of Windows, Linux, or MacOS. The prebuilt wheels (.whl files) are included only for situations where pip might not be available such as for plugin development for applications. The wheels are zip archives and can be extracted to obtain the compiled .pyd or .so file. xc3_model_py requires the `numpy` package for transforms and vertex data.
 
 Installing: `pip install xc3_model_py`  
 Updating: `pip install xc3_model_py --upgrade`
@@ -69,7 +69,7 @@ for group in root.groups:
 
 ```
 
-Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
+Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. All transformation matrices are column-major to match the Rust code in xc3_model. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
 
 ```python
 # blender

@@ -390,6 +390,30 @@ impl Animation {
         // TODO: looping?
         current_time_seconds * self.frames_per_second
     }
+
+    pub fn skinning_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.skinning_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
+
+    pub fn model_space_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.model_space_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
 }
 
 #[pymethods]
@@ -536,6 +560,14 @@ impl ChannelAssignment {
     }
 }
 
+#[pymethods]
+impl Skeleton {
+    pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
+        let transforms = skeleton_rs(py, self)?.model_space_transforms();
+        Ok(transforms_pyarray(py, &transforms))
+    }
+}
+
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
     let database = database_path
@@ -566,7 +598,7 @@ fn load_map(
 #[pyfunction]
 fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<Animation>> {
     let animations = xc3_model::load_animations(anim_path).map_err(py_exception)?;
-    Ok(animations.into_iter().map(animation).collect())
+    Ok(animations.into_iter().map(animation_py).collect())
 }
 
 #[pyfunction]
@@ -588,9 +620,9 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                     .models
                     .into_iter()
                     .map(|models| Models {
-                        models: models.models.into_iter().map(|m| model(py, m)).collect(),
-                        materials: materials(models.materials),
-                        samplers: samplers(models.samplers),
+                        models: models.models.into_iter().map(|m| model_py(py, m)).collect(),
+                        materials: materials_py(models.materials),
+                        samplers: samplers_py(models.samplers),
                         base_lod_indices: models.base_lod_indices,
                     })
                     .collect(),
@@ -598,8 +630,8 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                     .buffers
                     .into_iter()
                     .map(|buffer| ModelBuffers {
-                        vertex_buffers: vertex_buffers(py, buffer.vertex_buffers),
-                        index_buffers: index_buffers(py, buffer.index_buffers),
+                        vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
+                        index_buffers: index_buffers_py(py, buffer.index_buffers),
                         weights: buffer.weights.map(|weights| Weights {
                             skin_weights: SkinWeights {
                                 bone_indices: uvec4_pyarray(py, &weights.skin_weights.bone_indices),
@@ -632,17 +664,39 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
             bones: skeleton
                 .bones
                 .into_iter()
-                .map(|bone| Bone {
-                    name: bone.name,
-                    transform: mat4_pyarray(py, bone.transform),
-                    parent_index: bone.parent_index,
-                })
+                .map(|bone| bone_py(bone, py))
                 .collect(),
         }),
     }
 }
 
-fn model(py: Python, model: xc3_model::Model) -> Model {
+fn skeleton_rs(py: Python, skeleton: &Skeleton) -> PyResult<xc3_model::Skeleton> {
+    Ok(xc3_model::Skeleton {
+        bones: skeleton
+            .bones
+            .iter()
+            .map(|b| bone_rs(py, b))
+            .collect::<Result<Vec<_>, _>>()?,
+    })
+}
+
+fn bone_rs(py: Python, bone: &Bone) -> PyResult<xc3_model::Bone> {
+    Ok(xc3_model::Bone {
+        name: bone.name.clone(),
+        transform: pyarray_to_mat4(py, &bone.transform)?,
+        parent_index: bone.parent_index,
+    })
+}
+
+fn bone_py(bone: xc3_model::Bone, py: Python<'_>) -> Bone {
+    Bone {
+        name: bone.name,
+        transform: mat4_to_pyarray(py, bone.transform),
+        parent_index: bone.parent_index,
+    }
+}
+
+fn model_py(py: Python, model: xc3_model::Model) -> Model {
     Model {
         meshes: model
             .meshes
@@ -660,7 +714,7 @@ fn model(py: Python, model: xc3_model::Model) -> Model {
     }
 }
 
-fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
+fn materials_py(materials: Vec<xc3_model::Material>) -> Vec<Material> {
     materials
         .into_iter()
         .map(|material| Material {
@@ -696,7 +750,7 @@ fn materials(materials: Vec<xc3_model::Material>) -> Vec<Material> {
         .collect()
 }
 
-fn samplers(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
+fn samplers_py(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
     samplers
         .into_iter()
         .map(|sampler| Sampler {
@@ -710,30 +764,30 @@ fn samplers(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
         .collect()
 }
 
-fn vertex_buffers(
+fn vertex_buffers_py(
     py: Python,
     vertex_buffers: Vec<xc3_model::vertex::VertexBuffer>,
 ) -> Vec<VertexBuffer> {
     vertex_buffers
         .into_iter()
         .map(|buffer| VertexBuffer {
-            attributes: vertex_attributes(py, buffer.attributes),
-            morph_targets: morph_targets(py, buffer.morph_targets),
+            attributes: vertex_attributes_py(py, buffer.attributes),
+            morph_targets: morph_targets_py(py, buffer.morph_targets),
         })
         .collect()
 }
 
-fn vertex_attributes(
+fn vertex_attributes_py(
     py: Python,
     attributes: Vec<xc3_model::vertex::AttributeData>,
 ) -> Vec<AttributeData> {
     attributes
         .into_iter()
-        .map(|attribute| attribute_data(py, attribute))
+        .map(|attribute| attribute_data_py(py, attribute))
         .collect()
 }
 
-fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> AttributeData {
+fn attribute_data_py(py: Python, attribute: xc3_model::vertex::AttributeData) -> AttributeData {
     match attribute {
         xc3_model::vertex::AttributeData::Position(values) => AttributeData {
             attribute_type: AttributeType::Position,
@@ -806,7 +860,7 @@ fn attribute_data(py: Python, attribute: xc3_model::vertex::AttributeData) -> At
     }
 }
 
-fn morph_targets(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Vec<MorphTarget> {
+fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Vec<MorphTarget> {
     targets
         .into_iter()
         .map(|target| MorphTarget {
@@ -817,7 +871,7 @@ fn morph_targets(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Ve
         .collect()
 }
 
-fn index_buffers(
+fn index_buffers_py(
     py: Python,
     index_buffers: Vec<xc3_model::vertex::IndexBuffer>,
 ) -> Vec<IndexBuffer> {
@@ -829,7 +883,19 @@ fn index_buffers(
         .collect()
 }
 
-fn animation(animation: xc3_model::animation::Animation) -> Animation {
+fn animation_rs(animation: &Animation) -> xc3_model::animation::Animation {
+    xc3_model::animation::Animation {
+        name: animation.name.clone(),
+        space_mode: animation.space_mode.into(),
+        play_mode: animation.play_mode.into(),
+        blend_mode: animation.blend_mode.into(),
+        frames_per_second: animation.frames_per_second,
+        frame_count: animation.frame_count,
+        tracks: animation.tracks.iter().map(|t| t.0.clone()).collect(),
+    }
+}
+
+fn animation_py(animation: xc3_model::animation::Animation) -> Animation {
     Animation {
         name: animation.name.clone(),
         space_mode: animation.space_mode.into(),
@@ -913,12 +979,17 @@ fn transforms_pyarray(py: Python, transforms: &[Mat4]) -> PyObject {
         .into()
 }
 
-// TODO: test cases for this.
-fn mat4_pyarray(py: Python, transform: Mat4) -> PyObject {
+// TODO: test cases for conversions.
+fn mat4_to_pyarray(py: Python, transform: Mat4) -> PyObject {
     PyArray::from_slice(py, &transform.to_cols_array())
         .reshape((4, 4))
         .unwrap()
         .into()
+}
+
+fn pyarray_to_mat4(py: Python, transform: &PyObject) -> PyResult<Mat4> {
+    let cols: [[f32; 4]; 4] = transform.extract(py)?;
+    Ok(Mat4::from_cols_array_2d(&cols))
 }
 
 #[pymodule]
