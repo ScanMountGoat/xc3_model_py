@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
 
+### Fixed
+* Fixed an issue where method `output_assignments` for `Material` did not properly account for textures.
+
 ## 0.4.0 - 2024-03-15
 ### Added
 * Added `OutputAssignments`, `OutputAssignment`, `ChannelAssignment`, and `ChanelAssignmentTexture`.
