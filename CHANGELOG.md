@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `model_space_transforms` to `Skeleton`.
 * Added method `model_space_transforms` to `Animation`.
 * Added method `skinning_transforms` to `Animation`.
+* Added method `sample_transform` to `Track`.
+
+### Changed
+* Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
 
 ## 0.4.0 - 2024-03-15
 ### Added

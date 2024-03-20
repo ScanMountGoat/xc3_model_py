@@ -185,7 +185,42 @@ class ImageTexture:
 
 
 class TextureUsage:
-    pass
+    Unk0: ClassVar[TextureUsage]
+    Temp: ClassVar[TextureUsage]
+    Unk6: ClassVar[TextureUsage]
+    Nrm: ClassVar[TextureUsage]
+    Unk13: ClassVar[TextureUsage]
+    WavePlus: ClassVar[TextureUsage]
+    Col: ClassVar[TextureUsage]
+    Unk8: ClassVar[TextureUsage]
+    Alp: ClassVar[TextureUsage]
+    Unk: ClassVar[TextureUsage]
+    Alp2: ClassVar[TextureUsage]
+    Col2: ClassVar[TextureUsage]
+    Unk11: ClassVar[TextureUsage]
+    Unk9: ClassVar[TextureUsage]
+    Alp3: ClassVar[TextureUsage]
+    Nrm2: ClassVar[TextureUsage]
+    Col3: ClassVar[TextureUsage]
+    Unk3: ClassVar[TextureUsage]
+    Unk2: ClassVar[TextureUsage]
+    Unk20: ClassVar[TextureUsage]
+    Unk17: ClassVar[TextureUsage]
+    F01: ClassVar[TextureUsage]
+    Unk4: ClassVar[TextureUsage]
+    Unk7: ClassVar[TextureUsage]
+    Unk15: ClassVar[TextureUsage]
+    Temp2: ClassVar[TextureUsage]
+    Unk14: ClassVar[TextureUsage]
+    Col4: ClassVar[TextureUsage]
+    Alp4: ClassVar[TextureUsage]
+    Unk12: ClassVar[TextureUsage]
+    Unk18: ClassVar[TextureUsage]
+    Unk19: ClassVar[TextureUsage]
+    Unk5: ClassVar[TextureUsage]
+    Unk10: ClassVar[TextureUsage]
+    VolTex: ClassVar[TextureUsage]
+    Unk1: ClassVar[TextureUsage]
 
 
 class ViewDimension:
@@ -272,11 +307,15 @@ class Animation:
 
 class Track:
     def sample_translation(
-        self, frame: float) -> Tuple[float, float, float]: ...
+        self, frame: float) -> Optional[Tuple[float, float, float]]: ...
 
-    def sample_rotation(self, frame: float) -> Tuple[float, float, float]: ...
+    def sample_rotation(
+        self, frame: float) -> Optional[Tuple[float, float, float]]: ...
 
-    def sample_scale(self, frame: float) -> Tuple[float, float, float]: ...
+    def sample_scale(
+        self, frame: float) -> Optional[Tuple[float, float, float]]: ...
+
+    def sample_transform(self, frame: float) -> Optional[numpy.ndarray]: ...
 
     def bone_index(self) -> Optional[int]: ...
 
