@@ -284,6 +284,7 @@ class ChannelAssignment:
 class ChannelAssignmentTexture:
     name: str
     channel_index: int
+    texcoord_name: Optional[str]
     texcoord_scale: Optional[Tuple[float, float]]
 
 

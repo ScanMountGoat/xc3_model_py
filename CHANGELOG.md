@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `model_space_transforms` to `Animation`.
 * Added method `skinning_transforms` to `Animation`.
 * Added method `sample_transform` to `Track`.
+* Added field `texcoord_name` to `ChannelAssignmentTexture`.
 
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.

@@ -282,10 +282,46 @@ pub struct ImageTexture {
     pub image_data: Vec<u8>,
 }
 
-// TODO: export texture usage from xc3_model?
-#[pyclass]
-#[derive(Debug, Clone, Copy)]
-pub struct TextureUsage(pub u32);
+python_enum!(
+    TextureUsage,
+    xc3_model::TextureUsage,
+    Unk0,
+    Temp,
+    Unk6,
+    Nrm,
+    Unk13,
+    WavePlus,
+    Col,
+    Unk8,
+    Alp,
+    Unk,
+    Alp2,
+    Col2,
+    Unk11,
+    Unk9,
+    Alp3,
+    Nrm2,
+    Col3,
+    Unk3,
+    Unk2,
+    Unk20,
+    Unk17,
+    F01,
+    Unk4,
+    Unk7,
+    Unk15,
+    Temp2,
+    Unk14,
+    Col4,
+    Alp4,
+    Unk12,
+    Unk18,
+    Unk19,
+    Unk5,
+    Unk10,
+    VolTex,
+    Unk16
+);
 
 python_enum!(ViewDimension, xc3_model::ViewDimension, D2, D3, Cube);
 
@@ -351,6 +387,7 @@ pub struct ChannelAssignment(xc3_model::ChannelAssignment);
 pub struct ChannelAssignmentTexture {
     pub name: String,
     pub channel_index: usize,
+    pub texcoord_name: Option<String>,
     pub texcoord_scale: Option<(f32, f32)>,
 }
 
@@ -418,16 +455,22 @@ impl Animation {
 
 #[pymethods]
 impl Track {
-    pub fn sample_translation(&self, frame: f32) -> (f32, f32, f32) {
-        self.0.sample_translation(frame).into()
+    pub fn sample_translation(&self, frame: f32) -> Option<(f32, f32, f32)> {
+        self.0.sample_translation(frame).map(Into::into)
     }
 
-    pub fn sample_rotation(&self, frame: f32) -> (f32, f32, f32, f32) {
-        self.0.sample_rotation(frame).into()
+    pub fn sample_rotation(&self, frame: f32) -> Option<(f32, f32, f32, f32)> {
+        self.0.sample_rotation(frame).map(Into::into)
     }
 
-    pub fn sample_scale(&self, frame: f32) -> (f32, f32, f32) {
-        self.0.sample_scale(frame).into()
+    pub fn sample_scale(&self, frame: f32) -> Option<(f32, f32, f32)> {
+        self.0.sample_scale(frame).map(Into::into)
+    }
+
+    pub fn sample_transform(&self, py: Python, frame: f32) -> Option<PyObject> {
+        self.0
+            .sample_transform(frame)
+            .map(|t| mat4_to_pyarray(py, t))
     }
 
     // Workaround for representing Rust enums in Python.
@@ -494,9 +537,24 @@ impl ModelRoot {
 
 #[pymethods]
 impl Material {
-    pub fn output_assignments(&self, _textures: Vec<ImageTexture>) -> OutputAssignments {
+    pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
+        // We only need the usage to be correct.
+        let image_textures: Vec<_> = textures
+            .iter()
+            .map(|t| xc3_model::ImageTexture {
+                name: t.name.clone(),
+                usage: t.usage.map(Into::into),
+                width: 1,
+                height: 1,
+                depth: 1,
+                view_dimension: xc3_model::ViewDimension::D2,
+                image_format: xc3_model::ImageFormat::BC7Unorm,
+                mipmap_count: 1,
+                image_data: Vec::new(),
+            })
+            .collect();
+
         // TODO: Is there a better way than creating the entire type?
-        // TODO: What to do about the image textures?
         let assignments = xc3_model::Material {
             name: self.name.clone(),
             flags: xc3_model::StateFlags {
@@ -521,7 +579,7 @@ impl Material {
                 work_color: self.parameters.work_color.clone(),
             },
         }
-        .output_assignments(&[]);
+        .output_assignments(&image_textures);
 
         OutputAssignments {
             assignments: assignments.assignments.map(|a| OutputAssignment {
@@ -542,10 +600,12 @@ impl ChannelAssignment {
             xc3_model::ChannelAssignment::Texture {
                 name,
                 channel_index,
+                texcoord_name,
                 texcoord_scale,
             } => Some(ChannelAssignmentTexture {
                 name,
                 channel_index,
+                texcoord_name,
                 texcoord_scale,
             }),
             xc3_model::ChannelAssignment::Value(_) => None,
@@ -650,7 +710,7 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
             .into_iter()
             .map(|image| ImageTexture {
                 name: image.name,
-                usage: image.usage.map(|u| TextureUsage(u as u32)),
+                usage: image.usage.map(Into::into),
                 width: image.width,
                 height: image.height,
                 depth: image.depth,
