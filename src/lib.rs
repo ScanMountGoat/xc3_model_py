@@ -198,6 +198,7 @@ pub struct Shader(xc3_model::shader_database::Shader);
 #[derive(Debug, Clone)]
 pub struct Texture {
     pub image_texture_index: usize,
+    pub sampler_index: usize,
 }
 
 #[pyclass(get_all)]
@@ -555,31 +556,7 @@ impl Material {
             .collect();
 
         // TODO: Is there a better way than creating the entire type?
-        let assignments = xc3_model::Material {
-            name: self.name.clone(),
-            flags: xc3_model::StateFlags {
-                depth_write_mode: 0,
-                blend_mode: xc3_model::BlendMode::Disabled,
-                cull_mode: xc3_model::CullMode::Disabled,
-                unk4: 0,
-                stencil_value: xc3_model::StencilValue::Unk0,
-                stencil_mode: xc3_model::StencilMode::Unk0,
-                depth_func: xc3_model::DepthFunc::Equal,
-                color_write_mode: 0,
-            },
-            textures: Vec::new(),
-            alpha_test: None,
-            shader: self.shader.clone().map(|s| s.0),
-            pass_type: xc3_model::RenderPassType::Unk0,
-            parameters: xc3_model::MaterialParameters {
-                mat_color: self.parameters.mat_color.into(),
-                alpha_test_ref: self.parameters.alpha_test_ref,
-                tex_matrix: self.parameters.tex_matrix.clone(),
-                work_float4: self.parameters.work_float4.clone(),
-                work_color: self.parameters.work_color.clone(),
-            },
-        }
-        .output_assignments(&image_textures);
+        let assignments = material_rs(self).output_assignments(&image_textures);
 
         OutputAssignments {
             assignments: assignments.assignments.map(|a| OutputAssignment {
@@ -589,6 +566,40 @@ impl Material {
                 w: a.w.map(ChannelAssignment),
             }),
         }
+    }
+}
+
+fn material_rs(material: &Material) -> xc3_model::Material {
+    xc3_model::Material {
+        name: material.name.clone(),
+        flags: xc3_model::StateFlags {
+            depth_write_mode: 0,
+            blend_mode: xc3_model::BlendMode::Disabled,
+            cull_mode: xc3_model::CullMode::Disabled,
+            unk4: 0,
+            stencil_value: xc3_model::StencilValue::Unk0,
+            stencil_mode: xc3_model::StencilMode::Unk0,
+            depth_func: xc3_model::DepthFunc::Equal,
+            color_write_mode: 0,
+        },
+        textures: material
+            .textures
+            .iter()
+            .map(|t| xc3_model::Texture {
+                image_texture_index: t.image_texture_index,
+                sampler_index: t.sampler_index,
+            })
+            .collect(),
+        alpha_test: None,
+        shader: material.shader.clone().map(|s| s.0),
+        pass_type: xc3_model::RenderPassType::Unk0,
+        parameters: xc3_model::MaterialParameters {
+            mat_color: material.parameters.mat_color.into(),
+            alpha_test_ref: material.parameters.alpha_test_ref,
+            tex_matrix: material.parameters.tex_matrix.clone(),
+            work_float4: material.parameters.work_float4.clone(),
+            work_color: material.parameters.work_color.clone(),
+        },
     }
 }
 
@@ -784,6 +795,7 @@ fn materials_py(materials: Vec<xc3_model::Material>) -> Vec<Material> {
                 .into_iter()
                 .map(|texture| Texture {
                     image_texture_index: texture.image_texture_index,
+                    sampler_index: texture.sampler_index,
                 })
                 .collect(),
             alpha_test: material.alpha_test.map(|a| TextureAlphaTest {

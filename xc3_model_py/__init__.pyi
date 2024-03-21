@@ -120,6 +120,7 @@ class Shader:
 
 class Texture:
     image_texture_index: int
+    sampler_index: int
 
 
 class VertexBuffer:
