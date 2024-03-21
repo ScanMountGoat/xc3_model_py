@@ -134,13 +134,13 @@ pub struct Mesh {
     pub skin_flags: u32,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Skeleton {
     pub bones: Vec<Bone>,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Bone {
     pub name: String,
@@ -633,9 +633,27 @@ impl ChannelAssignment {
 
 #[pymethods]
 impl Skeleton {
+    // TODO: generate this with some sort of macro?
+    #[new]
+    fn new(bones: Vec<Bone>) -> Self {
+        Self { bones }
+    }
+
     pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
         let transforms = skeleton_rs(py, self)?.model_space_transforms();
         Ok(transforms_pyarray(py, &transforms))
+    }
+}
+
+#[pymethods]
+impl Bone {
+    #[new]
+    fn new(name: String, transform: PyObject, parent_index: Option<usize>) -> Self {
+        Self {
+            name,
+            transform,
+            parent_index,
+        }
     }
 }
 

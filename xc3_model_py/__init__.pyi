@@ -72,6 +72,8 @@ class Mesh:
 class Skeleton:
     bones: list[Bone]
 
+    def __init__(self, bones: list[Bone]) -> None: ...
+
     def model_space_transforms(self) -> numpy.ndarray: ...
 
 
@@ -79,6 +81,9 @@ class Bone:
     name: str
     transform: numpy.ndarray
     parent_index: Optional[int]
+
+    def __init__(self, name: str, transform: numpy.ndarray,
+                 parent_index: Optional[int]) -> None: ...
 
 
 class Material:
