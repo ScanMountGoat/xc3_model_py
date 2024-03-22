@@ -452,6 +452,18 @@ impl Animation {
         let transforms = animation.model_space_transforms(&skeleton, frame);
         Ok(transforms_pyarray(py, &transforms))
     }
+
+    pub fn local_space_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.local_space_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
 }
 
 #[pymethods]

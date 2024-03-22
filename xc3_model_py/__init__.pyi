@@ -311,6 +311,9 @@ class Animation:
     def model_space_transforms(
         self, skeleton: Skeleton, frame: float) -> numpy.ndarray: ...
 
+    def local_space_transforms(
+        self, skeleton: Skeleton, frame: float) -> numpy.ndarray: ...
+
 
 class Track:
     def sample_translation(

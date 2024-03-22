@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added method `model_space_transforms` to `Skeleton`.
 * Added method `model_space_transforms` to `Animation`.
+* Added method `local_space_transforms` to `Animation`.
 * Added method `skinning_transforms` to `Animation`.
 * Added method `sample_transform` to `Track`.
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
