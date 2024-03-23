@@ -47,6 +47,9 @@ class SkinWeights:
     weights: numpy.ndarray
     bone_names: list[str]
 
+    def to_influences(
+        self, weight_indices: numpy.ndarray) -> list[Influence]: ...
+
 
 class Models:
     models: list[Model]
@@ -166,10 +169,10 @@ class MorphTarget:
 
 class Influence:
     bone_name: str
-    weights: list[SkinWeight]
+    weights: list[VertexWeight]
 
 
-class SkinWeight:
+class VertexWeight:
     vertex_index: int
     weight: float
 

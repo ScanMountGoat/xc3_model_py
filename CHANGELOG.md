@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `local_space_transforms` to `Animation`.
 * Added method `skinning_transforms` to `Animation`.
 * Added method `sample_transform` to `Track`.
+* Added method `to_influences` to `SkinWeights`.
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
 * Added constructors and setters for `Skeleton` and `Bone`.
 
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
+* Renamed `SkinWeight` to `VertexWeight` to match xc3_model.
 
 ### Fixed
 * Fixed an issue where method `output_assignments` for `Material` did not properly account for textures.
