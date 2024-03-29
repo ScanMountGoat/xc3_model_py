@@ -351,6 +351,7 @@ pub struct Sampler {
     pub address_mode_w: AddressMode,
     pub min_filter: FilterMode,
     pub mag_filter: FilterMode,
+    pub mip_filter: FilterMode,
     pub mipmaps: bool,
 }
 
@@ -421,6 +422,42 @@ pub struct Keyframe {
 python_enum!(SpaceMode, xc3_model::animation::SpaceMode, Local, Model);
 python_enum!(PlayMode, xc3_model::animation::PlayMode, Loop, Single);
 python_enum!(BlendMode, xc3_model::animation::BlendMode, Blend, Add);
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct Mxmd(xc3_lib::mxmd::Mxmd);
+
+#[pymethods]
+impl Mxmd {
+    #[staticmethod]
+    pub fn from_file(path: &str) -> PyResult<Self> {
+        xc3_lib::mxmd::Mxmd::from_file(path)
+            .map(Mxmd)
+            .map_err(py_exception)
+    }
+
+    pub fn save(&self, path: &str) -> PyResult<()> {
+        self.0.save(path).map_err(py_exception)
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct Msrd(xc3_lib::msrd::Msrd);
+
+#[pymethods]
+impl Msrd {
+    #[staticmethod]
+    pub fn from_file(path: &str) -> PyResult<Self> {
+        xc3_lib::msrd::Msrd::from_file(path)
+            .map(Msrd)
+            .map_err(py_exception)
+    }
+
+    pub fn save(&self, path: &str) -> PyResult<()> {
+        self.0.save(path).map_err(py_exception)
+    }
+}
 
 #[pymethods]
 impl Animation {
@@ -519,20 +556,10 @@ impl ModelRoot {
             .par_iter()
             .map(|image| {
                 // TODO: Use image_dds directly to avoid cloning?
-                let bytes = xc3_model::ImageTexture {
-                    name: image.name.clone(),
-                    usage: None, // TODO: add to Python bindings
-                    width: image.width,
-                    height: image.height,
-                    depth: image.depth,
-                    view_dimension: image.view_dimension.into(),
-                    image_format: image.image_format.into(),
-                    mipmap_count: image.mipmap_count,
-                    image_data: image.image_data.clone(),
-                }
-                .to_image()
-                .map_err(py_exception)?
-                .into_raw();
+                let bytes = image_texture_rs(image)
+                    .to_image()
+                    .map_err(py_exception)?
+                    .into_raw();
 
                 Ok(bytes
                     .into_iter()
@@ -546,26 +573,19 @@ impl ModelRoot {
             .map(|buffer| buffer.into_pyarray(py).into())
             .collect())
     }
+
+    pub fn to_mxmd_model(&self, py: Python, mxmd: &Mxmd, msrd: &Msrd) -> PyResult<(Mxmd, Msrd)> {
+        let (mxmd, msrd) = model_root_rs(py, self)?.to_mxmd_model(&mxmd.0, &msrd.0);
+        Ok((Mxmd(mxmd), Msrd(msrd)))
+    }
+    // TODO: support texture edits as well?
 }
 
 #[pymethods]
 impl Material {
     pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
         // We only need the usage to be correct.
-        let image_textures: Vec<_> = textures
-            .iter()
-            .map(|t| xc3_model::ImageTexture {
-                name: t.name.clone(),
-                usage: t.usage.map(Into::into),
-                width: 1,
-                height: 1,
-                depth: 1,
-                view_dimension: xc3_model::ViewDimension::D2,
-                image_format: xc3_model::ImageFormat::BC7Unorm,
-                mipmap_count: 1,
-                image_data: Vec::new(),
-            })
-            .collect();
+        let image_textures: Vec<_> = textures.iter().map(image_texture_rs).collect();
 
         // TODO: Is there a better way than creating the entire type?
         let assignments = material_rs(self).output_assignments(&image_textures);
@@ -578,40 +598,6 @@ impl Material {
                 w: a.w.map(ChannelAssignment),
             }),
         }
-    }
-}
-
-fn material_rs(material: &Material) -> xc3_model::Material {
-    xc3_model::Material {
-        name: material.name.clone(),
-        flags: xc3_model::StateFlags {
-            depth_write_mode: 0,
-            blend_mode: xc3_model::BlendMode::Disabled,
-            cull_mode: xc3_model::CullMode::Disabled,
-            unk4: 0,
-            stencil_value: xc3_model::StencilValue::Unk0,
-            stencil_mode: xc3_model::StencilMode::Unk0,
-            depth_func: xc3_model::DepthFunc::Equal,
-            color_write_mode: 0,
-        },
-        textures: material
-            .textures
-            .iter()
-            .map(|t| xc3_model::Texture {
-                image_texture_index: t.image_texture_index,
-                sampler_index: t.sampler_index,
-            })
-            .collect(),
-        alpha_test: None,
-        shader: material.shader.clone().map(|s| s.0),
-        pass_type: xc3_model::RenderPassType::Unk0,
-        parameters: xc3_model::MaterialParameters {
-            mat_color: material.parameters.mat_color.into(),
-            alpha_test_ref: material.parameters.alpha_test_ref,
-            tex_matrix: material.parameters.tex_matrix.clone(),
-            work_float4: material.parameters.work_float4.clone(),
-            work_color: material.parameters.work_color.clone(),
-        },
     }
 }
 
@@ -702,7 +688,7 @@ fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyRe
         .transpose()
         .map_err(py_exception)?;
     let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
-    Ok(model_root(py, root))
+    Ok(model_root_py(py, root))
 }
 
 #[pyfunction]
@@ -719,7 +705,10 @@ fn load_map(
     let roots = py.allow_threads(move || {
         xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)
     })?;
-    Ok(roots.into_iter().map(|root| model_root(py, root)).collect())
+    Ok(roots
+        .into_iter()
+        .map(|root| model_root_py(py, root))
+        .collect())
 }
 
 #[pyfunction]
@@ -737,51 +726,17 @@ fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
     PyErr::new::<Xc3ModelError, _>(format!("{e}"))
 }
 
-fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
+fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
     ModelRoot {
         groups: root
             .groups
             .into_iter()
-            .map(|group| ModelGroup {
-                models: group
-                    .models
-                    .into_iter()
-                    .map(|models| Models {
-                        models: models.models.into_iter().map(|m| model_py(py, m)).collect(),
-                        materials: materials_py(models.materials),
-                        samplers: samplers_py(models.samplers),
-                        base_lod_indices: models.base_lod_indices,
-                    })
-                    .collect(),
-                buffers: group
-                    .buffers
-                    .into_iter()
-                    .map(|buffer| ModelBuffers {
-                        vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
-                        index_buffers: index_buffers_py(py, buffer.index_buffers),
-                        weights: buffer.weights.map(|weights| Weights {
-                            skin_weights: skin_weights_py(py, &weights),
-                            weight_groups: weights.weight_groups,
-                            weight_lods: weights.weight_lods,
-                        }),
-                    })
-                    .collect(),
-            })
+            .map(|group| model_group_py(py, group))
             .collect(),
         image_textures: root
             .image_textures
             .into_iter()
-            .map(|image| ImageTexture {
-                name: image.name,
-                usage: image.usage.map(Into::into),
-                width: image.width,
-                height: image.height,
-                depth: image.depth,
-                view_dimension: image.view_dimension.into(),
-                image_format: image.image_format.into(),
-                mipmap_count: image.mipmap_count,
-                image_data: image.image_data,
-            })
+            .map(image_texture_py)
             .collect(),
         skeleton: root.skeleton.map(|skeleton| Skeleton {
             bones: skeleton
@@ -791,6 +746,220 @@ fn model_root(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                 .collect(),
         }),
     }
+}
+
+fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
+    ModelGroup {
+        models: group
+            .models
+            .into_iter()
+            .map(|models| Models {
+                models: models.models.into_iter().map(|m| model_py(py, m)).collect(),
+                materials: materials_py(models.materials),
+                samplers: models.samplers.iter().map(sampler_py).collect(),
+                base_lod_indices: models.base_lod_indices,
+            })
+            .collect(),
+        buffers: group
+            .buffers
+            .into_iter()
+            .map(|buffer| ModelBuffers {
+                vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
+                index_buffers: index_buffers_py(py, buffer.index_buffers),
+                weights: buffer.weights.map(|weights| Weights {
+                    skin_weights: skin_weights_py(py, &weights),
+                    weight_groups: weights.weight_groups,
+                    weight_lods: weights.weight_lods,
+                }),
+            })
+            .collect(),
+    }
+}
+
+fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGroup> {
+    // TODO: Fill in all fields
+    Ok(xc3_model::ModelGroup {
+        models: group
+            .models
+            .iter()
+            .map(|models| {
+                Ok(xc3_model::Models {
+                    models: models
+                        .models
+                        .iter()
+                        .map(|model| model_rs(py, model))
+                        .collect::<PyResult<Vec<_>>>()?,
+                    materials: models.materials.iter().map(material_rs).collect(),
+                    samplers: models.samplers.iter().map(sampler_rs).collect(),
+                    base_lod_indices: models.base_lod_indices.clone(),
+                    max_xyz: Vec3::ZERO,
+                    min_xyz: Vec3::ZERO,
+                })
+            })
+            .collect::<PyResult<Vec<_>>>()?,
+        buffers: group
+            .buffers
+            .iter()
+            .map(|buffer| model_buffers_rs(py, buffer))
+            .collect::<PyResult<Vec<_>>>()?,
+    })
+}
+
+fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
+    // TODO: Fill in all fields
+    Ok(xc3_model::Model {
+        meshes: model
+            .meshes
+            .iter()
+            .map(|mesh| xc3_model::Mesh {
+                vertex_buffer_index: mesh.vertex_buffer_index,
+                index_buffer_index: mesh.index_buffer_index,
+                material_index: mesh.material_index,
+                lod: mesh.lod,
+                flags1: 0,
+                skin_flags: mesh.skin_flags,
+            })
+            .collect(),
+        instances: pyarray_to_mat4s(py, &model.instances)?,
+        model_buffers_index: model.model_buffers_index,
+        max_xyz: Vec3::ZERO,
+        min_xyz: Vec3::ZERO,
+        bounding_radius: 0.0,
+    })
+}
+
+fn material_rs(material: &Material) -> xc3_model::Material {
+    xc3_model::Material {
+        name: material.name.clone(),
+        // TODO: proper state flags and defaults?
+        flags: xc3_model::StateFlags {
+            depth_write_mode: 0,
+            blend_mode: xc3_model::BlendMode::Disabled,
+            cull_mode: xc3_model::CullMode::Disabled,
+            unk4: 0,
+            stencil_value: xc3_model::StencilValue::Unk0,
+            stencil_mode: xc3_model::StencilMode::Unk0,
+            depth_func: xc3_model::DepthFunc::Equal,
+            color_write_mode: 0,
+        },
+        textures: material
+            .textures
+            .iter()
+            .map(|t| xc3_model::Texture {
+                image_texture_index: t.image_texture_index,
+                sampler_index: t.sampler_index,
+            })
+            .collect(),
+        alpha_test: None,
+        shader: material.shader.clone().map(|s| s.0),
+        pass_type: xc3_model::RenderPassType::Unk0,
+        parameters: xc3_model::MaterialParameters {
+            mat_color: material.parameters.mat_color,
+            alpha_test_ref: material.parameters.alpha_test_ref,
+            tex_matrix: material.parameters.tex_matrix.clone(),
+            work_float4: material.parameters.work_float4.clone(),
+            work_color: material.parameters.work_color.clone(),
+        },
+    }
+}
+
+fn model_buffers_rs(
+    py: Python,
+    buffer: &ModelBuffers,
+) -> PyResult<xc3_model::vertex::ModelBuffers> {
+    Ok(xc3_model::vertex::ModelBuffers {
+        vertex_buffers: buffer
+            .vertex_buffers
+            .iter()
+            .map(|b| vertex_buffer_rs(py, b))
+            .collect::<PyResult<Vec<_>>>()?,
+        // TODO: Fill in all fields
+        outline_buffers: Vec::new(),
+        index_buffers: buffer
+            .index_buffers
+            .iter()
+            .map(|b| {
+                Ok(xc3_model::vertex::IndexBuffer {
+                    indices: b.indices.extract(py)?,
+                })
+            })
+            .collect::<PyResult<Vec<_>>>()?,
+        unk_buffers: Vec::new(),
+        weights: buffer
+            .weights
+            .as_ref()
+            .map(|w| weights_rs(py, w))
+            .transpose()?,
+    })
+}
+
+fn weights_rs(py: Python, w: &Weights) -> PyResult<xc3_model::Weights> {
+    Ok(xc3_model::Weights {
+        skin_weights: xc3_model::skinning::SkinWeights {
+            bone_indices: w.skin_weights.bone_indices.extract(py)?,
+            weights: pyarray_to_vec4s(py, &w.skin_weights.weights)?,
+            bone_names: w.skin_weights.bone_names.clone(),
+        },
+        weight_groups: w.weight_groups.clone(),
+        weight_lods: w.weight_lods.clone(),
+    })
+}
+
+fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex::VertexBuffer> {
+    Ok(xc3_model::vertex::VertexBuffer {
+        attributes: b
+            .attributes
+            .iter()
+            .map(|a| attribute_data_rs(py, a))
+            .collect::<PyResult<Vec<_>>>()?,
+        // TODO: Fill in all fields
+        morph_targets: Vec::new(),
+        outline_buffer_index: None,
+    })
+}
+
+fn image_texture_py(image: xc3_model::ImageTexture) -> ImageTexture {
+    ImageTexture {
+        name: image.name,
+        usage: image.usage.map(Into::into),
+        width: image.width,
+        height: image.height,
+        depth: image.depth,
+        view_dimension: image.view_dimension.into(),
+        image_format: image.image_format.into(),
+        mipmap_count: image.mipmap_count,
+        image_data: image.image_data,
+    }
+}
+
+fn image_texture_rs(image: &ImageTexture) -> xc3_model::ImageTexture {
+    xc3_model::ImageTexture {
+        name: image.name.clone(),
+        usage: image.usage.map(Into::into),
+        width: image.width,
+        height: image.height,
+        depth: image.depth,
+        view_dimension: image.view_dimension.into(),
+        image_format: image.image_format.into(),
+        mipmap_count: image.mipmap_count,
+        image_data: image.image_data.clone(),
+    }
+}
+
+fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot> {
+    Ok(xc3_model::ModelRoot {
+        groups: root
+            .groups
+            .iter()
+            .map(|g| model_group_rs(py, g))
+            .collect::<Result<Vec<_>, _>>()?,
+        image_textures: root.image_textures.iter().map(image_texture_rs).collect(),
+        skeleton: root
+            .skeleton
+            .as_ref()
+            .map(|s| skeleton_rs(py, s))
+            .transpose()?,
+    })
 }
 
 fn skin_weights_rs(
@@ -877,34 +1046,38 @@ fn materials_py(materials: Vec<xc3_model::Material>) -> Vec<Material> {
             shader: material.shader.map(Shader),
             pass_type: material.pass_type.into(),
             parameters: MaterialParameters {
-                mat_color: material.parameters.mat_color.into(),
+                mat_color: material.parameters.mat_color,
                 alpha_test_ref: material.parameters.alpha_test_ref,
                 tex_matrix: material.parameters.tex_matrix,
-                work_float4: material
-                    .parameters
-                    .work_float4
-                    .map(|v| v.into_iter().map(|v| v.into()).collect()),
-                work_color: material
-                    .parameters
-                    .work_color
-                    .map(|v| v.into_iter().map(|v| v.into()).collect()),
+                work_float4: material.parameters.work_float4,
+                work_color: material.parameters.work_color,
             },
         })
         .collect()
 }
 
-fn samplers_py(samplers: Vec<xc3_model::Sampler>) -> Vec<Sampler> {
-    samplers
-        .into_iter()
-        .map(|sampler| Sampler {
-            address_mode_u: sampler.address_mode_u.into(),
-            address_mode_v: sampler.address_mode_v.into(),
-            address_mode_w: sampler.address_mode_w.into(),
-            min_filter: sampler.min_filter.into(),
-            mag_filter: sampler.mag_filter.into(),
-            mipmaps: sampler.mipmaps,
-        })
-        .collect()
+fn sampler_py(sampler: &xc3_model::Sampler) -> Sampler {
+    Sampler {
+        address_mode_u: sampler.address_mode_u.into(),
+        address_mode_v: sampler.address_mode_v.into(),
+        address_mode_w: sampler.address_mode_w.into(),
+        min_filter: sampler.min_filter.into(),
+        mag_filter: sampler.mag_filter.into(),
+        mip_filter: sampler.mip_filter.into(),
+        mipmaps: sampler.mipmaps,
+    }
+}
+
+fn sampler_rs(s: &Sampler) -> xc3_model::Sampler {
+    xc3_model::Sampler {
+        address_mode_u: s.address_mode_u.into(),
+        address_mode_v: s.address_mode_v.into(),
+        address_mode_w: s.address_mode_w.into(),
+        min_filter: s.min_filter.into(),
+        mag_filter: s.mag_filter.into(),
+        mip_filter: s.mip_filter.into(),
+        mipmaps: s.mipmaps,
+    }
 }
 
 fn vertex_buffers_py(
@@ -1003,6 +1176,37 @@ fn attribute_data_py(py: Python, attribute: xc3_model::vertex::AttributeData) ->
     }
 }
 
+fn attribute_data_rs(
+    py: Python,
+    attribute: &AttributeData,
+) -> PyResult<xc3_model::vertex::AttributeData> {
+    use xc3_model::vertex::AttributeData as AttrRs;
+
+    match attribute.attribute_type {
+        AttributeType::Position => Ok(AttrRs::Position(pyarray_to_vec3s(py, &attribute.data)?)),
+        AttributeType::Normal => Ok(AttrRs::Normal(pyarray_to_vec4s(py, &attribute.data)?)),
+        AttributeType::Tangent => Ok(AttrRs::Tangent(pyarray_to_vec4s(py, &attribute.data)?)),
+        AttributeType::TexCoord0 => Ok(AttrRs::TexCoord0(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord1 => Ok(AttrRs::TexCoord1(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord2 => Ok(AttrRs::TexCoord2(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord3 => Ok(AttrRs::TexCoord3(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord4 => Ok(AttrRs::TexCoord4(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord5 => Ok(AttrRs::TexCoord5(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord6 => Ok(AttrRs::TexCoord6(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord7 => Ok(AttrRs::TexCoord7(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::TexCoord8 => Ok(AttrRs::TexCoord8(pyarray_to_vec2s(py, &attribute.data)?)),
+        AttributeType::VertexColor => {
+            Ok(AttrRs::VertexColor(pyarray_to_vec4s(py, &attribute.data)?))
+        }
+        AttributeType::Blend => Ok(AttrRs::Blend(pyarray_to_vec4s(py, &attribute.data)?)),
+        AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(attribute.data.extract(py)?)),
+        AttributeType::SkinWeights => {
+            Ok(AttrRs::SkinWeights(pyarray_to_vec4s(py, &attribute.data)?))
+        }
+        AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(attribute.data.extract(py)?)),
+    }
+}
+
 fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Vec<MorphTarget> {
     targets
         .into_iter()
@@ -1065,6 +1269,11 @@ fn vec2s_pyarray(py: Python, values: &[Vec2]) -> PyObject {
         .into()
 }
 
+fn pyarray_to_vec2s(py: Python, values: &PyObject) -> PyResult<Vec<Vec2>> {
+    let values: Vec<[f32; 2]> = values.extract(py)?;
+    Ok(values.into_iter().map(Into::into).collect())
+}
+
 fn vec3s_pyarray(py: Python, values: &[Vec3]) -> PyObject {
     // This flatten will be optimized in Release mode.
     // This avoids needing unsafe code.
@@ -1077,6 +1286,11 @@ fn vec3s_pyarray(py: Python, values: &[Vec3]) -> PyObject {
         .reshape((count, 3))
         .unwrap()
         .into()
+}
+
+fn pyarray_to_vec3s(py: Python, values: &PyObject) -> PyResult<Vec<Vec3>> {
+    let values: Vec<[f32; 3]> = values.extract(py)?;
+    Ok(values.into_iter().map(Into::into).collect())
 }
 
 fn vec4s_pyarray(py: Python, values: &[Vec4]) -> PyObject {
@@ -1093,8 +1307,8 @@ fn vec4s_pyarray(py: Python, values: &[Vec4]) -> PyObject {
         .into()
 }
 
-fn pyarray_to_vec4s(py: Python, transform: &PyObject) -> PyResult<Vec<Vec4>> {
-    let values: Vec<[f32; 4]> = transform.extract(py)?;
+fn pyarray_to_vec4s(py: Python, values: &PyObject) -> PyResult<Vec<Vec4>> {
+    let values: Vec<[f32; 4]> = values.extract(py)?;
     Ok(values.into_iter().map(Into::into).collect())
 }
 
@@ -1140,18 +1354,25 @@ fn pyarray_to_mat4(py: Python, transform: &PyObject) -> PyResult<Mat4> {
     Ok(Mat4::from_cols_array_2d(&cols))
 }
 
+fn pyarray_to_mat4s(py: Python, values: &PyObject) -> PyResult<Vec<Mat4>> {
+    let transforms: Vec<[[f32; 4]; 4]> = values.extract(py)?;
+    Ok(transforms.iter().map(Mat4::from_cols_array_2d).collect())
+}
+
 #[pymodule]
 fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     pyo3_log::init();
 
-    // TODO: automate registering every type?
-    // TODO: split into submodules?
-    // TODO: Match the module structure of xc3_model as closely as possible.
+    // Match the module hierarchy and types of xc3_model as closely as possible.
+    animation(py, m)?;
+    skinning(py, m)?;
+    vertex(py, m)?;
+
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
-    m.add_class::<ModelBuffers>()?;
+
     m.add_class::<Weights>()?;
-    m.add_class::<SkinWeights>()?;
+
     m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
@@ -1164,14 +1385,6 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<MaterialParameters>()?;
     m.add_class::<Shader>()?;
     m.add_class::<Texture>()?;
-
-    m.add_class::<VertexBuffer>()?;
-    m.add_class::<AttributeData>()?;
-    m.add_class::<AttributeType>()?;
-    m.add_class::<MorphTarget>()?;
-    m.add_class::<Influence>()?;
-    m.add_class::<VertexWeight>()?;
-    m.add_class::<IndexBuffer>()?;
 
     m.add_class::<ImageTexture>()?;
     m.add_class::<TextureUsage>()?;
@@ -1187,23 +1400,55 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ChannelAssignment>()?;
     m.add_class::<ChannelAssignmentTexture>()?;
 
-    m.add_class::<Animation>()?;
-    m.add_class::<Track>()?;
-    m.add_class::<Keyframe>()?;
-    m.add_class::<SpaceMode>()?;
-    m.add_class::<PlayMode>()?;
-    m.add_class::<BlendMode>()?;
+    m.add_class::<Mxmd>()?;
+    m.add_class::<Msrd>()?;
 
     m.add("Xc3ModelError", py.get_type::<Xc3ModelError>())?;
 
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
     m.add_function(wrap_pyfunction!(load_animations, m)?)?;
-    m.add_function(wrap_pyfunction!(murmur3, m)?)?;
 
     Ok(())
 }
 
-// TODO: Test cases for certain conversions?
-#[cfg(test)]
-mod tests {}
+fn animation(py: Python, module: &PyModule) -> PyResult<()> {
+    let m = PyModule::new(py, "animation")?;
+
+    m.add_class::<Animation>()?;
+    m.add_class::<Track>()?;
+    m.add_class::<Keyframe>()?;
+    m.add_class::<SpaceMode>()?;
+    m.add_class::<PlayMode>()?;
+    m.add_class::<BlendMode>()?;
+    m.add_function(wrap_pyfunction!(murmur3, m)?)?;
+
+    module.add_submodule(m)?;
+    Ok(())
+}
+
+fn vertex(py: Python, module: &PyModule) -> PyResult<()> {
+    let m = PyModule::new(py, "vertex")?;
+
+    m.add_class::<ModelBuffers>()?;
+    m.add_class::<VertexBuffer>()?;
+    m.add_class::<IndexBuffer>()?;
+    m.add_class::<AttributeData>()?;
+    m.add_class::<AttributeType>()?;
+    m.add_class::<MorphTarget>()?;
+
+    module.add_submodule(m)?;
+    Ok(())
+}
+
+fn skinning(py: Python, module: &PyModule) -> PyResult<()> {
+    let m = PyModule::new(py, "skinning")?;
+
+    // TODO: Should this also have Weights?
+    m.add_class::<SkinWeights>()?;
+    m.add_class::<Influence>()?;
+    m.add_class::<VertexWeight>()?;
+
+    module.add_submodule(m)?;
+    Ok(())
+}

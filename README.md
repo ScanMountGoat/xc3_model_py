@@ -21,14 +21,6 @@ for root in roots:
             for material in models.materials:
                 print(material.name)
                 # The shader contains assignment information when specifying a JSON database.
-                if material.shader is not None:
-                    # Find the image texture and channel used for the ambient occlusion output.
-                    ao = material.shader.sampler_channel_index(2, 'z')
-                    if ao is not None:
-                        sampler_index, channel_index = ao
-                        image_texture_index = material.textures[sampler_index].image_texture_index
-                        image_texture = root.image_textures[image_texture_index]
-                        print(image_texture.name, 'xyzw'[channel_index])
 
             for model in models.models:
                 # prints (num_instances, 4, 4)
@@ -54,12 +46,12 @@ for group in root.groups:
 
                 if buffers.weights is not None:
                     # Calculate the index offset based on the weight group for this mesh.
-                    unk_type = models.materials[mesh.material_index].unk_type
-                    start_index = buffers.weights.weights_start_index(mesh.skin_flags, mesh.lod, unk_type)
+                    pass_type = models.materials[mesh.material_index].pass_type
+                    start_index = buffers.weights.weights_start_index(mesh.skin_flags, mesh.lod, pass_type)
 
                     # Get vertex skinning attributes.
                     for attribute in vertex_buffer.attributes:
-                        if attribute.attribute_type == xc3_model_py.AttributeType.WeightIndex:
+                        if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
                             # Find the actual per vertex skinning information.
                             weight_indices = attribute.data + start_index
                             skin_weights = buffers.weights.skin_weights.weights[weight_indices]
