@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
 * Added field `mip_filter` to `Sampler`
+* Added fields `max_xyz` and `min_xyz` to `Models`
+* Added fields `max_xyz`, `min_xyz`, and `bounding_radius` to `Model`
 * Added constructors and setters for `Skeleton` and `Bone`.
 * Added opaque wrapper types `Mxmd` and `Msrd` for the types in xc3_lib.
 

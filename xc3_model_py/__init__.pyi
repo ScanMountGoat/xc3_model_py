@@ -44,12 +44,17 @@ class Models:
     materials: list[Material]
     samplers: list[Sampler]
     base_lod_indices: Optional[list[int]]
+    max_xyz: list[float]
+    min_xyz: list[float]
 
 
 class Model:
     meshes: list[Mesh]
     instances: numpy.ndarray
     model_buffers_index: int
+    max_xyz: list[float]
+    min_xyz: list[float]
+    bounding_radius: float
 
 
 class Mesh:

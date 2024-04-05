@@ -113,6 +113,8 @@ pub struct Models {
     pub materials: Vec<Material>,
     pub samplers: Vec<Sampler>,
     pub base_lod_indices: Option<Vec<u16>>,
+    pub max_xyz: [f32; 3],
+    pub min_xyz: [f32; 3],
 }
 
 #[pyclass(get_all)]
@@ -122,6 +124,9 @@ pub struct Model {
     // N x 4 x 4 numpy.ndarray
     pub instances: PyObject,
     pub model_buffers_index: usize,
+    pub max_xyz: [f32; 3],
+    pub min_xyz: [f32; 3],
+    pub bounding_radius: f32,
 }
 
 #[pyclass(get_all)]
@@ -758,6 +763,8 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
                 materials: materials_py(models.materials),
                 samplers: models.samplers.iter().map(sampler_py).collect(),
                 base_lod_indices: models.base_lod_indices,
+                max_xyz: models.max_xyz.to_array(),
+                min_xyz: models.min_xyz.to_array(),
             })
             .collect(),
         buffers: group
@@ -777,7 +784,6 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
 }
 
 fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGroup> {
-    // TODO: Fill in all fields
     Ok(xc3_model::ModelGroup {
         models: group
             .models
@@ -792,8 +798,8 @@ fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGr
                     materials: models.materials.iter().map(material_rs).collect(),
                     samplers: models.samplers.iter().map(sampler_rs).collect(),
                     base_lod_indices: models.base_lod_indices.clone(),
-                    max_xyz: Vec3::ZERO,
-                    min_xyz: Vec3::ZERO,
+                    max_xyz: models.max_xyz.into(),
+                    min_xyz: models.min_xyz.into(),
                 })
             })
             .collect::<PyResult<Vec<_>>>()?,
@@ -822,9 +828,9 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
             .collect(),
         instances: pyarray_to_mat4s(py, &model.instances)?,
         model_buffers_index: model.model_buffers_index,
-        max_xyz: Vec3::ZERO,
-        min_xyz: Vec3::ZERO,
-        bounding_radius: 0.0,
+        max_xyz: model.max_xyz.into(),
+        min_xyz: model.min_xyz.into(),
+        bounding_radius: model.bounding_radius,
     })
 }
 
@@ -1022,6 +1028,9 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
             .collect(),
         instances: transforms_pyarray(py, &model.instances),
         model_buffers_index: model.model_buffers_index,
+        max_xyz: model.max_xyz.to_array(),
+        min_xyz: model.min_xyz.to_array(),
+        bounding_radius: model.bounding_radius,
     }
 }
 
