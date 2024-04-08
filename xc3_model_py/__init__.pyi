@@ -62,7 +62,8 @@ class Mesh:
     index_buffer_index: int
     material_index: int
     lod: int
-    skin_flags: int
+    flags1: int
+    flags2: int
 
 
 class Skeleton:

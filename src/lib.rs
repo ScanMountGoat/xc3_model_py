@@ -136,7 +136,8 @@ pub struct Mesh {
     pub index_buffer_index: usize,
     pub material_index: usize,
     pub lod: u16,
-    pub skin_flags: u32,
+    pub flags1: u32,
+    pub flags2: u32,
 }
 
 #[pyclass(get_all, set_all)]
@@ -812,7 +813,6 @@ fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGr
 }
 
 fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
-    // TODO: Fill in all fields
     Ok(xc3_model::Model {
         meshes: model
             .meshes
@@ -822,8 +822,8 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
                 index_buffer_index: mesh.index_buffer_index,
                 material_index: mesh.material_index,
                 lod: mesh.lod,
-                flags1: 0,
-                skin_flags: mesh.skin_flags,
+                flags1: mesh.flags1,
+                flags2: mesh.flags2.try_into().unwrap(),
             })
             .collect(),
         instances: pyarray_to_mat4s(py, &model.instances)?,
@@ -856,7 +856,14 @@ fn material_rs(material: &Material) -> xc3_model::Material {
                 sampler_index: t.sampler_index,
             })
             .collect(),
-        alpha_test: None,
+        alpha_test: material
+            .alpha_test
+            .as_ref()
+            .map(|a| xc3_model::TextureAlphaTest {
+                texture_index: a.texture_index,
+                channel_index: a.channel_index,
+                ref_value: a.ref_value,
+            }),
         shader: material.shader.clone().map(|s| s.0),
         pass_type: xc3_model::RenderPassType::Unk0,
         parameters: xc3_model::MaterialParameters {
@@ -1023,7 +1030,8 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
                 index_buffer_index: mesh.index_buffer_index,
                 material_index: mesh.material_index,
                 lod: mesh.lod,
-                skin_flags: mesh.skin_flags,
+                flags1: mesh.flags1,
+                flags2: mesh.flags2.into(),
             })
             .collect(),
         instances: transforms_pyarray(py, &model.instances),

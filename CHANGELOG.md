@@ -15,15 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `to_mxmd_model` to `ModelRoot`.
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
-* Added field `mip_filter` to `Sampler`
-* Added fields `max_xyz` and `min_xyz` to `Models`
-* Added fields `max_xyz`, `min_xyz`, and `bounding_radius` to `Model`
+* Added field `mip_filter` to `Sampler`.
+* Added fields `max_xyz` and `min_xyz` to `Models`.
+* Added fields `max_xyz`, `min_xyz`, and `bounding_radius` to `Model`.
+* Added field `flags1` to `Mesh`.
 * Added constructors and setters for `Skeleton` and `Bone`.
 * Added opaque wrapper types `Mxmd` and `Msrd` for the types in xc3_lib.
 
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
 * Renamed `SkinWeight` to `VertexWeight` to match xc3_model.
+* Renamed field `skin_flags` to `flags` for `Mesh`.
 * Move animation types and `murmur3` function to `xc3_model_py.animation` submodule.
 
 ### Fixed

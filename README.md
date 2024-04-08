@@ -47,7 +47,7 @@ for group in root.groups:
                 if buffers.weights is not None:
                     # Calculate the index offset based on the weight group for this mesh.
                     pass_type = models.materials[mesh.material_index].pass_type
-                    start_index = buffers.weights.weights_start_index(mesh.skin_flags, mesh.lod, pass_type)
+                    start_index = buffers.weights.weights_start_index(mesh.flags2, mesh.lod, pass_type)
 
                     # Get vertex skinning attributes.
                     for attribute in vertex_buffer.attributes:
