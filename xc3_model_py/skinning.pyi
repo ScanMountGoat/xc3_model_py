@@ -7,6 +7,9 @@ class SkinWeights:
     weights: numpy.ndarray
     bone_names: list[str]
 
+    def __init__(self, bone_indices: numpy.ndarray,
+                 weights: numpy.ndarray, bone_names: list[str]) -> None: ...
+
     def to_influences(
         self, weight_indices: numpy.ndarray) -> list[Influence]: ...
 

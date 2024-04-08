@@ -9,6 +9,9 @@ from . import vertex
 def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
 
 
+def load_model_legacy(camdo_path) -> ModelRoot: ...
+
+
 def load_map(wismhd: str, database_path: Optional[str]) -> list[ModelRoot]: ...
 
 
@@ -24,6 +27,9 @@ class ModelRoot:
     image_textures: list[ImageTexture]
     skeleton: Optional[Skeleton]
 
+    def __init__(self, groups: list[ModelGroup], image_textures: list[ImageTexture],
+                 skeleton: Optional[Skeleton]) -> None: ...
+
     def to_mxmd_model(self, mxmd: Mxmd, msrd: Msrd) -> Tuple[Mxmd, Msrd]: ...
 
 
@@ -31,12 +37,17 @@ class ModelGroup:
     models: list[Models]
     buffers: list[vertex.ModelBuffers]
 
+    def __init__(self, models: list[Models],
+                 buffers: list[vertex.ModelBuffers]) -> None: ...
+
 
 class Weights:
     skin_weights: skinning.SkinWeights
 
     def weights_start_index(self, skin_flags: int,
                             lod: int, unk_type: RenderPassType) -> int: ...
+
+    def __init__(self, skin_weights: skinning.SkinWeights) -> None: ...
 
 
 class Models:

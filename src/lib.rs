@@ -37,7 +37,7 @@ macro_rules! python_enum {
     };
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ModelRoot {
     pub groups: Vec<ModelGroup>,
@@ -45,14 +45,22 @@ pub struct ModelRoot {
     pub skeleton: Option<Skeleton>,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ModelGroup {
     pub models: Vec<Models>,
     pub buffers: Vec<ModelBuffers>,
 }
 
-#[pyclass(get_all)]
+#[pymethods]
+impl ModelGroup {
+    #[new]
+    pub fn new(models: Vec<Models>, buffers: Vec<ModelBuffers>) -> Self {
+        Self { models, buffers }
+    }
+}
+
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ModelBuffers {
     pub vertex_buffers: Vec<VertexBuffer>,
@@ -60,8 +68,23 @@ pub struct ModelBuffers {
     pub weights: Option<Weights>,
 }
 
-// TODO: Add methods to convert to influences.
+#[pymethods]
+impl ModelBuffers {
+    #[new]
+    pub fn new(
+        vertex_buffers: Vec<VertexBuffer>,
+        index_buffers: Vec<IndexBuffer>,
+        weights: Option<Weights>,
+    ) -> Self {
+        Self {
+            vertex_buffers,
+            index_buffers,
+            weights,
+        }
+    }
+}
 
+// TODO: Add methods to convert to influences.
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Weights {
@@ -74,6 +97,16 @@ pub struct Weights {
 
 #[pymethods]
 impl Weights {
+    #[new]
+    pub fn new(skin_weights: SkinWeights) -> Self {
+        // TODO: make groups and lods public?
+        Self {
+            skin_weights,
+            weight_groups: Vec::new(),
+            weight_lods: Vec::new(),
+        }
+    }
+
     // TODO: Is it worth including the weight_group method?
     pub fn weights_start_index(
         &self,
@@ -95,7 +128,7 @@ impl Weights {
     }
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct SkinWeights {
     // N x 4 numpy.ndarray
@@ -106,7 +139,25 @@ pub struct SkinWeights {
     pub bone_names: Vec<String>,
 }
 
-#[pyclass(get_all)]
+#[pymethods]
+impl SkinWeights {
+    #[new]
+    pub fn new(bone_indices: PyObject, weights: PyObject, bone_names: Vec<String>) -> Self {
+        Self {
+            bone_indices,
+            weights,
+            bone_names,
+        }
+    }
+
+    pub fn to_influences(&self, py: Python, weight_indices: PyObject) -> PyResult<Vec<Influence>> {
+        let weight_indices: Vec<_> = weight_indices.extract(py)?;
+        let influences = skin_weights_rs(py, self)?.to_influences(&weight_indices);
+        Ok(influences_py(influences))
+    }
+}
+
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Models {
     pub models: Vec<Model>,
@@ -117,7 +168,7 @@ pub struct Models {
     pub min_xyz: [f32; 3],
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Model {
     pub meshes: Vec<Mesh>,
@@ -129,7 +180,7 @@ pub struct Model {
     pub bounding_radius: f32,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub vertex_buffer_index: usize,
@@ -146,6 +197,20 @@ pub struct Skeleton {
     pub bones: Vec<Bone>,
 }
 
+#[pymethods]
+impl Skeleton {
+    // TODO: generate this with some sort of macro?
+    #[new]
+    fn new(bones: Vec<Bone>) -> Self {
+        Self { bones }
+    }
+
+    pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
+        let transforms = skeleton_rs(py, self)?.model_space_transforms();
+        Ok(transforms_pyarray(py, &transforms))
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Bone {
@@ -154,7 +219,19 @@ pub struct Bone {
     pub parent_index: Option<usize>,
 }
 
-#[pyclass(get_all)]
+#[pymethods]
+impl Bone {
+    #[new]
+    fn new(name: String, transform: PyObject, parent_index: Option<usize>) -> Self {
+        Self {
+            name,
+            transform,
+            parent_index,
+        }
+    }
+}
+
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Material {
     pub name: String,
@@ -177,7 +254,7 @@ python_enum!(
     Unk9
 );
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct TextureAlphaTest {
     pub texture_index: usize,
@@ -185,7 +262,7 @@ pub struct TextureAlphaTest {
     pub ref_value: f32,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct MaterialParameters {
     pub mat_color: [f32; 4],
@@ -200,21 +277,21 @@ pub struct MaterialParameters {
 #[derive(Debug, Clone)]
 pub struct Shader(xc3_model::shader_database::Shader);
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Texture {
     pub image_texture_index: usize,
     pub sampler_index: usize,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct VertexBuffer {
     pub attributes: Vec<AttributeData>,
     pub morph_targets: Vec<MorphTarget>,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct AttributeData {
     pub attribute_type: AttributeType,
@@ -244,7 +321,7 @@ pub enum AttributeType {
     BoneIndices,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct MorphTarget {
     // N x 3 numpy.ndarray
@@ -255,27 +332,27 @@ pub struct MorphTarget {
     pub tangent_deltas: PyObject,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Influence {
     pub bone_name: String,
     pub weights: Vec<VertexWeight>,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct VertexWeight {
     pub vertex_index: u32,
     pub weight: f32,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct IndexBuffer {
     pub indices: PyObject,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ImageTexture {
     pub name: Option<String>,
@@ -349,7 +426,7 @@ python_enum!(
     B8G8R8A8Unorm
 );
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Sampler {
     pub address_mode_u: AddressMode,
@@ -371,13 +448,13 @@ python_enum!(
 
 python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct OutputAssignments {
     pub assignments: [OutputAssignment; 6],
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct OutputAssignment {
     pub x: Option<ChannelAssignment>,
@@ -390,7 +467,7 @@ pub struct OutputAssignment {
 #[derive(Debug, Clone)]
 pub struct ChannelAssignment(xc3_model::ChannelAssignment);
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ChannelAssignmentTexture {
     pub name: String,
@@ -399,7 +476,7 @@ pub struct ChannelAssignmentTexture {
     pub texcoord_scale: Option<(f32, f32)>,
 }
 
-#[pyclass(get_all)]
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Animation {
     pub name: String,
@@ -411,12 +488,99 @@ pub struct Animation {
     pub tracks: Vec<Track>,
 }
 
+#[pymethods]
+impl Animation {
+    pub fn current_frame(&self, current_time_seconds: f32) -> f32 {
+        // TODO: looping?
+        current_time_seconds * self.frames_per_second
+    }
+
+    pub fn skinning_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.skinning_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
+
+    pub fn model_space_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.model_space_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
+
+    pub fn local_space_transforms(
+        &self,
+        py: Python,
+        skeleton: Skeleton,
+        frame: f32,
+    ) -> PyResult<PyObject> {
+        let animation = animation_rs(self);
+        let skeleton = skeleton_rs(py, &skeleton)?;
+        let transforms = animation.local_space_transforms(&skeleton, frame);
+        Ok(transforms_pyarray(py, &transforms))
+    }
+}
+
 // TODO: Expose implementation details?
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Track(xc3_model::animation::Track);
 
-#[pyclass(get_all)]
+#[pymethods]
+impl Track {
+    pub fn sample_translation(&self, frame: f32) -> Option<(f32, f32, f32)> {
+        self.0.sample_translation(frame).map(Into::into)
+    }
+
+    pub fn sample_rotation(&self, frame: f32) -> Option<(f32, f32, f32, f32)> {
+        self.0.sample_rotation(frame).map(Into::into)
+    }
+
+    pub fn sample_scale(&self, frame: f32) -> Option<(f32, f32, f32)> {
+        self.0.sample_scale(frame).map(Into::into)
+    }
+
+    pub fn sample_transform(&self, py: Python, frame: f32) -> Option<PyObject> {
+        self.0
+            .sample_transform(frame)
+            .map(|t| mat4_to_pyarray(py, t))
+    }
+
+    // Workaround for representing Rust enums in Python.
+    pub fn bone_index(&self) -> Option<usize> {
+        match &self.0.bone_index {
+            BoneIndex::Index(index) => Some(*index),
+            _ => None,
+        }
+    }
+
+    pub fn bone_hash(&self) -> Option<u32> {
+        match &self.0.bone_index {
+            BoneIndex::Hash(hash) => Some(*hash),
+            _ => None,
+        }
+    }
+
+    pub fn bone_name(&self) -> Option<&str> {
+        match &self.0.bone_index {
+            BoneIndex::Name(name) => Some(name),
+            _ => None,
+        }
+    }
+}
+
+#[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Keyframe {
     pub x_coeffs: (f32, f32, f32, f32),
@@ -466,94 +630,20 @@ impl Msrd {
 }
 
 #[pymethods]
-impl Animation {
-    pub fn current_frame(&self, current_time_seconds: f32) -> f32 {
-        // TODO: looping?
-        current_time_seconds * self.frames_per_second
-    }
-
-    pub fn skinning_transforms(
-        &self,
-        py: Python,
-        skeleton: Skeleton,
-        frame: f32,
-    ) -> PyResult<PyObject> {
-        let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
-        let transforms = animation.skinning_transforms(&skeleton, frame);
-        Ok(transforms_pyarray(py, &transforms))
-    }
-
-    pub fn model_space_transforms(
-        &self,
-        py: Python,
-        skeleton: Skeleton,
-        frame: f32,
-    ) -> PyResult<PyObject> {
-        let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
-        let transforms = animation.model_space_transforms(&skeleton, frame);
-        Ok(transforms_pyarray(py, &transforms))
-    }
-
-    pub fn local_space_transforms(
-        &self,
-        py: Python,
-        skeleton: Skeleton,
-        frame: f32,
-    ) -> PyResult<PyObject> {
-        let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
-        let transforms = animation.local_space_transforms(&skeleton, frame);
-        Ok(transforms_pyarray(py, &transforms))
-    }
-}
-
-#[pymethods]
-impl Track {
-    pub fn sample_translation(&self, frame: f32) -> Option<(f32, f32, f32)> {
-        self.0.sample_translation(frame).map(Into::into)
-    }
-
-    pub fn sample_rotation(&self, frame: f32) -> Option<(f32, f32, f32, f32)> {
-        self.0.sample_rotation(frame).map(Into::into)
-    }
-
-    pub fn sample_scale(&self, frame: f32) -> Option<(f32, f32, f32)> {
-        self.0.sample_scale(frame).map(Into::into)
-    }
-
-    pub fn sample_transform(&self, py: Python, frame: f32) -> Option<PyObject> {
-        self.0
-            .sample_transform(frame)
-            .map(|t| mat4_to_pyarray(py, t))
-    }
-
-    // Workaround for representing Rust enums in Python.
-    pub fn bone_index(&self) -> Option<usize> {
-        match &self.0.bone_index {
-            BoneIndex::Index(index) => Some(*index),
-            _ => None,
-        }
-    }
-
-    pub fn bone_hash(&self) -> Option<u32> {
-        match &self.0.bone_index {
-            BoneIndex::Hash(hash) => Some(*hash),
-            _ => None,
-        }
-    }
-
-    pub fn bone_name(&self) -> Option<&str> {
-        match &self.0.bone_index {
-            BoneIndex::Name(name) => Some(name),
-            _ => None,
-        }
-    }
-}
-
-#[pymethods]
 impl ModelRoot {
+    #[new]
+    pub fn new(
+        groups: Vec<ModelGroup>,
+        image_textures: Vec<ImageTexture>,
+        skeleton: Option<Skeleton>,
+    ) -> Self {
+        Self {
+            groups,
+            image_textures,
+            skeleton,
+        }
+    }
+
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
         // TODO: make decoding optional?
         // TODO: Expose xc3_model types from root?
@@ -635,32 +725,6 @@ impl ChannelAssignment {
     }
 }
 
-#[pymethods]
-impl Skeleton {
-    // TODO: generate this with some sort of macro?
-    #[new]
-    fn new(bones: Vec<Bone>) -> Self {
-        Self { bones }
-    }
-
-    pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
-        let transforms = skeleton_rs(py, self)?.model_space_transforms();
-        Ok(transforms_pyarray(py, &transforms))
-    }
-}
-
-#[pymethods]
-impl Bone {
-    #[new]
-    fn new(name: String, transform: PyObject, parent_index: Option<usize>) -> Self {
-        Self {
-            name,
-            transform,
-            parent_index,
-        }
-    }
-}
-
 fn influences_py(influences: Vec<xc3_model::skinning::Influence>) -> Vec<Influence> {
     influences
         .into_iter()
@@ -678,15 +742,6 @@ fn influences_py(influences: Vec<xc3_model::skinning::Influence>) -> Vec<Influen
         .collect()
 }
 
-#[pymethods]
-impl SkinWeights {
-    pub fn to_influences(&self, py: Python, weight_indices: PyObject) -> PyResult<Vec<Influence>> {
-        let weight_indices: Vec<_> = weight_indices.extract(py)?;
-        let influences = skin_weights_rs(py, self)?.to_influences(&weight_indices);
-        Ok(influences_py(influences))
-    }
-}
-
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
     let database = database_path
@@ -694,6 +749,12 @@ fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyRe
         .transpose()
         .map_err(py_exception)?;
     let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
+    Ok(model_root_py(py, root))
+}
+
+#[pyfunction]
+fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
+    let root = xc3_model::load_model_legacy(camdo_path);
     Ok(model_root_py(py, root))
 }
 
@@ -1423,6 +1484,7 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("Xc3ModelError", py.get_type::<Xc3ModelError>())?;
 
     m.add_function(wrap_pyfunction!(load_model, m)?)?;
+    m.add_function(wrap_pyfunction!(load_model_legacy, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
     m.add_function(wrap_pyfunction!(load_animations, m)?)?;
 

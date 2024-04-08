@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### unreleased
 ### Added
+* Added function `load_model_legacy` for loading Xenoblade X `.camdo` models.
 * Added method `model_space_transforms` to `Skeleton`.
 * Added method `model_space_transforms` to `Animation`.
 * Added method `local_space_transforms` to `Animation`.
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `flags1` to `Mesh`.
 * Added constructors and setters for `Skeleton` and `Bone`.
 * Added opaque wrapper types `Mxmd` and `Msrd` for the types in xc3_lib.
+* Added setters for all public fields for all types.
 
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
