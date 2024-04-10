@@ -18,7 +18,12 @@ class Influence:
     bone_name: str
     weights: list[VertexWeight]
 
+    def __init__(self, bone_name: str,
+                 weights: list[VertexWeight]) -> None: ...
+
 
 class VertexWeight:
     vertex_index: int
     weight: float
+
+    def __init__(self, vertex_index: int, weight: float) -> None: ...

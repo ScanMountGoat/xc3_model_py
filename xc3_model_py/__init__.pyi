@@ -58,6 +58,9 @@ class Models:
     max_xyz: list[float]
     min_xyz: list[float]
 
+    def __init__(self, models: list[Model], materials: list[Material], samplers: list[Sampler],
+                 max_xyz: list[float], min_xyz: list[float], base_lod_indices: Optional[list[int]]) -> None: ...
+
 
 class Model:
     meshes: list[Mesh]
@@ -67,6 +70,9 @@ class Model:
     min_xyz: list[float]
     bounding_radius: float
 
+    def __init__(self, meshes: list[Mesh], instances: numpy.ndarray, model_buffers_index: int,
+                 max_xyz: list[float], min_xyz: list[float], bounding_radius: float) -> None: ...
+
 
 class Mesh:
     vertex_buffer_index: int
@@ -75,6 +81,9 @@ class Mesh:
     lod: int
     flags1: int
     flags2: int
+
+    def __init__(self, vertex_buffer_index: int, index_buffer_index: int,
+                 material_index: int, lod: int, flags1: int, flags2: int) -> None: ...
 
 
 class Skeleton:
@@ -101,6 +110,9 @@ class Material:
     shader: Optional[Shader]
     pass_type: RenderPassType
 
+    def __init__(self, name: str, textures: list[Texture], pass_type: RenderPassType,
+                 alpha_test: Optional[TextureAlphaTest], shader: Optional[Shader], ) -> None: ...
+
     def output_assignments(
         self, textures: list[ImageTexture]) -> OutputAssignments: ...
 
@@ -118,6 +130,9 @@ class TextureAlphaTest:
     channel_index: int
     ref_value: float
 
+    def __init__(self, texture_index: int, channel_index: int,
+                 ref_value: float) -> None: ...
+
 
 class MaterialParameters:
     mat_color: list[float]
@@ -125,6 +140,9 @@ class MaterialParameters:
     tex_matrix: Optional[list[float]]
     work_float4: Optional[list[float]]
     work_color: Optional[list[float]]
+
+    def __init__(self, mat_color: list[float], alpha_test_ref: float, tex_matrix: Optional[list[float]],
+                 work_float4: Optional[list[float]], work_color: Optional[list[float]]) -> None: ...
 
 
 class Shader:
@@ -134,6 +152,9 @@ class Shader:
 class Texture:
     image_texture_index: int
     sampler_index: int
+
+    def __init__(self, image_texture_index: int,
+                 sampler_index: int) -> None: ...
 
 
 class ImageTexture:
@@ -146,6 +167,9 @@ class ImageTexture:
     image_format: ImageFormat
     mipmap_count: int
     image_data: bytes
+
+    def __init__(self, width: int,  height: int,  depth: int, view_dimension: ViewDimension,  image_format: ImageFormat,
+                 mipmap_count: int,  image_data: bytes, name: Optional[str], usage: Optional[TextureUsage]) -> None: ...
 
 
 class TextureUsage:
@@ -216,6 +240,9 @@ class Sampler:
     mag_filter: FilterMode
     mip_filter: FilterMode
     mipmaps: bool
+
+    def __init__(self, address_mode_u: AddressMode, address_mode_v: AddressMode, address_mode_w: AddressMode,
+                 min_filter: FilterMode, mag_filter: FilterMode, mip_filter: FilterMode, mipmaps: bool) -> None: ...
 
 
 class AddressMode:

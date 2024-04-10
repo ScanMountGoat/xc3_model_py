@@ -4,20 +4,30 @@ import numpy
 from xc3_model_py import Weights
 from xc3_model_py.skinning import Influence
 
+
 class ModelBuffers:
     vertex_buffers: list[VertexBuffer]
     index_buffers: list[IndexBuffer]
     weights: Optional[Weights]
+
+    def __init__(self, vertex_buffers: list[VertexBuffer],
+                 index_buffers: list[IndexBuffer], weights: Optional[Weights]) -> None: ...
 
 
 class VertexBuffer:
     attributes: list[AttributeData]
     influences: list[Influence]
 
+    def __init__(self, attributes: list[AttributeData],
+                 influences: list[Influence]) -> None: ...
+
 
 class AttributeData:
     attribute_type: AttributeType
     data: numpy.ndarray
+
+    def __init__(self, attribute_type: AttributeType,
+                 data: numpy.ndarray) -> None: ...
 
 
 class AttributeType:
@@ -45,7 +55,11 @@ class MorphTarget:
     normal_deltas: numpy.ndarray
     tangent_deltas: numpy.ndarray
 
+    def __init__(self, position_deltas: numpy.ndarray,
+                 normal_deltas: numpy.ndarray, tangent_deltas: numpy.ndarray) -> None: ...
+
 
 class IndexBuffer:
     indices: numpy.ndarray
 
+    def __init__(self, indices: numpy.ndarray) -> None: ...

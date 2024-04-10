@@ -168,6 +168,28 @@ pub struct Models {
     pub min_xyz: [f32; 3],
 }
 
+#[pymethods]
+impl Models {
+    #[new]
+    pub fn new(
+        models: Vec<Model>,
+        materials: Vec<Material>,
+        samplers: Vec<Sampler>,
+        max_xyz: [f32; 3],
+        min_xyz: [f32; 3],
+        base_lod_indices: Option<Vec<u16>>,
+    ) -> Self {
+        Self {
+            models,
+            materials,
+            samplers,
+            base_lod_indices,
+            max_xyz,
+            min_xyz,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Model {
@@ -180,6 +202,28 @@ pub struct Model {
     pub bounding_radius: f32,
 }
 
+#[pymethods]
+impl Model {
+    #[new]
+    pub fn new(
+        meshes: Vec<Mesh>,
+        instances: PyObject,
+        model_buffers_index: usize,
+        max_xyz: [f32; 3],
+        min_xyz: [f32; 3],
+        bounding_radius: f32,
+    ) -> Self {
+        Self {
+            meshes,
+            instances,
+            model_buffers_index,
+            max_xyz,
+            min_xyz,
+            bounding_radius,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Mesh {
@@ -189,6 +233,28 @@ pub struct Mesh {
     pub lod: u16,
     pub flags1: u32,
     pub flags2: u32,
+}
+
+#[pymethods]
+impl Mesh {
+    #[new]
+    pub fn new(
+        vertex_buffer_index: usize,
+        index_buffer_index: usize,
+        material_index: usize,
+        lod: u16,
+        flags1: u32,
+        flags2: u32,
+    ) -> Self {
+        Self {
+            vertex_buffer_index,
+            index_buffer_index,
+            material_index,
+            lod,
+            flags1,
+            flags2,
+        }
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -244,6 +310,43 @@ pub struct Material {
     pub parameters: MaterialParameters,
 }
 
+#[pymethods]
+impl Material {
+    #[new]
+    fn new(
+        name: String,
+        textures: Vec<Texture>,
+        pass_type: RenderPassType,
+        parameters: MaterialParameters,
+        alpha_test: Option<TextureAlphaTest>,
+        shader: Option<Shader>,
+    ) -> Self {
+        Self {
+            name,
+            textures,
+            alpha_test,
+            shader,
+            pass_type,
+            parameters,
+        }
+    }
+
+    pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
+        // TODO: Is there a better way than creating the entire types?
+        let image_textures: Vec<_> = textures.iter().map(image_texture_rs).collect();
+        let assignments = material_rs(self).output_assignments(&image_textures);
+
+        OutputAssignments {
+            assignments: assignments.assignments.map(|a| OutputAssignment {
+                x: a.x.map(ChannelAssignment),
+                y: a.y.map(ChannelAssignment),
+                z: a.z.map(ChannelAssignment),
+                w: a.w.map(ChannelAssignment),
+            }),
+        }
+    }
+}
+
 python_enum!(
     RenderPassType,
     xc3_model::RenderPassType,
@@ -262,6 +365,18 @@ pub struct TextureAlphaTest {
     pub ref_value: f32,
 }
 
+#[pymethods]
+impl TextureAlphaTest {
+    #[new]
+    fn new(texture_index: usize, channel_index: usize, ref_value: f32) -> Self {
+        Self {
+            texture_index,
+            channel_index,
+            ref_value,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct MaterialParameters {
@@ -270,6 +385,26 @@ pub struct MaterialParameters {
     pub tex_matrix: Option<Vec<[f32; 8]>>,
     pub work_float4: Option<Vec<[f32; 4]>>,
     pub work_color: Option<Vec<[f32; 4]>>,
+}
+
+#[pymethods]
+impl MaterialParameters {
+    #[new]
+    fn new(
+        mat_color: [f32; 4],
+        alpha_test_ref: f32,
+        tex_matrix: Option<Vec<[f32; 8]>>,
+        work_float4: Option<Vec<[f32; 4]>>,
+        work_color: Option<Vec<[f32; 4]>>,
+    ) -> Self {
+        Self {
+            mat_color,
+            alpha_test_ref,
+            tex_matrix,
+            work_float4,
+            work_color,
+        }
+    }
 }
 
 // TODO: Expose implementation details?
@@ -284,11 +419,33 @@ pub struct Texture {
     pub sampler_index: usize,
 }
 
+#[pymethods]
+impl Texture {
+    #[new]
+    fn new(image_texture_index: usize, sampler_index: usize) -> Self {
+        Self {
+            image_texture_index,
+            sampler_index,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct VertexBuffer {
     pub attributes: Vec<AttributeData>,
     pub morph_targets: Vec<MorphTarget>,
+}
+
+#[pymethods]
+impl VertexBuffer {
+    #[new]
+    fn new(attributes: Vec<AttributeData>, morph_targets: Vec<MorphTarget>) -> Self {
+        Self {
+            attributes,
+            morph_targets,
+        }
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -297,6 +454,17 @@ pub struct AttributeData {
     pub attribute_type: AttributeType,
     // numpy.ndarray with vertex count many rows
     pub data: PyObject,
+}
+
+#[pymethods]
+impl AttributeData {
+    #[new]
+    fn new(attribute_type: AttributeType, data: PyObject) -> Self {
+        Self {
+            attribute_type,
+            data,
+        }
+    }
 }
 
 #[pyclass]
@@ -332,11 +500,31 @@ pub struct MorphTarget {
     pub tangent_deltas: PyObject,
 }
 
+#[pymethods]
+impl MorphTarget {
+    #[new]
+    fn new(position_deltas: PyObject, normal_deltas: PyObject, tangent_deltas: PyObject) -> Self {
+        Self {
+            position_deltas,
+            normal_deltas,
+            tangent_deltas,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct Influence {
     pub bone_name: String,
     pub weights: Vec<VertexWeight>,
+}
+
+#[pymethods]
+impl Influence {
+    #[new]
+    fn new(bone_name: String, weights: Vec<VertexWeight>) -> Self {
+        Self { bone_name, weights }
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -346,10 +534,29 @@ pub struct VertexWeight {
     pub weight: f32,
 }
 
+#[pymethods]
+impl VertexWeight {
+    #[new]
+    fn new(vertex_index: u32, weight: f32) -> Self {
+        Self {
+            vertex_index,
+            weight,
+        }
+    }
+}
+
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct IndexBuffer {
     pub indices: PyObject,
+}
+
+#[pymethods]
+impl IndexBuffer {
+    #[new]
+    fn new(indices: PyObject) -> Self {
+        Self { indices }
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -364,6 +571,35 @@ pub struct ImageTexture {
     pub image_format: ImageFormat,
     pub mipmap_count: u32,
     pub image_data: Vec<u8>,
+}
+
+#[pymethods]
+impl ImageTexture {
+    #[allow(clippy::too_many_arguments)]
+    #[new]
+    fn new(
+        width: u32,
+        height: u32,
+        depth: u32,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmap_count: u32,
+        image_data: Vec<u8>,
+        name: Option<String>,
+        usage: Option<TextureUsage>,
+    ) -> Self {
+        Self {
+            name,
+            usage,
+            width,
+            height,
+            depth,
+            view_dimension,
+            image_format,
+            mipmap_count,
+            image_data,
+        }
+    }
 }
 
 python_enum!(
@@ -436,6 +672,30 @@ pub struct Sampler {
     pub mag_filter: FilterMode,
     pub mip_filter: FilterMode,
     pub mipmaps: bool,
+}
+
+#[pymethods]
+impl Sampler {
+    #[new]
+    fn new(
+        address_mode_u: AddressMode,
+        address_mode_v: AddressMode,
+        address_mode_w: AddressMode,
+        min_filter: FilterMode,
+        mag_filter: FilterMode,
+        mip_filter: FilterMode,
+        mipmaps: bool,
+    ) -> Self {
+        Self {
+            address_mode_u,
+            address_mode_v,
+            address_mode_w,
+            min_filter,
+            mag_filter,
+            mip_filter,
+            mipmaps,
+        }
+    }
 }
 
 python_enum!(
@@ -675,26 +935,6 @@ impl ModelRoot {
         Ok((Mxmd(mxmd), Msrd(msrd)))
     }
     // TODO: support texture edits as well?
-}
-
-#[pymethods]
-impl Material {
-    pub fn output_assignments(&self, textures: Vec<ImageTexture>) -> OutputAssignments {
-        // We only need the usage to be correct.
-        let image_textures: Vec<_> = textures.iter().map(image_texture_rs).collect();
-
-        // TODO: Is there a better way than creating the entire type?
-        let assignments = material_rs(self).output_assignments(&image_textures);
-
-        OutputAssignments {
-            assignments: assignments.assignments.map(|a| OutputAssignment {
-                x: a.x.map(ChannelAssignment),
-                y: a.y.map(ChannelAssignment),
-                z: a.z.map(ChannelAssignment),
-                w: a.w.map(ChannelAssignment),
-            }),
-        }
-    }
 }
 
 #[pymethods]
