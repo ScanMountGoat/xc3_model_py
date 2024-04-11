@@ -16,10 +16,10 @@ class ModelBuffers:
 
 class VertexBuffer:
     attributes: list[AttributeData]
-    influences: list[Influence]
+    morph_targets: list[MorphTarget]
 
     def __init__(self, attributes: list[AttributeData],
-                 influences: list[Influence]) -> None: ...
+                 morph_targets: list[MorphTarget]) -> None: ...
 
 
 class AttributeData:
