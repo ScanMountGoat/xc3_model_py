@@ -435,15 +435,21 @@ impl Texture {
 pub struct VertexBuffer {
     pub attributes: Vec<AttributeData>,
     pub morph_targets: Vec<MorphTarget>,
+    pub outline_buffer_index: Option<usize>,
 }
 
 #[pymethods]
 impl VertexBuffer {
     #[new]
-    fn new(attributes: Vec<AttributeData>, morph_targets: Vec<MorphTarget>) -> Self {
+    fn new(
+        attributes: Vec<AttributeData>,
+        morph_targets: Vec<MorphTarget>,
+        outline_buffer_index: Option<usize>,
+    ) -> Self {
         Self {
             attributes,
             morph_targets,
+            outline_buffer_index,
         }
     }
 }
@@ -498,16 +504,23 @@ pub struct MorphTarget {
     pub normal_deltas: PyObject,
     // N x 4 numpy.ndarray
     pub tangent_deltas: PyObject,
+    pub vertex_indices: PyObject,
 }
 
 #[pymethods]
 impl MorphTarget {
     #[new]
-    fn new(position_deltas: PyObject, normal_deltas: PyObject, tangent_deltas: PyObject) -> Self {
+    fn new(
+        position_deltas: PyObject,
+        normal_deltas: PyObject,
+        tangent_deltas: PyObject,
+        vertex_indices: PyObject,
+    ) -> Self {
         Self {
             position_deltas,
             normal_deltas,
             tangent_deltas,
+            vertex_indices,
         }
     }
 }
@@ -1226,9 +1239,19 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
             .iter()
             .map(|a| attribute_data_rs(py, a))
             .collect::<PyResult<Vec<_>>>()?,
-        // TODO: Fill in all fields
-        morph_targets: Vec::new(),
-        outline_buffer_index: None,
+        morph_targets: b
+            .morph_targets
+            .iter()
+            .map(|t| {
+                Ok(xc3_model::vertex::MorphTarget {
+                    position_deltas: pyarray_to_vec3s(py, &t.position_deltas)?,
+                    normal_deltas: pyarray_to_vec4s(py, &t.normal_deltas)?,
+                    tangent_deltas: pyarray_to_vec4s(py, &t.tangent_deltas)?,
+                    vertex_indices: t.vertex_indices.extract(py)?,
+                })
+            })
+            .collect::<PyResult<Vec<_>>>()?,
+        outline_buffer_index: b.outline_buffer_index,
     })
 }
 
@@ -1407,6 +1430,7 @@ fn vertex_buffers_py(
         .map(|buffer| VertexBuffer {
             attributes: vertex_attributes_py(py, buffer.attributes),
             morph_targets: morph_targets_py(py, buffer.morph_targets),
+            outline_buffer_index: buffer.outline_buffer_index,
         })
         .collect()
 }
@@ -1532,6 +1556,7 @@ fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) ->
             position_deltas: vec3s_pyarray(py, &target.position_deltas),
             normal_deltas: vec4s_pyarray(py, &target.normal_deltas),
             tangent_deltas: vec4s_pyarray(py, &target.tangent_deltas),
+            vertex_indices: target.vertex_indices.into_pyarray(py).into(),
         })
         .collect()
 }

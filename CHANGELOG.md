@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added fields `max_xyz` and `min_xyz` to `Models`.
 * Added fields `max_xyz`, `min_xyz`, and `bounding_radius` to `Model`.
 * Added field `flags1` to `Mesh`.
+* Added field `vertex_indices` to `MorphTarget`.
+* Added field `outline_buffer_index` to `VertexBuffer`
 * Added constructors for all non opaque wrapper types.
 * Added opaque wrapper types `Mxmd` and `Msrd` for the types in xc3_lib.
 * Added setters for all public fields for all types.

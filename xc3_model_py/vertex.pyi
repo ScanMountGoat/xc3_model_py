@@ -17,9 +17,10 @@ class ModelBuffers:
 class VertexBuffer:
     attributes: list[AttributeData]
     morph_targets: list[MorphTarget]
+    outline_buffer_index: Optional[int]
 
-    def __init__(self, attributes: list[AttributeData],
-                 morph_targets: list[MorphTarget]) -> None: ...
+    def __init__(self, attributes: list[AttributeData], morph_targets: list[MorphTarget],
+                 outline_buffer_index: Optional[int]) -> None: ...
 
 
 class AttributeData:
@@ -54,9 +55,10 @@ class MorphTarget:
     position_deltas: numpy.ndarray
     normal_deltas: numpy.ndarray
     tangent_deltas: numpy.ndarray
+    vertex_indices: numpy.ndarray
 
-    def __init__(self, position_deltas: numpy.ndarray,
-                 normal_deltas: numpy.ndarray, tangent_deltas: numpy.ndarray) -> None: ...
+    def __init__(self, position_deltas: numpy.ndarray, normal_deltas: numpy.ndarray,
+                 tangent_deltas: numpy.ndarray, vertex_indices: numpy.ndarray) -> None: ...
 
 
 class IndexBuffer:
