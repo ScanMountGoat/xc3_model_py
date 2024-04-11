@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `SkinWeight` to `VertexWeight` to match xc3_model.
 * Renamed field `skin_flags` to `flags` for `Mesh`.
 * Move animation types and `murmur3` function to `xc3_model_py.animation` submodule.
+* Changed `AttributeType.WeightIndex` to use a numpy array of u16 with shape (N, 2).
 
 ### Fixed
 * Fixed an issue where method `output_assignments` for `Material` did not properly account for textures.

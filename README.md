@@ -53,7 +53,7 @@ for group in root.groups:
                     for attribute in vertex_buffer.attributes:
                         if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
                             # Find the actual per vertex skinning information.
-                            weight_indices = attribute.data + start_index
+                            weight_indices = attribute.data[:, 0] + start_index
                             skin_weights = buffers.weights.skin_weights.weights[weight_indices]
                             # Note that these indices index into a different bone list than the skeleton.
                             bone_indices = buffers.weights.skin_weights.bone_indices[weight_indices]

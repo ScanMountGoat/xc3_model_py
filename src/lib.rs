@@ -1505,7 +1505,7 @@ fn attribute_data_py(py: Python, attribute: xc3_model::vertex::AttributeData) ->
         },
         xc3_model::vertex::AttributeData::WeightIndex(values) => AttributeData {
             attribute_type: AttributeType::WeightIndex,
-            data: values.into_pyarray(py).into(),
+            data: uvec2s_pyarray(py, &values),
         },
         xc3_model::vertex::AttributeData::SkinWeights(values) => AttributeData {
             attribute_type: AttributeType::SkinWeights,
@@ -1646,6 +1646,21 @@ fn vec4s_pyarray(py: Python, values: &[Vec4]) -> PyObject {
         .collect::<Vec<f32>>()
         .into_pyarray(py)
         .reshape((count, 4))
+        .unwrap()
+        .into()
+}
+
+fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
+    // This flatten will be optimized in Release mode.
+    // This avoids needing unsafe code.
+    let count = values.len();
+    values
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<Vec<u16>>()
+        .into_pyarray(py)
+        .reshape((count, 2))
         .unwrap()
         .into()
 }
