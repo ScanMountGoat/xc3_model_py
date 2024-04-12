@@ -52,13 +52,14 @@ class AttributeType:
 
 
 class MorphTarget:
+    morph_controller_index: int
     position_deltas: numpy.ndarray
     normal_deltas: numpy.ndarray
     tangent_deltas: numpy.ndarray
     vertex_indices: numpy.ndarray
 
-    def __init__(self, position_deltas: numpy.ndarray, normal_deltas: numpy.ndarray,
-                 tangent_deltas: numpy.ndarray, vertex_indices: numpy.ndarray) -> None: ...
+    def __init__(self, morph_controller_index: int, position_deltas: numpy.ndarray,
+                 normal_deltas: numpy.ndarray, tangent_deltas: numpy.ndarray, vertex_indices: numpy.ndarray) -> None: ...
 
 
 class IndexBuffer:

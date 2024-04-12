@@ -55,11 +55,12 @@ class Models:
     materials: list[Material]
     samplers: list[Sampler]
     base_lod_indices: Optional[list[int]]
+    morph_controller_names: list[str]
     max_xyz: list[float]
     min_xyz: list[float]
 
-    def __init__(self, models: list[Model], materials: list[Material], samplers: list[Sampler],
-                 max_xyz: list[float], min_xyz: list[float], base_lod_indices: Optional[list[int]]) -> None: ...
+    def __init__(self, models: list[Model], materials: list[Material], samplers: list[Sampler], max_xyz: list[float],
+                 min_xyz: list[float], morph_controller_names: list[str], base_lod_indices: Optional[list[int]]) -> None: ...
 
 
 class Model:

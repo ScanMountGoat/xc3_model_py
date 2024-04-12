@@ -164,6 +164,7 @@ pub struct Models {
     pub materials: Vec<Material>,
     pub samplers: Vec<Sampler>,
     pub base_lod_indices: Option<Vec<u16>>,
+    pub morph_controller_names: Vec<String>,
     pub max_xyz: [f32; 3],
     pub min_xyz: [f32; 3],
 }
@@ -177,6 +178,7 @@ impl Models {
         samplers: Vec<Sampler>,
         max_xyz: [f32; 3],
         min_xyz: [f32; 3],
+        morph_controller_names: Vec<String>,
         base_lod_indices: Option<Vec<u16>>,
     ) -> Self {
         Self {
@@ -184,6 +186,7 @@ impl Models {
             materials,
             samplers,
             base_lod_indices,
+            morph_controller_names,
             max_xyz,
             min_xyz,
         }
@@ -498,6 +501,7 @@ pub enum AttributeType {
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct MorphTarget {
+    pub morph_controller_index: usize,
     // N x 3 numpy.ndarray
     pub position_deltas: PyObject,
     // N x 4 numpy.ndarray
@@ -511,12 +515,14 @@ pub struct MorphTarget {
 impl MorphTarget {
     #[new]
     fn new(
+        morph_controller_index: usize,
         position_deltas: PyObject,
         normal_deltas: PyObject,
         tangent_deltas: PyObject,
         vertex_indices: PyObject,
     ) -> Self {
         Self {
+            morph_controller_index,
             position_deltas,
             normal_deltas,
             tangent_deltas,
@@ -1078,6 +1084,7 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
                 materials: materials_py(models.materials),
                 samplers: models.samplers.iter().map(sampler_py).collect(),
                 base_lod_indices: models.base_lod_indices,
+                morph_controller_names: models.morph_controller_names,
                 max_xyz: models.max_xyz.to_array(),
                 min_xyz: models.min_xyz.to_array(),
             })
@@ -1113,6 +1120,7 @@ fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGr
                     materials: models.materials.iter().map(material_rs).collect(),
                     samplers: models.samplers.iter().map(sampler_rs).collect(),
                     base_lod_indices: models.base_lod_indices.clone(),
+                    morph_controller_names: models.morph_controller_names.clone(),
                     max_xyz: models.max_xyz.into(),
                     min_xyz: models.min_xyz.into(),
                 })
@@ -1244,6 +1252,7 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
             .iter()
             .map(|t| {
                 Ok(xc3_model::vertex::MorphTarget {
+                    morph_controller_index: t.morph_controller_index,
                     position_deltas: pyarray_to_vec3s(py, &t.position_deltas)?,
                     normal_deltas: pyarray_to_vec4s(py, &t.normal_deltas)?,
                     tangent_deltas: pyarray_to_vec4s(py, &t.tangent_deltas)?,
@@ -1553,6 +1562,7 @@ fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) ->
     targets
         .into_iter()
         .map(|target| MorphTarget {
+            morph_controller_index: target.morph_controller_index,
             position_deltas: vec3s_pyarray(py, &target.position_deltas),
             normal_deltas: vec4s_pyarray(py, &target.normal_deltas),
             tangent_deltas: vec4s_pyarray(py, &target.tangent_deltas),
