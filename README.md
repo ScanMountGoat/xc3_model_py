@@ -125,4 +125,4 @@ The compiled extension module can be imported just like any other Python file. O
 Build the project with `cargo build --release`. This will compile a native python module for the current Python interpreter. For use with Blender, make sure to build for the Python version used by Blender. This can be achieved by activating a virtual environment with the appropriate Python version or setting the Python interpeter using the `PYO3_PYTHON` environment variable. See the [PyO3 guide](https://pyo3.rs) for details.
 
 ## Limitations
-Modifying list elements will appear to work, but changes will not be reflected when accessing the elements again. Some types from `xc3_model_py` are opaque wrappers around the underlying Rust types and cannot be constructed in any way from Python. These limitations should hopefully be resolved in the future.
+Some types from `xc3_model_py` are opaque wrappers around the underlying Rust types and cannot be constructed in any way from Python. Some of these limitations should hopefully be resolved in the future.
