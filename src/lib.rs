@@ -170,6 +170,7 @@ pub struct Models {
     pub samplers: Py<PyList>,
     pub base_lod_indices: Option<Vec<u16>>,
     pub morph_controller_names: Py<PyList>,
+    pub animation_morph_names: Py<PyList>,
     pub max_xyz: [f32; 3],
     pub min_xyz: [f32; 3],
 }
@@ -184,6 +185,7 @@ impl Models {
         max_xyz: [f32; 3],
         min_xyz: [f32; 3],
         morph_controller_names: Py<PyList>,
+        animation_morph_names: Py<PyList>,
         base_lod_indices: Option<Vec<u16>>,
     ) -> Self {
         Self {
@@ -192,6 +194,7 @@ impl Models {
             samplers,
             base_lod_indices,
             morph_controller_names,
+            animation_morph_names,
             max_xyz,
             min_xyz,
         }
@@ -1112,6 +1115,7 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
                     .into(),
                     base_lod_indices: models.base_lod_indices,
                     morph_controller_names: PyList::new(py, models.morph_controller_names).into(),
+                    animation_morph_names: PyList::new(py, models.animation_morph_names).into(),
                     max_xyz: models.max_xyz.to_array(),
                     min_xyz: models.min_xyz.to_array(),
                 }
@@ -1166,6 +1170,7 @@ fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGr
                         .collect(),
                     base_lod_indices: models.base_lod_indices.clone(),
                     morph_controller_names: models.morph_controller_names.extract(py)?,
+                    animation_morph_names: models.animation_morph_names.extract(py)?,
                     max_xyz: models.max_xyz.into(),
                     min_xyz: models.min_xyz.into(),
                 })
@@ -1669,6 +1674,7 @@ fn animation_rs(animation: &Animation) -> xc3_model::animation::Animation {
         frames_per_second: animation.frames_per_second,
         frame_count: animation.frame_count,
         tracks: animation.tracks.iter().map(|t| t.0.clone()).collect(),
+        morph_tracks: None, // TODO: morph animations?
     }
 }
 

@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
 * Added field `mip_filter` to `Sampler`.
-* Added fields `max_xyz`, `min_xyz`, and `morph_controller_names` to `Models`.
+* Added fields `max_xyz`, `min_xyz`, `morph_controller_names`, and `animation_morph_names` to `Models`.
 * Added fields `max_xyz`, `min_xyz`, and `bounding_radius` to `Model`.
 * Added field `flags1` to `Mesh`.
 * Added field `vertex_indices` and `morph_controller_index` to `MorphTarget`.
