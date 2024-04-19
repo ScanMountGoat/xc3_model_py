@@ -1,8 +1,7 @@
-from typing import Optional, ClassVar, Tuple
+from typing import Optional, ClassVar
 import numpy
 
-from xc3_model_py import Weights
-from xc3_model_py.skinning import Influence
+from xc3_model_py.skinning import Weights
 
 
 class ModelBuffers:

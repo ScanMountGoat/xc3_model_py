@@ -41,15 +41,6 @@ class ModelGroup:
                  buffers: list[vertex.ModelBuffers]) -> None: ...
 
 
-class Weights:
-    skin_weights: skinning.SkinWeights
-
-    def weights_start_index(self, skin_flags: int,
-                            lod: int, unk_type: RenderPassType) -> int: ...
-
-    def __init__(self, skin_weights: skinning.SkinWeights) -> None: ...
-
-
 class Models:
     models: list[Model]
     materials: list[Material]

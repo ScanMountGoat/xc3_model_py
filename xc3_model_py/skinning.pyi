@@ -1,6 +1,19 @@
 from typing import Optional, ClassVar, Tuple
 import numpy
 
+from xc3_model_py import RenderPassType
+
+
+class Weights:
+    weight_buffers: list[SkinWeights]
+
+    def __init__(self, weight_buffers: list[SkinWeights]) -> None: ...
+
+    def weight_buffer(self, flags2: int) -> Optional[SkinWeights]: ...
+
+    def weights_start_index(self, flags2: int, lod: int,
+                            unk_type: RenderPassType) -> int: ...
+
 
 class SkinWeights:
     bone_indices: numpy.ndarray

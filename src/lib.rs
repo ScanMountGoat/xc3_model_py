@@ -89,47 +89,43 @@ impl ModelBuffers {
     }
 }
 
-// TODO: Add methods to convert to influences.
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Weights {
-    #[pyo3(get)]
-    pub skin_weights: SkinWeights,
+    weight_buffers: Vec<SkinWeights>,
     // TODO: how to handle this?
-    weight_groups: Vec<xc3_model::vertex::WeightGroup>,
-    weight_lods: Vec<xc3_model::vertex::WeightLod>,
+    weight_groups: xc3_model::skinning::WeightGroups,
 }
 
 #[pymethods]
 impl Weights {
     #[new]
-    pub fn new(skin_weights: SkinWeights) -> Self {
-        // TODO: make groups and lods public?
+    pub fn new(weight_buffers: Vec<SkinWeights>) -> Self {
+        // TODO: rework xc3_model to make this easier to work with.
         Self {
-            skin_weights,
-            weight_groups: Vec::new(),
-            weight_lods: Vec::new(),
+            weight_buffers,
+            weight_groups: xc3_model::skinning::WeightGroups::Groups {
+                weight_groups: Vec::new(),
+                weight_lods: Vec::new(),
+            },
         }
     }
 
-    // TODO: Is it worth including the weight_group method?
+    pub fn weight_buffer(&self, py: Python, flags2: u32) -> PyResult<Option<SkinWeights>> {
+        Ok(weights_rs(py, self)?
+            .weight_buffer(flags2)
+            .map(|b| skin_weights_py(py, b)))
+    }
+
+    // TODO: make this a method of WeightGroups?
     pub fn weights_start_index(
         &self,
         skin_flags: u32,
         lod: u16,
         unk_type: RenderPassType,
     ) -> usize {
-        // TODO: find a cleaner way of doing this.
-        xc3_model::Weights {
-            skin_weights: xc3_model::skinning::SkinWeights {
-                bone_indices: Vec::new(),
-                weights: Vec::new(),
-                bone_names: Vec::new(),
-            },
-            weight_groups: self.weight_groups.clone(),
-            weight_lods: self.weight_lods.clone(),
-        }
-        .weights_start_index(skin_flags, lod, unk_type.into())
+        self.weight_groups
+            .weights_start_index(skin_flags, lod, unk_type.into())
     }
 }
 
@@ -1130,9 +1126,8 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
                     vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
                     index_buffers: index_buffers_py(py, buffer.index_buffers),
                     weights: buffer.weights.map(|weights| Weights {
-                        skin_weights: skin_weights_py(py, &weights),
+                        weight_buffers: weight_buffers_py(py, weights.weight_buffers),
                         weight_groups: weights.weight_groups,
-                        weight_lods: weights.weight_lods,
                     }),
                 }
                 .into_py(py)
@@ -1283,11 +1278,10 @@ fn model_buffers_rs(
     })
 }
 
-fn weights_rs(py: Python, w: &Weights) -> PyResult<xc3_model::Weights> {
-    Ok(xc3_model::Weights {
-        skin_weights: skin_weights_rs(py, &w.skin_weights)?,
+fn weights_rs(py: Python, w: &Weights) -> PyResult<xc3_model::skinning::Weights> {
+    Ok(xc3_model::skinning::Weights {
+        weight_buffers: weight_buffers_rs(py, &w.weight_buffers)?,
         weight_groups: w.weight_groups.clone(),
-        weight_lods: w.weight_lods.clone(),
     })
 }
 
@@ -1367,23 +1361,40 @@ fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot>
     })
 }
 
-fn skin_weights_rs(
+fn weight_buffers_rs(
     py: Python,
-    weights: &SkinWeights,
-) -> Result<xc3_model::skinning::SkinWeights, PyErr> {
+    weight_buffers: &[SkinWeights],
+) -> Result<Vec<xc3_model::skinning::SkinWeights>, PyErr> {
+    weight_buffers
+        .iter()
+        .map(|w| skin_weights_rs(py, w))
+        .collect()
+}
+
+fn skin_weights_rs(py: Python, w: &SkinWeights) -> PyResult<xc3_model::skinning::SkinWeights> {
     Ok(xc3_model::skinning::SkinWeights {
-        bone_indices: weights.bone_indices.extract(py)?,
-        weights: pyarray_to_vec4s(py, &weights.weights)?,
-        bone_names: weights.bone_names.extract(py)?,
+        bone_indices: w.bone_indices.extract(py)?,
+        weights: pyarray_to_vec4s(py, &w.weights)?,
+        bone_names: w.bone_names.extract(py)?,
     })
 }
 
-fn skin_weights_py(py: Python, weights: &xc3_model::Weights) -> SkinWeights {
+fn skin_weights_py(py: Python, w: xc3_model::skinning::SkinWeights) -> SkinWeights {
     SkinWeights {
-        bone_indices: uvec4_pyarray(py, &weights.skin_weights.bone_indices),
-        weights: vec4s_pyarray(py, &weights.skin_weights.weights),
-        bone_names: PyList::new(py, &weights.skin_weights.bone_names).into(),
+        bone_indices: uvec4_pyarray(py, &w.bone_indices),
+        weights: vec4s_pyarray(py, &w.weights),
+        bone_names: PyList::new(py, &w.bone_names).into(),
     }
+}
+
+fn weight_buffers_py(
+    py: Python,
+    weight_buffers: Vec<xc3_model::skinning::SkinWeights>,
+) -> Vec<SkinWeights> {
+    weight_buffers
+        .into_iter()
+        .map(|w| skin_weights_py(py, w))
+        .collect()
 }
 
 fn skeleton_rs(py: Python, skeleton: &Skeleton) -> PyResult<xc3_model::Skeleton> {
@@ -1822,8 +1833,6 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ModelRoot>()?;
     m.add_class::<ModelGroup>()?;
 
-    m.add_class::<Weights>()?;
-
     m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
@@ -1896,7 +1905,7 @@ fn vertex(py: Python, module: &PyModule) -> PyResult<()> {
 fn skinning(py: Python, module: &PyModule) -> PyResult<()> {
     let m = PyModule::new(py, "skinning")?;
 
-    // TODO: Should this also have Weights?
+    m.add_class::<Weights>()?;
     m.add_class::<SkinWeights>()?;
     m.add_class::<Influence>()?;
     m.add_class::<VertexWeight>()?;

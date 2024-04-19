@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `sample_transform` to `Track`.
 * Added method `to_influences` to `SkinWeights`.
 * Added method `to_mxmd_model` to `ModelRoot`.
+* Added method `weight_buffer` to `skinning.Weights`.
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
 * Added field `mip_filter` to `Sampler`.
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `SkinWeight` to `VertexWeight` to match xc3_model.
 * Renamed field `skin_flags` to `flags` for `Mesh`.
 * Move animation types and `murmur3` function to `xc3_model_py.animation` submodule.
+* Moved `Weights` to `skinning.Weights` and adjusted fields to match xc3_model.
 * Changed `AttributeType.WeightIndex` to use a numpy array of u16 with shape (N, 2).
 * Changed non bytes or `numpy.ndarray` lists to use pure Python lists to to allow mutating elements.
 

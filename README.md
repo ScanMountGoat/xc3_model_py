@@ -49,15 +49,17 @@ for group in root.groups:
                     pass_type = models.materials[mesh.material_index].pass_type
                     start_index = buffers.weights.weights_start_index(mesh.flags2, mesh.lod, pass_type)
 
-                    # Get vertex skinning attributes.
-                    for attribute in vertex_buffer.attributes:
-                        if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
-                            # Find the actual per vertex skinning information.
-                            weight_indices = attribute.data[:, 0] + start_index
-                            skin_weights = buffers.weights.skin_weights.weights[weight_indices]
-                            # Note that these indices index into a different bone list than the skeleton.
-                            bone_indices = buffers.weights.skin_weights.bone_indices[weight_indices]
-                            bone_name = buffers.weights.skin_weights.bone_names[bone_indices[0]]
+                    weight_buffer = buffers.weights.weight_buffer(mesh.flag2)
+                    if weight_buffer is not None:
+                        # Get vertex skinning attributes.
+                        for attribute in vertex_buffer.attributes:
+                            if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
+                                # Find the actual per vertex skinning information.
+                                weight_indices = attribute.data[:, 0] + start_index
+                                skin_weights = weight_buffer.weights[weight_indices]
+                                # Note that these indices index into a different bone list than the skeleton.
+                                bone_indices = weight_buffer.bone_indices[weight_indices]
+                                bone_name = weight_buffer.bone_names[bone_indices[0]]
 
 ```
 
