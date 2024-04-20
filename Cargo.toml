@@ -5,8 +5,8 @@ authors = ["ScanMountGoat"]
 edition = "2021"
 
 [dependencies]
-xc3_model = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "4fdfadf" }
-xc3_lib = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "4fdfadf" }
+xc3_model = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "0c435ac" }
+xc3_lib = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "0c435ac" }
 pyo3 = { version = "0.20.2", features = ["extension-module", "indexmap"] }
 numpy = "0.20.0"
 indexmap = "2.0.0"
