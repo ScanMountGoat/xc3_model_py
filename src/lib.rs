@@ -980,13 +980,14 @@ impl ModelRoot {
         self.image_textures
             .extract::<'_, Vec<ImageTexture>>(py)?
             .par_iter()
-            .map(|texture| {
+            .enumerate()
+            .map(|(i, texture)| {
                 // TODO: Better way to handle missing name?
                 let filename = texture
                     .name
                     .as_ref()
                     .map(|n| format!("{prefix}.{n}.{ext}"))
-                    .unwrap_or_else(|| format!("{prefix}.{ext}"));
+                    .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
                 let path = Path::new(folder).join(filename);
 
                 let image = image_texture_rs(texture).to_image().map_err(py_exception)?;
