@@ -341,10 +341,26 @@ impl Material {
     pub fn output_assignments(
         &self,
         py: Python,
-        textures: Vec<ImageTexture>,
+        textures: Vec<PyRef<ImageTexture>>,
     ) -> PyResult<OutputAssignments> {
-        // TODO: Is there a better way than creating the entire types?
-        let image_textures: Vec<_> = textures.iter().map(image_texture_rs).collect();
+        // Converting all the Python images to Rust is very expensive.
+        // We can avoid costly conversion of input images using PyRef.
+        // We only need the usage enum, so we can cheat a little here.
+        let image_textures: Vec<_> = textures
+            .iter()
+            .map(|t| xc3_model::ImageTexture {
+                name: None,
+                usage: t.usage.map(Into::into),
+                width: 1,
+                height: 1,
+                depth: 1,
+                view_dimension: xc3_model::ViewDimension::D2,
+                image_format: xc3_model::ImageFormat::BC7Unorm,
+                mipmap_count: 1,
+                image_data: Vec::new(),
+            })
+            .collect();
+
         let assignments = material_rs(py, self)?.output_assignments(&image_textures);
 
         Ok(OutputAssignments {
