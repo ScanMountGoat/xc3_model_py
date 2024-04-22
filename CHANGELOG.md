@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `to_influences` to `SkinWeights`.
 * Added method `to_mxmd_model` to `ModelRoot`.
 * Added method `weight_buffer` to `skinning.Weights`.
+* Added method `save_images_rgba8` to `ModelRoot` for saving to formats like PNG.
 * Added field `texcoord_name` to `ChannelAssignmentTexture`.
 * Added field `sampler_index` to `Texture`.
 * Added field `mip_filter` to `Sampler`.

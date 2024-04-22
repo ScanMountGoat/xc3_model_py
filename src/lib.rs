@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
@@ -944,8 +946,6 @@ impl ModelRoot {
     }
 
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
-        // TODO: make decoding optional?
-        // TODO: Expose xc3_model types from root?
         let buffers = self
             .image_textures
             .extract::<'_, Vec<ImageTexture>>(py)?
@@ -968,6 +968,34 @@ impl ModelRoot {
             .into_iter()
             .map(|buffer| buffer.into_pyarray(py).into())
             .collect())
+    }
+
+    pub fn save_images_rgba8(
+        &self,
+        py: Python,
+        folder: &str,
+        prefix: &str,
+        ext: &str,
+    ) -> PyResult<Vec<String>> {
+        self.image_textures
+            .extract::<'_, Vec<ImageTexture>>(py)?
+            .par_iter()
+            .map(|texture| {
+                // TODO: Better way to handle missing name?
+                let filename = texture
+                    .name
+                    .as_ref()
+                    .map(|n| format!("{prefix}.{n}.{ext}"))
+                    .unwrap_or_else(|| format!("{prefix}.{ext}"));
+                let path = Path::new(folder).join(filename);
+
+                let image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+
+                image.save(&path).map_err(py_exception)?;
+
+                Ok(path.to_string_lossy().to_string())
+            })
+            .collect()
     }
 
     pub fn to_mxmd_model(&self, py: Python, mxmd: &Mxmd, msrd: &Msrd) -> PyResult<(Mxmd, Msrd)> {
