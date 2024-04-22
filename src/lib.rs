@@ -976,6 +976,7 @@ impl ModelRoot {
         folder: &str,
         prefix: &str,
         ext: &str,
+        flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
         self.image_textures
             .extract::<'_, Vec<ImageTexture>>(py)?
@@ -990,7 +991,12 @@ impl ModelRoot {
                     .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
                 let path = Path::new(folder).join(filename);
 
-                let image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+                let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+                if flip_vertical {
+                    // Xenoblade X images need to be flipped vertically to look as expected.
+                    // TODO: Is there a better way of handling this?
+                    image = image_dds::image::imageops::flip_vertical(&image);
+                }
 
                 image.save(&path).map_err(py_exception)?;
 
