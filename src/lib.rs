@@ -47,9 +47,17 @@ macro_rules! python_enum {
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ModelRoot {
-    pub groups: Py<PyList>,
+    pub models: Models,
+    pub buffers: ModelBuffers,
     pub image_textures: Py<PyList>,
     pub skeleton: Option<Skeleton>,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone)]
+pub struct MapRoot {
+    pub groups: Py<PyList>,
+    pub image_textures: Py<PyList>,
 }
 
 #[pyclass(get_all, set_all)]
@@ -347,11 +355,11 @@ impl Material {
     ) -> PyResult<OutputAssignments> {
         // Converting all the Python images to Rust is very expensive.
         // We can avoid costly conversion of input images using PyRef.
-        // We only need the usage enum, so we can cheat a little here.
+        // We only need certain fields, so we can cheat a little here.
         let image_textures: Vec<_> = textures
             .iter()
             .map(|t| xc3_model::ImageTexture {
-                name: None,
+                name: t.name.clone(),
                 usage: t.usage.map(Into::into),
                 width: 1,
                 height: 1,
@@ -937,9 +945,15 @@ impl Msrd {
 #[pymethods]
 impl ModelRoot {
     #[new]
-    pub fn new(groups: Py<PyList>, image_textures: Py<PyList>, skeleton: Option<Skeleton>) -> Self {
+    pub fn new(
+        models: Models,
+        buffers: ModelBuffers,
+        image_textures: Py<PyList>,
+        skeleton: Option<Skeleton>,
+    ) -> Self {
         Self {
-            groups,
+            models,
+            buffers,
             image_textures,
             skeleton,
         }
@@ -1013,6 +1027,78 @@ impl ModelRoot {
 }
 
 #[pymethods]
+impl MapRoot {
+    #[new]
+    pub fn new(groups: Py<PyList>, image_textures: Py<PyList>) -> Self {
+        Self {
+            groups,
+            image_textures,
+        }
+    }
+
+    pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
+        let buffers = self
+            .image_textures
+            .extract::<'_, Vec<ImageTexture>>(py)?
+            .par_iter()
+            .map(|image| {
+                // TODO: Use image_dds directly to avoid cloning?
+                let bytes = image_texture_rs(image)
+                    .to_image()
+                    .map_err(py_exception)?
+                    .into_raw();
+
+                Ok(bytes
+                    .into_iter()
+                    .map(|u| u as f32 / 255.0)
+                    .collect::<Vec<_>>())
+            })
+            .collect::<PyResult<Vec<_>>>()?;
+
+        Ok(buffers
+            .into_iter()
+            .map(|buffer| buffer.into_pyarray(py).into())
+            .collect())
+    }
+
+    pub fn save_images_rgba8(
+        &self,
+        py: Python,
+        folder: &str,
+        prefix: &str,
+        ext: &str,
+        flip_vertical: bool,
+    ) -> PyResult<Vec<String>> {
+        self.image_textures
+            .extract::<'_, Vec<ImageTexture>>(py)?
+            .par_iter()
+            .enumerate()
+            .map(|(i, texture)| {
+                // TODO: Better way to handle missing name?
+                let filename = texture
+                    .name
+                    .as_ref()
+                    .map(|n| format!("{prefix}.{n}.{ext}"))
+                    .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
+                let path = Path::new(folder).join(filename);
+
+                let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+                if flip_vertical {
+                    // Xenoblade X images need to be flipped vertically to look as expected.
+                    // TODO: Is there a better way of handling this?
+                    image = image_dds::image::imageops::flip_vertical(&image);
+                }
+
+                image.save(&path).map_err(py_exception)?;
+
+                Ok(path.to_string_lossy().to_string())
+            })
+            .collect()
+    }
+    // TODO: support texture edits as well?
+}
+
+#[pymethods]
 impl ChannelAssignment {
     // Workaround for representing Rust enums in Python.
     pub fn texture(&self) -> Option<ChannelAssignmentTexture> {
@@ -1077,11 +1163,7 @@ fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
 }
 
 #[pyfunction]
-fn load_map(
-    py: Python,
-    wismhd_path: &str,
-    database_path: Option<&str>,
-) -> PyResult<Vec<ModelRoot>> {
+fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyResult<Vec<MapRoot>> {
     let database = database_path
         .map(xc3_model::shader_database::ShaderDatabase::from_file)
         .transpose()
@@ -1092,7 +1174,7 @@ fn load_map(
     })?;
     Ok(roots
         .into_iter()
-        .map(|root| model_root_py(py, root))
+        .map(|root| map_root_py(py, root))
         .collect())
 }
 
@@ -1111,8 +1193,8 @@ fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
     PyErr::new::<Xc3ModelError, _>(format!("{e}"))
 }
 
-fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
-    ModelRoot {
+fn map_root_py(py: Python, root: xc3_model::MapRoot) -> MapRoot {
+    MapRoot {
         groups: PyList::new(
             py,
             root.groups
@@ -1120,6 +1202,20 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
                 .map(|group| model_group_py(py, group).into_py(py)),
         )
         .into(),
+        image_textures: PyList::new(
+            py,
+            root.image_textures
+                .into_iter()
+                .map(|t| image_texture_py(t).into_py(py)),
+        )
+        .into(),
+    }
+}
+
+fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
+    ModelRoot {
+        models: models_py(py, root.models),
+        buffers: model_buffers_py(py, root.buffers),
         image_textures: PyList::new(
             py,
             root.image_textures
@@ -1140,95 +1236,77 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
     }
 }
 
+fn models_py(py: Python, models: xc3_model::Models) -> Models {
+    Models {
+        models: PyList::new(
+            py,
+            models
+                .models
+                .into_iter()
+                .map(|m| model_py(py, m).into_py(py)),
+        )
+        .into(),
+        materials: materials_py(py, models.materials),
+        samplers: PyList::new(
+            py,
+            models.samplers.iter().map(|s| sampler_py(s).into_py(py)),
+        )
+        .into(),
+        base_lod_indices: models.base_lod_indices,
+        morph_controller_names: PyList::new(py, models.morph_controller_names).into(),
+        animation_morph_names: PyList::new(py, models.animation_morph_names).into(),
+        max_xyz: models.max_xyz.to_array(),
+        min_xyz: models.min_xyz.to_array(),
+    }
+}
+
+fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
+    Ok(xc3_model::Models {
+        models: models
+            .models
+            .extract::<'_, Vec<Model>>(py)?
+            .iter()
+            .map(|model| model_rs(py, model))
+            .collect::<PyResult<Vec<_>>>()?,
+        materials: models
+            .materials
+            .extract::<'_, Vec<Material>>(py)?
+            .iter()
+            .map(|m| material_rs(py, m))
+            .collect::<PyResult<Vec<_>>>()?,
+        samplers: models
+            .samplers
+            .extract::<'_, Vec<Sampler>>(py)?
+            .iter()
+            .map(sampler_rs)
+            .collect(),
+        base_lod_indices: models.base_lod_indices.clone(),
+        morph_controller_names: models.morph_controller_names.extract(py)?,
+        animation_morph_names: models.animation_morph_names.extract(py)?,
+        max_xyz: models.max_xyz.into(),
+        min_xyz: models.min_xyz.into(),
+    })
+}
+
 fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
     ModelGroup {
         models: PyList::new(
             py,
-            group.models.into_iter().map(|models| {
-                Models {
-                    models: PyList::new(
-                        py,
-                        models
-                            .models
-                            .into_iter()
-                            .map(|m| model_py(py, m).into_py(py)),
-                    )
-                    .into(),
-                    materials: materials_py(py, models.materials),
-                    samplers: PyList::new(
-                        py,
-                        models.samplers.iter().map(|s| sampler_py(s).into_py(py)),
-                    )
-                    .into(),
-                    base_lod_indices: models.base_lod_indices,
-                    morph_controller_names: PyList::new(py, models.morph_controller_names).into(),
-                    animation_morph_names: PyList::new(py, models.animation_morph_names).into(),
-                    max_xyz: models.max_xyz.to_array(),
-                    min_xyz: models.min_xyz.to_array(),
-                }
-                .into_py(py)
-            }),
+            group
+                .models
+                .into_iter()
+                .map(|models| models_py(py, models).into_py(py)),
         )
         .into(),
         buffers: PyList::new(
             py,
-            group.buffers.into_iter().map(|buffer| {
-                ModelBuffers {
-                    vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
-                    index_buffers: index_buffers_py(py, buffer.index_buffers),
-                    weights: buffer.weights.map(|weights| Weights {
-                        weight_buffers: weight_buffers_py(py, weights.weight_buffers),
-                        weight_groups: weights.weight_groups,
-                    }),
-                }
-                .into_py(py)
-            }),
+            group
+                .buffers
+                .into_iter()
+                .map(|buffer| model_buffers_py(py, buffer).into_py(py)),
         )
         .into(),
     }
-}
-
-fn model_group_rs(py: Python, group: &ModelGroup) -> PyResult<xc3_model::ModelGroup> {
-    Ok(xc3_model::ModelGroup {
-        models: group
-            .models
-            .extract::<'_, Vec<Models>>(py)?
-            .iter()
-            .map(|models| {
-                Ok(xc3_model::Models {
-                    models: models
-                        .models
-                        .extract::<'_, Vec<Model>>(py)?
-                        .iter()
-                        .map(|model| model_rs(py, model))
-                        .collect::<PyResult<Vec<_>>>()?,
-                    materials: models
-                        .materials
-                        .extract::<'_, Vec<Material>>(py)?
-                        .iter()
-                        .map(|m| material_rs(py, m))
-                        .collect::<PyResult<Vec<_>>>()?,
-                    samplers: models
-                        .samplers
-                        .extract::<'_, Vec<Sampler>>(py)?
-                        .iter()
-                        .map(sampler_rs)
-                        .collect(),
-                    base_lod_indices: models.base_lod_indices.clone(),
-                    morph_controller_names: models.morph_controller_names.extract(py)?,
-                    animation_morph_names: models.animation_morph_names.extract(py)?,
-                    max_xyz: models.max_xyz.into(),
-                    min_xyz: models.min_xyz.into(),
-                })
-            })
-            .collect::<PyResult<Vec<_>>>()?,
-        buffers: group
-            .buffers
-            .extract::<'_, Vec<ModelBuffers>>(py)?
-            .iter()
-            .map(|buffer| model_buffers_rs(py, buffer))
-            .collect::<PyResult<Vec<_>>>()?,
-    })
 }
 
 fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
@@ -1329,6 +1407,17 @@ fn model_buffers_rs(
     })
 }
 
+fn model_buffers_py(py: Python, buffer: xc3_model::vertex::ModelBuffers) -> ModelBuffers {
+    ModelBuffers {
+        vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
+        index_buffers: index_buffers_py(py, buffer.index_buffers),
+        weights: buffer.weights.map(|weights| Weights {
+            weight_buffers: weight_buffers_py(py, weights.weight_buffers),
+            weight_groups: weights.weight_groups,
+        }),
+    }
+}
+
 fn weights_rs(py: Python, w: &Weights) -> PyResult<xc3_model::skinning::Weights> {
     Ok(xc3_model::skinning::Weights {
         weight_buffers: weight_buffers_rs(py, &w.weight_buffers)?,
@@ -1392,12 +1481,8 @@ fn image_texture_rs(image: &ImageTexture) -> xc3_model::ImageTexture {
 
 fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot> {
     Ok(xc3_model::ModelRoot {
-        groups: root
-            .groups
-            .extract::<'_, Vec<ModelGroup>>(py)?
-            .iter()
-            .map(|g| model_group_rs(py, g))
-            .collect::<Result<Vec<_>, _>>()?,
+        models: models_rs(py, &root.models)?,
+        buffers: model_buffers_rs(py, &root.buffers)?,
         image_textures: root
             .image_textures
             .extract::<'_, Vec<ImageTexture>>(py)?
@@ -1882,6 +1967,7 @@ fn xc3_model_py(py: Python, m: &PyModule) -> PyResult<()> {
     vertex(py, m)?;
 
     m.add_class::<ModelRoot>()?;
+    m.add_class::<MapRoot>()?;
     m.add_class::<ModelGroup>()?;
 
     m.add_class::<Models>()?;
