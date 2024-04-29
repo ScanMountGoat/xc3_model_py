@@ -27,7 +27,9 @@ for root in roots:
 
                 # prints (num_instances, 4, 4)
                 print(len(model.instances.shape))
+```
 
+```python
 # This returns only a single ModelRoot.
 root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json")
 for material in root.models.materials:
@@ -63,7 +65,6 @@ for model in root.models.models:
                         # Note that these indices index into a different bone list than the skeleton.
                         bone_indices = weight_buffer.bone_indices[weight_indices, 0]
                         bone_name = weight_buffer.bone_names[bone_indices[0]]
-
 ```
 
 Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. All transformation matrices are column-major to match the Rust code in xc3_model. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
