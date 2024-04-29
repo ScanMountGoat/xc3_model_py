@@ -13,7 +13,7 @@ Parsing and processing happens in optimized Rust code when calling `xc3_model_py
 ```python
 import xc3_model_py
 
-# Get a list of model roots.
+# Get a list of MapRoot.
 roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd", database_path="xc3.json")
 for root in roots:
     for group in root.groups:
@@ -23,43 +23,46 @@ for root in roots:
                 # The shader contains assignment information when specifying a JSON database.
 
             for model in models.models:
+                buffers = group.buffers[model.model_buffers_index]
+
                 # prints (num_instances, 4, 4)
                 print(len(model.instances.shape))
 
-# This returns only a single root.
+# This returns only a single ModelRoot.
 root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json")
-for group in root.groups:
-    for models in group.models:
-        for model in models.models:
-            # prints (1, 4, 4)
-            print(len(model.instances.shape))
+for material in root.models.materials:
+    print(material.name)
 
-            # Access vertex and index data for this model.
-            buffers = group.buffers[model.model_buffers_index]
-            for buffer in buffers.vertex_buffers:
-                for attribute in buffer.attributes:
-                    print(attribute.attribute_type, attribute.data.shape)
+for model in root.models.models:
+    # prints (1, 4, 4)
+    print(len(model.instances.shape))
 
-            # Access vertex skinning data for each mesh.
-            for mesh in model.meshes:
-                vertex_buffer = buffers.vertex_buffers[mesh.vertex_buffer_index]
+    # Access vertex and index data for this model.
+    buffers = root.buffers
+    for buffer in buffers.vertex_buffers:
+        for attribute in buffer.attributes:
+            print(attribute.attribute_type, attribute.data.shape)
 
-                if buffers.weights is not None:
-                    # Calculate the index offset based on the weight group for this mesh.
-                    pass_type = models.materials[mesh.material_index].pass_type
-                    start_index = buffers.weights.weights_start_index(mesh.flags2, mesh.lod, pass_type)
+    # Access vertex skinning data for each mesh.
+    for mesh in model.meshes:
+        vertex_buffer = buffers.vertex_buffers[mesh.vertex_buffer_index]
 
-                    weight_buffer = buffers.weights.weight_buffer(mesh.flag2)
-                    if weight_buffer is not None:
-                        # Get vertex skinning attributes.
-                        for attribute in vertex_buffer.attributes:
-                            if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
-                                # Find the actual per vertex skinning information.
-                                weight_indices = attribute.data[:, 0] + start_index
-                                skin_weights = weight_buffer.weights[weight_indices]
-                                # Note that these indices index into a different bone list than the skeleton.
-                                bone_indices = weight_buffer.bone_indices[weight_indices]
-                                bone_name = weight_buffer.bone_names[bone_indices[0]]
+        if buffers.weights is not None:
+            # Calculate the index offset based on the weight group for this mesh.
+            pass_type = root.models.materials[mesh.material_index].pass_type
+            start_index = buffers.weights.weights_start_index(mesh.flags2, mesh.lod, pass_type)
+
+            weight_buffer = buffers.weights.weight_buffer(mesh.flags2)
+            if weight_buffer is not None:
+                # Get vertex skinning attributes.
+                for attribute in vertex_buffer.attributes:
+                    if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
+                        # Find the actual per vertex skinning information.
+                        weight_indices = attribute.data[:, 0] + start_index
+                        skin_weights = weight_buffer.weights[weight_indices]
+                        # Note that these indices index into a different bone list than the skeleton.
+                        bone_indices = weight_buffer.bone_indices[weight_indices, 0]
+                        bone_name = weight_buffer.bone_names[bone_indices[0]]
 
 ```
 

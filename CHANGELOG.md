@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Changed the `sample_translation`, `sample_rotation`, and `sample_scale` for `Track` to return `None` if empty.
+* Split `ModelRoot` into separate `ModelRoot` and `MapRoot` types to better reflect in game data.
 * Renamed `SkinWeight` to `VertexWeight` to match xc3_model.
 * Renamed field `skin_flags` to `flags` for `Mesh`.
 * Move animation types and `murmur3` function to `xc3_model_py.animation` submodule.

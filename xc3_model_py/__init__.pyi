@@ -12,7 +12,7 @@ def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
 def load_model_legacy(camdo_path) -> ModelRoot: ...
 
 
-def load_map(wismhd: str, database_path: Optional[str]) -> list[ModelRoot]: ...
+def load_map(wismhd: str, database_path: Optional[str]) -> list[MapRoot]: ...
 
 
 def load_animations(anim_path: str) -> list[animation.Animation]: ...
@@ -23,12 +23,13 @@ class Xc3ModelError(Exception):
 
 
 class ModelRoot:
-    groups: list[ModelGroup]
+    models: Models
+    buffers: vertex.ModelBuffers
     image_textures: list[ImageTexture]
     skeleton: Optional[Skeleton]
 
-    def __init__(self, groups: list[ModelGroup], image_textures: list[ImageTexture],
-                 skeleton: Optional[Skeleton]) -> None: ...
+    def __init__(self, models: Models, buffers: vertex.ModelBuffers,
+                 image_textures: list[ImageTexture], skeleton: Optional[Skeleton]) -> None: ...
 
     def decode_images_rgbaf32(self) -> list[numpy.ndarray]: ...
 
@@ -36,6 +37,19 @@ class ModelRoot:
                           ext: str, flip_vertical: bool) -> list[str]: ...
 
     def to_mxmd_model(self, mxmd: Mxmd, msrd: Msrd) -> Tuple[Mxmd, Msrd]: ...
+
+
+class MapRoot:
+    groups: list[ModelGroup]
+    image_textures: list[ImageTexture]
+
+    def __init__(self, groups: list[ModelGroup],
+                 image_textures: list[ImageTexture]) -> None: ...
+
+    def decode_images_rgbaf32(self) -> list[numpy.ndarray]: ...
+
+    def save_images_rgba8(self, folder: str, prefix: str,
+                          ext: str, flip_vertical: bool) -> list[str]: ...
 
 
 class ModelGroup:
