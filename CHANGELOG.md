@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+### Added
+* Added field `ext_mesh_index` to `Mesh`
+
+### Changed
+* Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.
+
 ### 0.5.1 - 2024-04-29
 ### Fixed
 * Fixed an issue with anim loading for Xenoblade 1 animation files.

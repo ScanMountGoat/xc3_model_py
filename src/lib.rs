@@ -247,6 +247,7 @@ pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
     pub material_index: usize,
+    pub ext_mesh_index: usize,
     pub lod: u16,
     pub flags1: u32,
     pub flags2: u32,
@@ -259,6 +260,7 @@ impl Mesh {
         vertex_buffer_index: usize,
         index_buffer_index: usize,
         material_index: usize,
+        ext_mesh_index: usize,
         lod: u16,
         flags1: u32,
         flags2: u32,
@@ -267,6 +269,7 @@ impl Mesh {
             vertex_buffer_index,
             index_buffer_index,
             material_index,
+            ext_mesh_index,
             lod,
             flags1,
             flags2,
@@ -852,21 +855,23 @@ pub struct Track(xc3_model::animation::Track);
 
 #[pymethods]
 impl Track {
-    pub fn sample_translation(&self, frame: f32) -> Option<(f32, f32, f32)> {
-        self.0.sample_translation(frame).map(Into::into)
-    }
-
-    pub fn sample_rotation(&self, frame: f32) -> Option<(f32, f32, f32, f32)> {
-        self.0.sample_rotation(frame).map(Into::into)
-    }
-
-    pub fn sample_scale(&self, frame: f32) -> Option<(f32, f32, f32)> {
-        self.0.sample_scale(frame).map(Into::into)
-    }
-
-    pub fn sample_transform(&self, py: Python, frame: f32) -> Option<PyObject> {
+    pub fn sample_translation(&self, frame: f32, frame_count: u32) -> Option<(f32, f32, f32)> {
         self.0
-            .sample_transform(frame)
+            .sample_translation(frame, frame_count)
+            .map(Into::into)
+    }
+
+    pub fn sample_rotation(&self, frame: f32, frame_count: u32) -> Option<(f32, f32, f32, f32)> {
+        self.0.sample_rotation(frame, frame_count).map(Into::into)
+    }
+
+    pub fn sample_scale(&self, frame: f32, frame_count: u32) -> Option<(f32, f32, f32)> {
+        self.0.sample_scale(frame, frame_count).map(Into::into)
+    }
+
+    pub fn sample_transform(&self, py: Python, frame: f32, frame_count: u32) -> Option<PyObject> {
+        self.0
+            .sample_transform(frame, frame_count)
             .map(|t| mat4_to_pyarray(py, t))
     }
 
@@ -1319,6 +1324,7 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
                 vertex_buffer_index: mesh.vertex_buffer_index,
                 index_buffer_index: mesh.index_buffer_index,
                 material_index: mesh.material_index,
+                ext_mesh_index: mesh.ext_mesh_index,
                 lod: mesh.lod,
                 flags1: mesh.flags1,
                 flags2: mesh.flags2.try_into().unwrap(),
@@ -1569,6 +1575,7 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
                     vertex_buffer_index: mesh.vertex_buffer_index,
                     index_buffer_index: mesh.index_buffer_index,
                     material_index: mesh.material_index,
+                    ext_mesh_index: mesh.ext_mesh_index,
                     lod: mesh.lod,
                     flags1: mesh.flags1,
                     flags2: mesh.flags2.into(),

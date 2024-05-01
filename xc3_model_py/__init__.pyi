@@ -90,12 +90,13 @@ class Mesh:
     vertex_buffer_index: int
     index_buffer_index: int
     material_index: int
+    ext_mesh_index: int
     lod: int
     flags1: int
     flags2: int
 
     def __init__(self, vertex_buffer_index: int, index_buffer_index: int,
-                 material_index: int, lod: int, flags1: int, flags2: int) -> None: ...
+                 material_index: int, ext_mesh_index: int, lod: int, flags1: int, flags2: int) -> None: ...
 
 
 class Skeleton:

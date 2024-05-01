@@ -104,9 +104,9 @@ for animation in animations:
     # Sample the transform for a given track at each frame.
     # This essentially "bakes" the keyframes of the animation.
     for frame in range(animation.frame_count:)
-        print(track.sample_scale(frame))
-        print(track.sample_rotation(frame))
-        print(track.sample_translation(frame))
+        print(track.sample_scale(frame, animation.frame_count))
+        print(track.sample_rotation(frame, animation.frame_count))
+        print(track.sample_translation(frame, animation.frame_count))
     print()
 ```
 
