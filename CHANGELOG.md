@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## unreleased
 ### Added
-* Added field `ext_mesh_index` to `Mesh`
+* Added fields `unk_mesh_index1`, `ext_mesh_index`, and `base_mesh_index` to `Mesh`.
+* Added method `mat_id` to `OutputAssignments`.
 
 ### Changed
 * Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.

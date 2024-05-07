@@ -247,10 +247,12 @@ pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
     pub material_index: usize,
-    pub ext_mesh_index: usize,
+    pub unk_mesh_index1: usize,
+    pub ext_mesh_index: Option<usize>,
     pub lod: u16,
     pub flags1: u32,
     pub flags2: u32,
+    pub base_mesh_index: Option<usize>,
 }
 
 #[pymethods]
@@ -260,19 +262,23 @@ impl Mesh {
         vertex_buffer_index: usize,
         index_buffer_index: usize,
         material_index: usize,
-        ext_mesh_index: usize,
+        unk_mesh_index1: usize,
         lod: u16,
         flags1: u32,
         flags2: u32,
+        ext_mesh_index: Option<usize>,
+        base_mesh_index: Option<usize>,
     ) -> Self {
         Self {
             vertex_buffer_index,
             index_buffer_index,
+            unk_mesh_index1,
             material_index,
             ext_mesh_index,
             lod,
             flags1,
             flags2,
+            base_mesh_index,
         }
     }
 }
@@ -375,15 +381,7 @@ impl Material {
             .collect();
 
         let assignments = material_rs(py, self)?.output_assignments(&image_textures);
-
-        Ok(OutputAssignments {
-            assignments: assignments.assignments.map(|a| OutputAssignment {
-                x: a.x.map(ChannelAssignment),
-                y: a.y.map(ChannelAssignment),
-                z: a.z.map(ChannelAssignment),
-                w: a.w.map(ChannelAssignment),
-            }),
-        })
+        Ok(output_assignments_py(assignments))
     }
 }
 
@@ -768,6 +766,13 @@ python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 #[derive(Debug, Clone)]
 pub struct OutputAssignments {
     pub assignments: [OutputAssignment; 6],
+}
+
+#[pymethods]
+impl OutputAssignments {
+    fn mat_id(&self) -> Option<u32> {
+        output_assignments_rs(self).mat_id()
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -1323,11 +1328,13 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
             .map(|mesh| xc3_model::Mesh {
                 vertex_buffer_index: mesh.vertex_buffer_index,
                 index_buffer_index: mesh.index_buffer_index,
+                unk_mesh_index1: mesh.unk_mesh_index1,
                 material_index: mesh.material_index,
                 ext_mesh_index: mesh.ext_mesh_index,
                 lod: mesh.lod,
                 flags1: mesh.flags1,
                 flags2: mesh.flags2.try_into().unwrap(),
+                base_mesh_index: mesh.base_mesh_index,
             })
             .collect(),
         instances: pyarray_to_mat4s(py, &model.instances)?,
@@ -1379,6 +1386,31 @@ fn material_rs(py: Python, material: &Material) -> PyResult<xc3_model::Material>
             work_color: material.parameters.work_color.clone(),
         },
     })
+}
+
+fn output_assignments_py(assignments: xc3_model::OutputAssignments) -> OutputAssignments {
+    OutputAssignments {
+        assignments: assignments.assignments.map(|a| OutputAssignment {
+            x: a.x.map(ChannelAssignment),
+            y: a.y.map(ChannelAssignment),
+            z: a.z.map(ChannelAssignment),
+            w: a.w.map(ChannelAssignment),
+        }),
+    }
+}
+
+fn output_assignments_rs(assignments: &OutputAssignments) -> xc3_model::OutputAssignments {
+    xc3_model::OutputAssignments {
+        assignments: assignments
+            .assignments
+            .clone()
+            .map(|a| xc3_model::OutputAssignment {
+                x: a.x.map(|v| v.0),
+                y: a.y.map(|v| v.0),
+                z: a.z.map(|v| v.0),
+                w: a.w.map(|v| v.0),
+            }),
+    }
 }
 
 fn model_buffers_rs(
@@ -1574,11 +1606,13 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
                 Mesh {
                     vertex_buffer_index: mesh.vertex_buffer_index,
                     index_buffer_index: mesh.index_buffer_index,
+                    unk_mesh_index1: mesh.unk_mesh_index1,
                     material_index: mesh.material_index,
                     ext_mesh_index: mesh.ext_mesh_index,
                     lod: mesh.lod,
                     flags1: mesh.flags1,
                     flags2: mesh.flags2.into(),
+                    base_mesh_index: mesh.base_mesh_index,
                 }
                 .into_py(py)
             }),

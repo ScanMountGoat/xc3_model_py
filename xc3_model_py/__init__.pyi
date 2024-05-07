@@ -90,13 +90,13 @@ class Mesh:
     vertex_buffer_index: int
     index_buffer_index: int
     material_index: int
-    ext_mesh_index: int
+    ext_mesh_index: Optional[int]
     lod: int
     flags1: int
     flags2: int
 
-    def __init__(self, vertex_buffer_index: int, index_buffer_index: int,
-                 material_index: int, ext_mesh_index: int, lod: int, flags1: int, flags2: int) -> None: ...
+    def __init__(self, vertex_buffer_index: int, index_buffer_index: int, unk_mesh_index1: int, material_index: int,
+                 lod: int, flags1: int, flags2: int, ext_mesh_index: Optional[int], base_mesh_index: Optional[int]) -> None: ...
 
 
 class Skeleton:
@@ -271,6 +271,8 @@ class FilterMode:
 
 class OutputAssignments:
     assignments: list[OutputAssignment]
+
+    def mat_id(self) -> Optional[int]: ...
 
 
 class OutputAssignment:
