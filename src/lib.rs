@@ -187,7 +187,9 @@ impl SkinWeights {
             .iter()
             .map(|i| influence_rs(py, i))
             .collect::<PyResult<Vec<_>>>()?;
-        let weight_indices = skin_weights_rs(py, self)?.add_influences(&influences, vertex_count);
+        let mut skin_weights = skin_weights_rs(py, self)?;
+        let weight_indices = skin_weights.add_influences(&influences, vertex_count);
+        *self = skin_weights_py(py, skin_weights);
         Ok(uvec2s_pyarray(py, &weight_indices))
     }
 }
