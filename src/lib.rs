@@ -137,6 +137,16 @@ impl Weights {
         self.weight_groups
             .weights_start_index(skin_flags, lod, unk_type.into())
     }
+
+    pub fn update_weights(&mut self, py: Python, combined_weights: &SkinWeights) -> PyResult<()> {
+        let mut weights = weights_rs(py, self)?;
+
+        let combined_weights = skin_weights_rs(py, combined_weights)?;
+        weights.update_weights(combined_weights);
+
+        *self = weights_py(py, weights);
+        Ok(())
+    }
 }
 
 #[pyclass(get_all, set_all)]
@@ -165,6 +175,20 @@ impl SkinWeights {
         let weight_indices: Vec<_> = weight_indices.extract(py)?;
         let influences = skin_weights_rs(py, self)?.to_influences(&weight_indices);
         Ok(influences_py(py, influences))
+    }
+
+    pub fn add_influences(
+        &mut self,
+        py: Python,
+        influences: Vec<PyRef<Influence>>,
+        vertex_count: usize,
+    ) -> PyResult<PyObject> {
+        let influences = influences
+            .iter()
+            .map(|i| influence_rs(py, i))
+            .collect::<PyResult<Vec<_>>>()?;
+        let weight_indices = skin_weights_rs(py, self)?.add_influences(&influences, vertex_count);
+        Ok(uvec2s_pyarray(py, &weight_indices))
     }
 }
 
@@ -1156,6 +1180,21 @@ fn influences_py(py: Python, influences: Vec<xc3_model::skinning::Influence>) ->
         .collect()
 }
 
+fn influence_rs(py: Python, influence: &Influence) -> PyResult<xc3_model::skinning::Influence> {
+    Ok(xc3_model::skinning::Influence {
+        bone_name: influence.bone_name.clone(),
+        weights: influence
+            .weights
+            .extract::<Vec<VertexWeight>>(py)?
+            .into_iter()
+            .map(|w| xc3_model::skinning::VertexWeight {
+                vertex_index: w.vertex_index,
+                weight: w.weight,
+            })
+            .collect(),
+    })
+}
+
 #[pyfunction]
 fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
     let database = database_path
@@ -1449,10 +1488,14 @@ fn model_buffers_py(py: Python, buffer: xc3_model::vertex::ModelBuffers) -> Mode
     ModelBuffers {
         vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
         index_buffers: index_buffers_py(py, buffer.index_buffers),
-        weights: buffer.weights.map(|weights| Weights {
-            weight_buffers: weight_buffers_py(py, weights.weight_buffers),
-            weight_groups: weights.weight_groups,
-        }),
+        weights: buffer.weights.map(|weights| weights_py(py, weights)),
+    }
+}
+
+fn weights_py(py: Python, weights: xc3_model::skinning::Weights) -> Weights {
+    Weights {
+        weight_buffers: weight_buffers_py(py, weights.weight_buffers),
+        weight_groups: weights.weight_groups,
     }
 }
 

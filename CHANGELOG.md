@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added fields `unk_mesh_index1`, `ext_mesh_index`, and `base_mesh_index` to `Mesh`.
 * Added method `mat_id` to `OutputAssignments`.
+* Added method `update_weights` to `skinning.Weights`.
+* Added method `add_influences` to `skinning.SkinWeights`.
 
 ### Changed
 * Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.

@@ -14,6 +14,8 @@ class Weights:
     def weights_start_index(self, flags2: int, lod: int,
                             unk_type: RenderPassType) -> int: ...
 
+    def update_weights(self, combined_weights: SkinWeights) -> None: ...
+
 
 class SkinWeights:
     bone_indices: numpy.ndarray
@@ -25,6 +27,8 @@ class SkinWeights:
 
     def to_influences(
         self, weight_indices: numpy.ndarray) -> list[Influence]: ...
+
+    def add_influences(self, influences: list[Influence]) -> numpy.ndarray: ...
 
 
 class Influence:
