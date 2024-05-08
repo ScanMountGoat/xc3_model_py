@@ -270,8 +270,8 @@ impl Model {
 pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
-    pub material_index: usize,
     pub unk_mesh_index1: usize,
+    pub material_index: usize,
     pub ext_mesh_index: Option<usize>,
     pub lod: u16,
     pub flags1: u32,
@@ -285,8 +285,8 @@ impl Mesh {
     pub fn new(
         vertex_buffer_index: usize,
         index_buffer_index: usize,
-        material_index: usize,
         unk_mesh_index1: usize,
+        material_index: usize,
         lod: u16,
         flags1: u32,
         flags2: u32,
