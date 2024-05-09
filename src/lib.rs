@@ -47,8 +47,8 @@ macro_rules! python_enum {
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ModelRoot {
-    pub models: Models,
-    pub buffers: ModelBuffers,
+    pub models: Py<Models>,
+    pub buffers: Py<ModelBuffers>,
     pub image_textures: Py<PyList>,
     pub skeleton: Option<Skeleton>,
 }
@@ -982,8 +982,8 @@ impl Msrd {
 impl ModelRoot {
     #[new]
     pub fn new(
-        models: Models,
-        buffers: ModelBuffers,
+        models: Py<Models>,
+        buffers: Py<ModelBuffers>,
         image_textures: Py<PyList>,
         skeleton: Option<Skeleton>,
     ) -> Self {
@@ -1204,13 +1204,13 @@ fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyRe
         .transpose()
         .map_err(py_exception)?;
     let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
-    Ok(model_root_py(py, root))
+    model_root_py(py, root)
 }
 
 #[pyfunction]
 fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
     let root = xc3_model::load_model_legacy(camdo_path);
-    Ok(model_root_py(py, root))
+    model_root_py(py, root)
 }
 
 #[pyfunction]
@@ -1263,10 +1263,10 @@ fn map_root_py(py: Python, root: xc3_model::MapRoot) -> MapRoot {
     }
 }
 
-fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
-    ModelRoot {
-        models: models_py(py, root.models),
-        buffers: model_buffers_py(py, root.buffers),
+fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> {
+    Ok(ModelRoot {
+        models: Py::new(py, models_py(py, root.models))?,
+        buffers: Py::new(py, model_buffers_py(py, root.buffers))?,
         image_textures: PyList::new(
             py,
             root.image_textures
@@ -1284,7 +1284,7 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> ModelRoot {
             )
             .into(),
         }),
-    }
+    })
 }
 
 fn models_py(py: Python, models: xc3_model::Models) -> Models {
@@ -1564,8 +1564,8 @@ fn image_texture_rs(image: &ImageTexture) -> xc3_model::ImageTexture {
 
 fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot> {
     Ok(xc3_model::ModelRoot {
-        models: models_rs(py, &root.models)?,
-        buffers: model_buffers_rs(py, &root.buffers)?,
+        models: models_rs(py, &root.models.extract(py)?)?,
+        buffers: model_buffers_rs(py, &root.buffers.extract(py)?)?,
         image_textures: root
             .image_textures
             .extract::<'_, Vec<ImageTexture>>(py)?

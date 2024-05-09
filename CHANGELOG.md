@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.
+* Adjusted fields to use references to make nested property access like `root.buffers.vertex_buffers` work as expected.
 
 ### 0.5.1 - 2024-04-29
 ### Fixed
