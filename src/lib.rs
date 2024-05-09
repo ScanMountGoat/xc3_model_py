@@ -80,17 +80,13 @@ impl ModelGroup {
 pub struct ModelBuffers {
     pub vertex_buffers: Py<PyList>,
     pub index_buffers: Py<PyList>,
-    pub weights: Option<Weights>,
+    pub weights: PyObject,
 }
 
 #[pymethods]
 impl ModelBuffers {
     #[new]
-    pub fn new(
-        vertex_buffers: Py<PyList>,
-        index_buffers: Py<PyList>,
-        weights: Option<Weights>,
-    ) -> Self {
+    pub fn new(vertex_buffers: Py<PyList>, index_buffers: Py<PyList>, weights: PyObject) -> Self {
         Self {
             vertex_buffers,
             index_buffers,
@@ -102,6 +98,7 @@ impl ModelBuffers {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Weights {
+    #[pyo3(get, set)]
     weight_buffers: Vec<SkinWeights>,
     // TODO: how to handle this?
     weight_groups: xc3_model::skinning::WeightGroups,
@@ -1223,10 +1220,10 @@ fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyRes
     let roots = py.allow_threads(move || {
         xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)
     })?;
-    Ok(roots
+    roots
         .into_iter()
         .map(|root| map_root_py(py, root))
-        .collect())
+        .collect()
 }
 
 #[pyfunction]
@@ -1244,13 +1241,14 @@ fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
     PyErr::new::<Xc3ModelError, _>(format!("{e}"))
 }
 
-fn map_root_py(py: Python, root: xc3_model::MapRoot) -> MapRoot {
-    MapRoot {
+fn map_root_py(py: Python, root: xc3_model::MapRoot) -> PyResult<MapRoot> {
+    // TODO: Avoid unwrap.
+    Ok(MapRoot {
         groups: PyList::new(
             py,
             root.groups
                 .into_iter()
-                .map(|group| model_group_py(py, group).into_py(py)),
+                .map(|group| model_group_py(py, group).unwrap().into_py(py)),
         )
         .into(),
         image_textures: PyList::new(
@@ -1260,13 +1258,13 @@ fn map_root_py(py: Python, root: xc3_model::MapRoot) -> MapRoot {
                 .map(|t| image_texture_py(t).into_py(py)),
         )
         .into(),
-    }
+    })
 }
 
 fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> {
     Ok(ModelRoot {
         models: Py::new(py, models_py(py, root.models))?,
-        buffers: Py::new(py, model_buffers_py(py, root.buffers))?,
+        buffers: Py::new(py, model_buffers_py(py, root.buffers)?)?,
         image_textures: PyList::new(
             py,
             root.image_textures
@@ -1339,8 +1337,9 @@ fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
     })
 }
 
-fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
-    ModelGroup {
+fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> PyResult<ModelGroup> {
+    // TODO: avoid unwrap.
+    Ok(ModelGroup {
         models: PyList::new(
             py,
             group
@@ -1354,10 +1353,10 @@ fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> ModelGroup {
             group
                 .buffers
                 .into_iter()
-                .map(|buffer| model_buffers_py(py, buffer).into_py(py)),
+                .map(|buffer| model_buffers_py(py, buffer).unwrap().into_py(py)),
         )
         .into(),
-    }
+    })
 }
 
 fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
@@ -1478,20 +1477,25 @@ fn model_buffers_rs(
             })
             .collect::<PyResult<Vec<_>>>()?,
         unk_buffers: Vec::new(),
-        weights: buffer
-            .weights
-            .as_ref()
-            .map(|w| weights_rs(py, w))
-            .transpose()?,
+        // TODO: Nicer way of handling an optional reference?
+        weights: if buffer.weights.is_none(py) {
+            None
+        } else {
+            Some(weights_rs(py, &buffer.weights.extract(py)?)?)
+        },
     })
 }
 
-fn model_buffers_py(py: Python, buffer: xc3_model::vertex::ModelBuffers) -> ModelBuffers {
-    ModelBuffers {
+fn model_buffers_py(py: Python, buffer: xc3_model::vertex::ModelBuffers) -> PyResult<ModelBuffers> {
+    // TODO: Nicer way of handling an optional reference?
+    Ok(ModelBuffers {
         vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
         index_buffers: index_buffers_py(py, buffer.index_buffers),
-        weights: buffer.weights.map(|weights| weights_py(py, weights)),
-    }
+        weights: match buffer.weights {
+            Some(weights) => weights_py(py, weights).into_py(py),
+            None => pyo3::marker::Python::None(py),
+        },
+    })
 }
 
 fn weights_py(py: Python, weights: xc3_model::skinning::Weights) -> Weights {
