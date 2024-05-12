@@ -14,7 +14,9 @@ Parsing and processing happens in optimized Rust code when calling `xc3_model_py
 import xc3_model_py
 
 # Get a list of MapRoot.
-roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd", database_path="xc3.json")
+roots = xc3_model_py.load_map(
+    "xenoblade3_dump/map/ma59a.wismhd", database_path="xc3.json"
+)
 for root in roots:
     for group in root.groups:
         for models in group.models:
@@ -31,7 +33,9 @@ for root in roots:
 
 ```python
 # This returns only a single ModelRoot.
-root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json")
+root = xc3_model_py.load_model(
+    "xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json"
+)
 for material in root.models.materials:
     print(material.name)
 
@@ -52,13 +56,18 @@ for model in root.models.models:
         if buffers.weights is not None:
             # Calculate the index offset based on the weight group for this mesh.
             pass_type = root.models.materials[mesh.material_index].pass_type
-            start_index = buffers.weights.weights_start_index(mesh.flags2, mesh.lod, pass_type)
+            start_index = buffers.weights.weights_start_index(
+                mesh.flags2, mesh.lod, pass_type
+            )
 
             weight_buffer = buffers.weights.weight_buffer(mesh.flags2)
             if weight_buffer is not None:
                 # Get vertex skinning attributes.
                 for attribute in vertex_buffer.attributes:
-                    if attribute.attribute_type == xc3_model_py.vertex.AttributeType.WeightIndex:
+                    if (
+                        attribute.attribute_type
+                        == xc3_model_py.vertex.AttributeType.WeightIndex
+                    ):
                         # Find the actual per vertex skinning information.
                         weight_indices = attribute.data[:, 0] + start_index
                         skin_weights = weight_buffer.weights[weight_indices]
@@ -84,8 +93,10 @@ path = "xenoblade3_dump/chr/ch/ch01027000_event.mot"
 animations = xc3_model_py.load_animations(path)
 
 for animation in animations:
-    print(animation.name, animation.space_mode, animation.play_mode, animation.blend_mode)
-    print(f'frames: {animation.frame_count}, tracks: {len(animation.tracks)}')
+    print(
+        animation.name, animation.space_mode, animation.play_mode, animation.blend_mode
+    )
+    print(f"frames: {animation.frame_count}, tracks: {len(animation.tracks)}")
 
     track = animation.tracks[0]
 
@@ -103,7 +114,7 @@ for animation in animations:
 
     # Sample the transform for a given track at each frame.
     # This essentially "bakes" the keyframes of the animation.
-    for frame in range(animation.frame_count:)
+    for frame in range(animation.frame_count):
         print(track.sample_scale(frame, animation.frame_count))
         print(track.sample_rotation(frame, animation.frame_count))
         print(track.sample_translation(frame, animation.frame_count))
@@ -117,7 +128,7 @@ Logging can be disabled entirely if not needed using `logging.disable()`.
 import logging
 
 # Configure log messages to include more information.
-FORMAT = '%(levelname)s %(name)s %(filename)s:%(lineno)d %(message)s'
+FORMAT = "%(levelname)s %(name)s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 ```
 
