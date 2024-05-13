@@ -17,6 +17,7 @@ class ModelBuffers:
 
 class VertexBuffer:
     attributes: list[AttributeData]
+    morph_blend_target: list[AttributeData]
     morph_targets: list[MorphTarget]
     outline_buffer_index: Optional[int]
 
@@ -49,22 +50,26 @@ class AttributeType:
     VertexColor: ClassVar[AttributeType]
     Blend: ClassVar[AttributeType]
     WeightIndex: ClassVar[AttributeType]
+    Position2: ClassVar[AttributeType]
+    Normal4: ClassVar[AttributeType]
+    OldPosition: ClassVar[AttributeType]
+    Tangent2: ClassVar[AttributeType]
     SkinWeights: ClassVar[AttributeType]
     BoneIndices: ClassVar[AttributeType]
 
 class MorphTarget:
     morph_controller_index: int
     position_deltas: numpy.ndarray
-    normal_deltas: numpy.ndarray
-    tangent_deltas: numpy.ndarray
+    normals: numpy.ndarray
+    tangents: numpy.ndarray
     vertex_indices: numpy.ndarray
 
     def __init__(
         self,
         morph_controller_index: int,
         position_deltas: numpy.ndarray,
-        normal_deltas: numpy.ndarray,
-        tangent_deltas: numpy.ndarray,
+        normals: numpy.ndarray,
+        tangents: numpy.ndarray,
         vertex_indices: numpy.ndarray,
     ) -> None: ...
 

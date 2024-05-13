@@ -495,6 +495,7 @@ impl Texture {
 #[derive(Debug, Clone)]
 pub struct VertexBuffer {
     pub attributes: Py<PyList>,
+    pub morph_blend_target: Py<PyList>,
     pub morph_targets: Py<PyList>,
     pub outline_buffer_index: Option<usize>,
 }
@@ -504,11 +505,13 @@ impl VertexBuffer {
     #[new]
     fn new(
         attributes: Py<PyList>,
+        morph_blend_target: Py<PyList>,
         morph_targets: Py<PyList>,
         outline_buffer_index: Option<usize>,
     ) -> Self {
         Self {
             attributes,
+            morph_blend_target,
             morph_targets,
             outline_buffer_index,
         }
@@ -552,6 +555,10 @@ pub enum AttributeType {
     VertexColor,
     Blend,
     WeightIndex,
+    Position2,
+    Normal4,
+    OldPosition,
+    Tangent2,
     SkinWeights,
     BoneIndices,
 }
@@ -563,9 +570,9 @@ pub struct MorphTarget {
     // N x 3 numpy.ndarray
     pub position_deltas: PyObject,
     // N x 4 numpy.ndarray
-    pub normal_deltas: PyObject,
+    pub normals: PyObject,
     // N x 4 numpy.ndarray
-    pub tangent_deltas: PyObject,
+    pub tangents: PyObject,
     pub vertex_indices: PyObject,
 }
 
@@ -575,15 +582,15 @@ impl MorphTarget {
     fn new(
         morph_controller_index: usize,
         position_deltas: PyObject,
-        normal_deltas: PyObject,
-        tangent_deltas: PyObject,
+        normals: PyObject,
+        tangents: PyObject,
         vertex_indices: PyObject,
     ) -> Self {
         Self {
             morph_controller_index,
             position_deltas,
-            normal_deltas,
-            tangent_deltas,
+            normals,
+            tangents,
             vertex_indices,
         }
     }
@@ -1520,6 +1527,12 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
             .iter()
             .map(|a| attribute_data_rs(py, a))
             .collect::<PyResult<Vec<_>>>()?,
+        morph_blend_target: b
+            .morph_blend_target
+            .extract::<'_, Vec<AttributeData>>(py)?
+            .iter()
+            .map(|a| attribute_data_rs(py, a))
+            .collect::<PyResult<Vec<_>>>()?,
         morph_targets: b
             .morph_targets
             .extract::<'_, Vec<MorphTarget>>(py)?
@@ -1528,8 +1541,8 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
                 Ok(xc3_model::vertex::MorphTarget {
                     morph_controller_index: t.morph_controller_index,
                     position_deltas: pyarray_to_vec3s(py, &t.position_deltas)?,
-                    normal_deltas: pyarray_to_vec4s(py, &t.normal_deltas)?,
-                    tangent_deltas: pyarray_to_vec4s(py, &t.tangent_deltas)?,
+                    normals: pyarray_to_vec4s(py, &t.normals)?,
+                    tangents: pyarray_to_vec4s(py, &t.tangents)?,
                     vertex_indices: t.vertex_indices.extract(py)?,
                 })
             })
@@ -1746,6 +1759,7 @@ fn vertex_buffers_py(
         vertex_buffers.into_iter().map(|buffer| {
             VertexBuffer {
                 attributes: vertex_attributes_py(py, buffer.attributes),
+                morph_blend_target: vertex_attributes_py(py, buffer.morph_blend_target),
                 morph_targets: morph_targets_py(py, buffer.morph_targets),
                 outline_buffer_index: buffer.outline_buffer_index,
             }
@@ -1830,6 +1844,22 @@ fn attribute_data_py(py: Python, attribute: xc3_model::vertex::AttributeData) ->
             attribute_type: AttributeType::WeightIndex,
             data: uvec2s_pyarray(py, &values),
         },
+        xc3_model::vertex::AttributeData::Position2(values) => AttributeData {
+            attribute_type: AttributeType::Position2,
+            data: vec3s_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Normal4(values) => AttributeData {
+            attribute_type: AttributeType::Normal4,
+            data: vec4s_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::OldPosition(values) => AttributeData {
+            attribute_type: AttributeType::OldPosition,
+            data: vec3s_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::Tangent2(values) => AttributeData {
+            attribute_type: AttributeType::Tangent2,
+            data: vec4s_pyarray(py, &values),
+        },
         xc3_model::vertex::AttributeData::SkinWeights(values) => AttributeData {
             attribute_type: AttributeType::SkinWeights,
             data: vec4s_pyarray(py, &values),
@@ -1865,6 +1895,12 @@ fn attribute_data_rs(
         }
         AttributeType::Blend => Ok(AttrRs::Blend(pyarray_to_vec4s(py, &attribute.data)?)),
         AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(attribute.data.extract(py)?)),
+        AttributeType::Position2 => Ok(AttrRs::Position2(pyarray_to_vec3s(py, &attribute.data)?)),
+        AttributeType::Normal4 => Ok(AttrRs::Normal4(pyarray_to_vec4s(py, &attribute.data)?)),
+        AttributeType::OldPosition => {
+            Ok(AttrRs::OldPosition(pyarray_to_vec3s(py, &attribute.data)?))
+        }
+        AttributeType::Tangent2 => Ok(AttrRs::Tangent2(pyarray_to_vec4s(py, &attribute.data)?)),
         AttributeType::SkinWeights => {
             Ok(AttrRs::SkinWeights(pyarray_to_vec4s(py, &attribute.data)?))
         }
@@ -1879,8 +1915,8 @@ fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) ->
             MorphTarget {
                 morph_controller_index: target.morph_controller_index,
                 position_deltas: vec3s_pyarray(py, &target.position_deltas),
-                normal_deltas: vec4s_pyarray(py, &target.normal_deltas),
-                tangent_deltas: vec4s_pyarray(py, &target.tangent_deltas),
+                normals: vec4s_pyarray(py, &target.normals),
+                tangents: vec4s_pyarray(py, &target.tangents),
                 vertex_indices: target.vertex_indices.into_pyarray(py).into(),
             }
             .into_py(py)
