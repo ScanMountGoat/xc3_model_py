@@ -1424,7 +1424,7 @@ fn material_rs(py: Python, material: &Material) -> PyResult<xc3_model::Material>
                 ref_value: a.ref_value,
             }),
         shader: material.shader.clone().map(|s| s.0),
-        pass_type: xc3_model::RenderPassType::Unk0,
+        pass_type: material.pass_type.into(),
         parameters: xc3_model::MaterialParameters {
             mat_color: material.parameters.mat_color,
             alpha_test_ref: material.parameters.alpha_test_ref,
