@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added method `add_influences` to `skinning.SkinWeights`.
 * Added field `morph_blend_target` to `vertex.VertexBuffer` for base morph attributes.
 * Added base morph attributes `Position2`, `Normal4`, `OldPosition`, and `Tangent2` to `vertex.AttributeType`.
+* Added `SkinWeights2` and `BoneIndices2` to `vertex.AttributeType`.
 
 ### Changed
 * Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.

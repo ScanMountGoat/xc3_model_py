@@ -560,7 +560,9 @@ pub enum AttributeType {
     OldPosition,
     Tangent2,
     SkinWeights,
+    SkinWeights2,
     BoneIndices,
+    BoneIndices2,
 }
 
 #[pyclass(get_all, set_all)]
@@ -1213,7 +1215,7 @@ fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyRe
 
 #[pyfunction]
 fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
-    let root = xc3_model::load_model_legacy(camdo_path);
+    let root = xc3_model::load_model_legacy(camdo_path).map_err(py_exception)?;
     model_root_py(py, root)
 }
 
@@ -1864,8 +1866,16 @@ fn attribute_data_py(py: Python, attribute: xc3_model::vertex::AttributeData) ->
             attribute_type: AttributeType::SkinWeights,
             data: vec4s_pyarray(py, &values),
         },
+        xc3_model::vertex::AttributeData::SkinWeights2(values) => AttributeData {
+            attribute_type: AttributeType::SkinWeights2,
+            data: vec3s_pyarray(py, &values),
+        },
         xc3_model::vertex::AttributeData::BoneIndices(values) => AttributeData {
             attribute_type: AttributeType::BoneIndices,
+            data: uvec4_pyarray(py, &values),
+        },
+        xc3_model::vertex::AttributeData::BoneIndices2(values) => AttributeData {
+            attribute_type: AttributeType::BoneIndices2,
             data: uvec4_pyarray(py, &values),
         },
     }
@@ -1904,7 +1914,11 @@ fn attribute_data_rs(
         AttributeType::SkinWeights => {
             Ok(AttrRs::SkinWeights(pyarray_to_vec4s(py, &attribute.data)?))
         }
+        AttributeType::SkinWeights2 => {
+            Ok(AttrRs::SkinWeights2(pyarray_to_vec3s(py, &attribute.data)?))
+        }
         AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(attribute.data.extract(py)?)),
+        AttributeType::BoneIndices2 => Ok(AttrRs::BoneIndices2(attribute.data.extract(py)?)),
     }
 }
 

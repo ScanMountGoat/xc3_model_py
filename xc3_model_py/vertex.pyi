@@ -55,7 +55,9 @@ class AttributeType:
     OldPosition: ClassVar[AttributeType]
     Tangent2: ClassVar[AttributeType]
     SkinWeights: ClassVar[AttributeType]
+    SkinWeights2: ClassVar[AttributeType]
     BoneIndices: ClassVar[AttributeType]
+    BoneIndices2: ClassVar[AttributeType]
 
 class MorphTarget:
     morph_controller_index: int
