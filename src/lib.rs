@@ -1004,7 +1004,7 @@ impl ModelRoot {
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
         let buffers = self
             .image_textures
-            .extract::<'_, Vec<ImageTexture>>(py)?
+            .extract::<'_, '_, Vec<ImageTexture>>(py)?
             .par_iter()
             .map(|image| {
                 // TODO: Use image_dds directly to avoid cloning?
@@ -1035,7 +1035,7 @@ impl ModelRoot {
         flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
         self.image_textures
-            .extract::<'_, Vec<ImageTexture>>(py)?
+            .extract::<'_, '_, Vec<ImageTexture>>(py)?
             .par_iter()
             .enumerate()
             .map(|(i, texture)| {
@@ -1081,7 +1081,7 @@ impl MapRoot {
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
         let buffers = self
             .image_textures
-            .extract::<'_, Vec<ImageTexture>>(py)?
+            .extract::<'_, '_, Vec<ImageTexture>>(py)?
             .par_iter()
             .map(|image| {
                 // TODO: Use image_dds directly to avoid cloning?
@@ -1112,7 +1112,7 @@ impl MapRoot {
         flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
         self.image_textures
-            .extract::<'_, Vec<ImageTexture>>(py)?
+            .extract::<'_, '_, Vec<ImageTexture>>(py)?
             .par_iter()
             .enumerate()
             .map(|(i, texture)| {
@@ -1322,19 +1322,19 @@ fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
     Ok(xc3_model::Models {
         models: models
             .models
-            .extract::<'_, Vec<Model>>(py)?
+            .extract::<'_, '_, Vec<Model>>(py)?
             .iter()
             .map(|model| model_rs(py, model))
             .collect::<PyResult<Vec<_>>>()?,
         materials: models
             .materials
-            .extract::<'_, Vec<Material>>(py)?
+            .extract::<'_, '_, Vec<Material>>(py)?
             .iter()
             .map(|m| material_rs(py, m))
             .collect::<PyResult<Vec<_>>>()?,
         samplers: models
             .samplers
-            .extract::<'_, Vec<Sampler>>(py)?
+            .extract::<'_, '_, Vec<Sampler>>(py)?
             .iter()
             .map(sampler_rs)
             .collect(),
@@ -1372,7 +1372,7 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
     Ok(xc3_model::Model {
         meshes: model
             .meshes
-            .extract::<'_, Vec<Mesh>>(py)?
+            .extract::<'_, '_, Vec<Mesh>>(py)?
             .iter()
             .map(|mesh| xc3_model::Mesh {
                 vertex_buffer_index: mesh.vertex_buffer_index,
@@ -1410,7 +1410,7 @@ fn material_rs(py: Python, material: &Material) -> PyResult<xc3_model::Material>
         },
         textures: material
             .textures
-            .extract::<'_, Vec<Texture>>(py)?
+            .extract::<'_, '_, Vec<Texture>>(py)?
             .iter()
             .map(|t| xc3_model::Texture {
                 image_texture_index: t.image_texture_index,
@@ -1469,7 +1469,7 @@ fn model_buffers_rs(
     Ok(xc3_model::vertex::ModelBuffers {
         vertex_buffers: buffer
             .vertex_buffers
-            .extract::<'_, Vec<VertexBuffer>>(py)?
+            .extract::<'_, '_, Vec<VertexBuffer>>(py)?
             .iter()
             .map(|b| vertex_buffer_rs(py, b))
             .collect::<PyResult<Vec<_>>>()?,
@@ -1477,7 +1477,7 @@ fn model_buffers_rs(
         outline_buffers: Vec::new(),
         index_buffers: buffer
             .index_buffers
-            .extract::<'_, Vec<IndexBuffer>>(py)?
+            .extract::<'_, '_, Vec<IndexBuffer>>(py)?
             .iter()
             .map(|b| {
                 Ok(xc3_model::vertex::IndexBuffer {
@@ -1525,19 +1525,19 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
     Ok(xc3_model::vertex::VertexBuffer {
         attributes: b
             .attributes
-            .extract::<'_, Vec<AttributeData>>(py)?
+            .extract::<'_, '_, Vec<AttributeData>>(py)?
             .iter()
             .map(|a| attribute_data_rs(py, a))
             .collect::<PyResult<Vec<_>>>()?,
         morph_blend_target: b
             .morph_blend_target
-            .extract::<'_, Vec<AttributeData>>(py)?
+            .extract::<'_, '_, Vec<AttributeData>>(py)?
             .iter()
             .map(|a| attribute_data_rs(py, a))
             .collect::<PyResult<Vec<_>>>()?,
         morph_targets: b
             .morph_targets
-            .extract::<'_, Vec<MorphTarget>>(py)?
+            .extract::<'_, '_, Vec<MorphTarget>>(py)?
             .iter()
             .map(|t| {
                 Ok(xc3_model::vertex::MorphTarget {
@@ -1587,7 +1587,7 @@ fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot>
         buffers: model_buffers_rs(py, &root.buffers.extract(py)?)?,
         image_textures: root
             .image_textures
-            .extract::<'_, Vec<ImageTexture>>(py)?
+            .extract::<'_, '_, Vec<ImageTexture>>(py)?
             .iter()
             .map(image_texture_rs)
             .collect(),
@@ -1639,7 +1639,7 @@ fn skeleton_rs(py: Python, skeleton: &Skeleton) -> PyResult<xc3_model::Skeleton>
     Ok(xc3_model::Skeleton {
         bones: skeleton
             .bones
-            .extract::<'_, Vec<Bone>>(py)?
+            .extract::<'_, '_, Vec<Bone>>(py)?
             .iter()
             .map(|b| bone_rs(py, b))
             .collect::<Result<Vec<_>, _>>()?,
