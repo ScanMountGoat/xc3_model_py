@@ -125,12 +125,7 @@ impl Weights {
     }
 
     // TODO: make this a method of WeightGroups?
-    pub fn weights_start_index(
-        &self,
-        skin_flags: u32,
-        lod: u16,
-        unk_type: RenderPassType,
-    ) -> usize {
+    pub fn weights_start_index(&self, skin_flags: u32, lod: u8, unk_type: RenderPassType) -> usize {
         self.weight_groups
             .weights_start_index(skin_flags, lod, unk_type.into())
     }
@@ -272,7 +267,7 @@ pub struct Mesh {
     pub unk_mesh_index1: usize,
     pub material_index: usize,
     pub ext_mesh_index: Option<usize>,
-    pub lod: u16,
+    pub lod: u8,
     pub flags1: u32,
     pub flags2: u32,
     pub base_mesh_index: Option<usize>,
@@ -286,7 +281,7 @@ impl Mesh {
         index_buffer_index: usize,
         unk_mesh_index1: usize,
         material_index: usize,
-        lod: u16,
+        lod: u8,
         flags1: u32,
         flags2: u32,
         ext_mesh_index: Option<usize>,
