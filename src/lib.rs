@@ -1437,7 +1437,7 @@ fn lod_data_rs(data: &LodData, py: Python) -> PyResult<xc3_model::LodData> {
             })
             .collect(),
         groups: data
-            .items
+            .groups
             .extract::<'_, '_, Vec<LodGroup>>(py)?
             .iter()
             .map(|g| xc3_model::LodGroup {
