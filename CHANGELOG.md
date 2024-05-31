@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `morph_blend_target` to `vertex.VertexBuffer` for base morph attributes.
 * Added base morph attributes `Position2`, `Normal4`, `OldPosition`, and `Tangent2` to `vertex.AttributeType`.
 * Added `SkinWeights2` and `BoneIndices2` to `vertex.AttributeType`.
+* Added `LodData`, `LodItem`, and `LodGroup` types.
 
 ### Changed
 * Adjusted the signature of `animation.Track.sample_` methods to also take the frame count.
 * Adjusted fields to use references to make nested property access like `root.buffers.vertex_buffers` work as expected.
-* Changed `MorphTarget.tangent_deltas` to `MorphTarget.tangents` to better reflect in game data.
-* Changed `MorphTarget.normal_deltas` to `MorphTarget.normals` to better reflect in game data.
+* Changed field `MorphTarget.tangent_deltas` to `MorphTarget.tangents` to better reflect in game data.
+* Changed field `MorphTarget.normal_deltas` to `MorphTarget.normals` to better reflect in game data.
+* Changed field `Models.base_lod_indices` to `Models.lod_data` to better reflect in game data.
+* Renamed field `Mesh.lod` to `Mesh.lod_item_index` as an optional 0-based integer index.
 
 ### 0.5.1 - 2024-04-29
 ### Fixed

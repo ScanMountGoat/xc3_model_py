@@ -56,7 +56,7 @@ class Models:
     models: list[Model]
     materials: list[Material]
     samplers: list[Sampler]
-    base_lod_indices: Optional[list[int]]
+    lod_data: Optional[LodData]
     morph_controller_names: list[str]
     animation_morph_names: list[str]
     max_xyz: list[float]
@@ -71,7 +71,7 @@ class Models:
         min_xyz: list[float],
         morph_controller_names: list[str],
         animation_morph_names: list[str],
-        base_lod_indices: Optional[list[int]],
+        lod_data: Optional[LodData],
     ) -> None: ...
 
 class Model:
@@ -97,7 +97,7 @@ class Mesh:
     index_buffer_index: int
     material_index: int
     ext_mesh_index: Optional[int]
-    lod: int
+    lod_item_index: Optional[int]
     flags1: int
     flags2: int
 
@@ -107,12 +107,31 @@ class Mesh:
         index_buffer_index: int,
         unk_mesh_index1: int,
         material_index: int,
-        lod: int,
         flags1: int,
         flags2: int,
+        lod_item_index: Optional[int],
         ext_mesh_index: Optional[int],
         base_mesh_index: Optional[int],
     ) -> None: ...
+
+class LodData:
+    items: list[LodItem]
+    groups: list[LodGroup]
+
+    def __init__(self, items: list[LodItem], groups: list[LodGroup]) -> None: ...
+
+class LodItem:
+    unk2: float
+    index: int
+    unk5: int
+
+    def __init__(self, unk2: float, index: int, unk5: int) -> None: ...
+
+class LodGroup:
+    base_lod_index: int
+    lod_count: int
+
+    def __init__(self, base_lod_index: int, lod_count: int) -> None: ...
 
 class Skeleton:
     bones: list[Bone]

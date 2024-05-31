@@ -125,9 +125,15 @@ impl Weights {
     }
 
     // TODO: make this a method of WeightGroups?
-    pub fn weights_start_index(&self, skin_flags: u32, lod: u8, unk_type: RenderPassType) -> usize {
+    pub fn weights_start_index(
+        &self,
+        skin_flags: u32,
+        lod_item_index: usize,
+        unk_type: RenderPassType,
+    ) -> usize {
+        // TODO: Move the optional parameter last in Rust to match Python?
         self.weight_groups
-            .weights_start_index(skin_flags, lod, unk_type.into())
+            .weights_start_index(skin_flags, Some(lod_item_index), unk_type.into())
     }
 
     pub fn update_weights(&mut self, py: Python, combined_weights: &SkinWeights) -> PyResult<()> {
@@ -192,11 +198,11 @@ pub struct Models {
     pub models: Py<PyList>,
     pub materials: Py<PyList>,
     pub samplers: Py<PyList>,
-    pub base_lod_indices: Option<Vec<u16>>,
     pub morph_controller_names: Py<PyList>,
     pub animation_morph_names: Py<PyList>,
     pub max_xyz: [f32; 3],
     pub min_xyz: [f32; 3],
+    pub lod_data: Option<LodData>,
 }
 
 #[pymethods]
@@ -210,13 +216,13 @@ impl Models {
         min_xyz: [f32; 3],
         morph_controller_names: Py<PyList>,
         animation_morph_names: Py<PyList>,
-        base_lod_indices: Option<Vec<u16>>,
+        lod_data: Option<LodData>,
     ) -> Self {
         Self {
             models,
             materials,
             samplers,
-            base_lod_indices,
+            lod_data,
             morph_controller_names,
             animation_morph_names,
             max_xyz,
@@ -267,7 +273,7 @@ pub struct Mesh {
     pub unk_mesh_index1: usize,
     pub material_index: usize,
     pub ext_mesh_index: Option<usize>,
-    pub lod: u8,
+    pub lod_item_index: Option<usize>,
     pub flags1: u32,
     pub flags2: u32,
     pub base_mesh_index: Option<usize>,
@@ -281,9 +287,9 @@ impl Mesh {
         index_buffer_index: usize,
         unk_mesh_index1: usize,
         material_index: usize,
-        lod: u8,
         flags1: u32,
         flags2: u32,
+        lod_item_index: Option<usize>,
         ext_mesh_index: Option<usize>,
         base_mesh_index: Option<usize>,
     ) -> Self {
@@ -293,10 +299,59 @@ impl Mesh {
             unk_mesh_index1,
             material_index,
             ext_mesh_index,
-            lod,
+            lod_item_index,
             flags1,
             flags2,
             base_mesh_index,
+        }
+    }
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone)]
+pub struct LodData {
+    pub items: Py<PyList>,
+    pub groups: Py<PyList>,
+}
+
+#[pymethods]
+impl LodData {
+    #[new]
+    pub fn new(items: Py<PyList>, groups: Py<PyList>) -> Self {
+        Self { items, groups }
+    }
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone)]
+pub struct LodItem {
+    pub unk2: f32,
+    pub index: u8,
+    pub unk5: u8,
+}
+
+#[pymethods]
+impl LodItem {
+    #[new]
+    pub fn new(unk2: f32, index: u8, unk5: u8) -> Self {
+        Self { unk2, index, unk5 }
+    }
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone)]
+pub struct LodGroup {
+    pub base_lod_index: usize,
+    pub lod_count: usize,
+}
+
+#[pymethods]
+impl LodGroup {
+    #[new]
+    pub fn new(base_lod_index: usize, lod_count: usize) -> Self {
+        Self {
+            base_lod_index,
+            lod_count,
         }
     }
 }
@@ -1305,7 +1360,31 @@ fn models_py(py: Python, models: xc3_model::Models) -> Models {
             models.samplers.iter().map(|s| sampler_py(s).into_py(py)),
         )
         .into(),
-        base_lod_indices: models.base_lod_indices,
+        lod_data: models.lod_data.map(|data| LodData {
+            items: PyList::new_bound(
+                py,
+                data.items.into_iter().map(|i| {
+                    LodItem {
+                        unk2: i.unk2,
+                        index: i.index,
+                        unk5: i.unk5,
+                    }
+                    .into_py(py)
+                }),
+            )
+            .into(),
+            groups: PyList::new_bound(
+                py,
+                data.groups.into_iter().map(|g| {
+                    LodGroup {
+                        base_lod_index: g.base_lod_index,
+                        lod_count: g.lod_count,
+                    }
+                    .into_py(py)
+                }),
+            )
+            .into(),
+        }),
         morph_controller_names: PyList::new_bound(py, models.morph_controller_names).into(),
         animation_morph_names: PyList::new_bound(py, models.animation_morph_names).into(),
         max_xyz: models.max_xyz.to_array(),
@@ -1333,11 +1412,39 @@ fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
             .iter()
             .map(sampler_rs)
             .collect(),
-        base_lod_indices: models.base_lod_indices.clone(),
+        lod_data: models
+            .lod_data
+            .as_ref()
+            .map(|data| lod_data_rs(data, py))
+            .transpose()?,
         morph_controller_names: models.morph_controller_names.extract(py)?,
         animation_morph_names: models.animation_morph_names.extract(py)?,
         max_xyz: models.max_xyz.into(),
         min_xyz: models.min_xyz.into(),
+    })
+}
+
+fn lod_data_rs(data: &LodData, py: Python) -> PyResult<xc3_model::LodData> {
+    Ok(xc3_model::LodData {
+        items: data
+            .items
+            .extract::<'_, '_, Vec<LodItem>>(py)?
+            .iter()
+            .map(|i| xc3_model::LodItem {
+                unk2: i.unk2,
+                index: i.index,
+                unk5: i.unk5,
+            })
+            .collect(),
+        groups: data
+            .items
+            .extract::<'_, '_, Vec<LodGroup>>(py)?
+            .iter()
+            .map(|g| xc3_model::LodGroup {
+                base_lod_index: g.base_lod_index,
+                lod_count: g.lod_count,
+            })
+            .collect(),
     })
 }
 
@@ -1375,7 +1482,7 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
                 unk_mesh_index1: mesh.unk_mesh_index1,
                 material_index: mesh.material_index,
                 ext_mesh_index: mesh.ext_mesh_index,
-                lod: mesh.lod,
+                lod_item_index: mesh.lod_item_index,
                 flags1: mesh.flags1,
                 flags2: mesh.flags2.try_into().unwrap(),
                 base_mesh_index: mesh.base_mesh_index,
@@ -1668,7 +1775,7 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
                     unk_mesh_index1: mesh.unk_mesh_index1,
                     material_index: mesh.material_index,
                     ext_mesh_index: mesh.ext_mesh_index,
-                    lod: mesh.lod,
+                    lod_item_index: mesh.lod_item_index,
                     flags1: mesh.flags1,
                     flags2: mesh.flags2.into(),
                     base_mesh_index: mesh.base_mesh_index,
@@ -2109,6 +2216,10 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Models>()?;
     m.add_class::<Model>()?;
     m.add_class::<Mesh>()?;
+
+    m.add_class::<LodData>()?;
+    m.add_class::<LodItem>()?;
+    m.add_class::<LodGroup>()?;
 
     m.add_class::<Skeleton>()?;
     m.add_class::<Bone>()?;
