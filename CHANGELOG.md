@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed field `MorphTarget.normal_deltas` to `MorphTarget.normals` to better reflect in game data.
 * Changed field `Models.base_lod_indices` to `Models.lod_data` to better reflect in game data.
 * Renamed field `Mesh.lod` to `Mesh.lod_item_index` as an optional 0-based integer index.
+* Changed the output file names for `save_images_rgba8` to always include the image index.
 
 ### 0.5.1 - 2024-04-29
 ### Fixed

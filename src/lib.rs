@@ -1084,31 +1084,7 @@ impl ModelRoot {
         ext: &str,
         flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
-        self.image_textures
-            .extract::<'_, '_, Vec<ImageTexture>>(py)?
-            .par_iter()
-            .enumerate()
-            .map(|(i, texture)| {
-                // TODO: Better way to handle missing name?
-                let filename = texture
-                    .name
-                    .as_ref()
-                    .map(|n| format!("{prefix}.{n}.{ext}"))
-                    .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
-                let path = Path::new(folder).join(filename);
-
-                let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
-                if flip_vertical {
-                    // Xenoblade X images need to be flipped vertically to look as expected.
-                    // TODO: Is there a better way of handling this?
-                    image = image_dds::image::imageops::flip_vertical(&image);
-                }
-
-                image.save(&path).map_err(py_exception)?;
-
-                Ok(path.to_string_lossy().to_string())
-            })
-            .collect()
+        save_images_rgba8(py, &self.image_textures, folder, prefix, ext, flip_vertical)
     }
 
     pub fn to_mxmd_model(&self, py: Python, mxmd: &Mxmd, msrd: &Msrd) -> PyResult<(Mxmd, Msrd)> {
@@ -1161,33 +1137,44 @@ impl MapRoot {
         ext: &str,
         flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
-        self.image_textures
-            .extract::<'_, '_, Vec<ImageTexture>>(py)?
-            .par_iter()
-            .enumerate()
-            .map(|(i, texture)| {
-                // TODO: Better way to handle missing name?
-                let filename = texture
-                    .name
-                    .as_ref()
-                    .map(|n| format!("{prefix}.{n}.{ext}"))
-                    .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
-                let path = Path::new(folder).join(filename);
-
-                let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
-                if flip_vertical {
-                    // Xenoblade X images need to be flipped vertically to look as expected.
-                    // TODO: Is there a better way of handling this?
-                    image = image_dds::image::imageops::flip_vertical(&image);
-                }
-
-                image.save(&path).map_err(py_exception)?;
-
-                Ok(path.to_string_lossy().to_string())
-            })
-            .collect()
+        save_images_rgba8(py, &self.image_textures, folder, prefix, ext, flip_vertical)
     }
     // TODO: support texture edits as well?
+}
+
+fn save_images_rgba8(
+    py: Python,
+    image_textures: &Py<PyList>,
+    folder: &str,
+    prefix: &str,
+    ext: &str,
+    flip_vertical: bool,
+) -> PyResult<Vec<String>> {
+    image_textures
+        .extract::<'_, '_, Vec<ImageTexture>>(py)?
+        .par_iter()
+        .enumerate()
+        .map(|(i, texture)| {
+            // Use the same naming conventions as xc3_tex.
+            let filename = texture
+                .name
+                .as_ref()
+                .map(|n| format!("{prefix}.{i}.{n}.{ext}"))
+                .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
+            let path = Path::new(folder).join(filename);
+
+            let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+            if flip_vertical {
+                // Xenoblade X images need to be flipped vertically to look as expected.
+                // TODO: Is there a better way of handling this?
+                image = image_dds::image::imageops::flip_vertical(&image);
+            }
+
+            image.save(&path).map_err(py_exception)?;
+
+            Ok(path.to_string_lossy().to_string())
+        })
+        .collect()
 }
 
 #[pymethods]
