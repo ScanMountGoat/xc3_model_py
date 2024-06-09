@@ -1,6 +1,6 @@
 [package]
 name = "xc3_model_py"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["ScanMountGoat"]
 edition = "2021"
 
