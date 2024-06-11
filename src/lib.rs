@@ -270,7 +270,7 @@ impl Model {
 pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
-    pub unk_mesh_index1: usize,
+    pub index_buffer_index2: usize,
     pub material_index: usize,
     pub ext_mesh_index: Option<usize>,
     pub lod_item_index: Option<usize>,
@@ -285,7 +285,7 @@ impl Mesh {
     pub fn new(
         vertex_buffer_index: usize,
         index_buffer_index: usize,
-        unk_mesh_index1: usize,
+        index_buffer_index2: usize,
         material_index: usize,
         flags1: u32,
         flags2: u32,
@@ -296,7 +296,7 @@ impl Mesh {
         Self {
             vertex_buffer_index,
             index_buffer_index,
-            unk_mesh_index1,
+            index_buffer_index2,
             material_index,
             ext_mesh_index,
             lod_item_index,
@@ -881,6 +881,13 @@ pub struct ChannelAssignmentTexture {
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
+pub struct ChannelAssignmentAttribute {
+    pub name: String,
+    pub channel_index: usize,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone)]
 pub struct Animation {
     pub name: String,
     pub space_mode: SpaceMode,
@@ -1193,14 +1200,27 @@ impl ChannelAssignment {
                 texcoord_name,
                 texcoord_scale,
             }),
-            xc3_model::ChannelAssignment::Value(_) => None,
+            _ => None,
         }
     }
 
     pub fn value(&self) -> Option<f32> {
         match self.0 {
-            xc3_model::ChannelAssignment::Texture { .. } => None,
             xc3_model::ChannelAssignment::Value(f) => Some(f),
+            _ => None,
+        }
+    }
+
+    pub fn attribute(&self) -> Option<ChannelAssignmentAttribute> {
+        match self.0.clone() {
+            xc3_model::ChannelAssignment::Attribute {
+                name,
+                channel_index,
+            } => Some(ChannelAssignmentAttribute {
+                name,
+                channel_index,
+            }),
+            _ => None,
         }
     }
 }
@@ -1466,7 +1486,7 @@ fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
             .map(|mesh| xc3_model::Mesh {
                 vertex_buffer_index: mesh.vertex_buffer_index,
                 index_buffer_index: mesh.index_buffer_index,
-                unk_mesh_index1: mesh.unk_mesh_index1,
+                index_buffer_index2: mesh.index_buffer_index2,
                 material_index: mesh.material_index,
                 ext_mesh_index: mesh.ext_mesh_index,
                 lod_item_index: mesh.lod_item_index,
@@ -1759,7 +1779,7 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
                 Mesh {
                     vertex_buffer_index: mesh.vertex_buffer_index,
                     index_buffer_index: mesh.index_buffer_index,
-                    unk_mesh_index1: mesh.unk_mesh_index1,
+                    index_buffer_index2: mesh.index_buffer_index2,
                     material_index: mesh.material_index,
                     ext_mesh_index: mesh.ext_mesh_index,
                     lod_item_index: mesh.lod_item_index,

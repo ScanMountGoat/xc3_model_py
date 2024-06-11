@@ -95,6 +95,7 @@ class Model:
 class Mesh:
     vertex_buffer_index: int
     index_buffer_index: int
+    index_buffer_index2: int
     material_index: int
     ext_mesh_index: Optional[int]
     lod_item_index: Optional[int]
@@ -105,7 +106,7 @@ class Mesh:
         self,
         vertex_buffer_index: int,
         index_buffer_index: int,
-        unk_mesh_index1: int,
+        index_buffer_index2: int,
         material_index: int,
         flags1: int,
         flags2: int,
@@ -330,12 +331,17 @@ class OutputAssignment:
 class ChannelAssignment:
     def texture(self) -> Optional[ChannelAssignmentTexture]: ...
     def value(self) -> Optional[float]: ...
+    def attribute(self) -> Optional[ChannelAssignmentAttribute]: ...
 
 class ChannelAssignmentTexture:
     name: str
     channel_index: int
     texcoord_name: Optional[str]
     texcoord_scale: Optional[Tuple[float, float]]
+
+class ChannelAssignmentAttribute:
+    name: str
+    channel_index: int
 
 class Mxmd:
     @staticmethod
