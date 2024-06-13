@@ -80,13 +80,17 @@ impl ModelGroup {
 pub struct ModelBuffers {
     pub vertex_buffers: Py<PyList>,
     pub index_buffers: Py<PyList>,
-    pub weights: PyObject,
+    pub weights: Option<Py<Weights>>,
 }
 
 #[pymethods]
 impl ModelBuffers {
     #[new]
-    pub fn new(vertex_buffers: Py<PyList>, index_buffers: Py<PyList>, weights: PyObject) -> Self {
+    pub fn new(
+        vertex_buffers: Py<PyList>,
+        index_buffers: Py<PyList>,
+        weights: Option<Py<Weights>>,
+    ) -> Self {
         Self {
             vertex_buffers,
             index_buffers,
@@ -1595,24 +1599,22 @@ fn model_buffers_rs(
             })
             .collect::<PyResult<Vec<_>>>()?,
         unk_buffers: Vec::new(),
-        // TODO: Nicer way of handling an optional reference?
-        weights: if buffer.weights.is_none(py) {
-            None
-        } else {
-            Some(weights_rs(py, &buffer.weights.extract(py)?)?)
-        },
+        weights: buffer
+            .weights
+            .as_ref()
+            .map(|w| weights_rs(py, &w.extract(py)?))
+            .transpose()?,
     })
 }
 
 fn model_buffers_py(py: Python, buffer: xc3_model::vertex::ModelBuffers) -> PyResult<ModelBuffers> {
-    // TODO: Nicer way of handling an optional reference?
     Ok(ModelBuffers {
         vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers),
         index_buffers: index_buffers_py(py, buffer.index_buffers),
-        weights: match buffer.weights {
-            Some(weights) => weights_py(py, weights).into_py(py),
-            None => pyo3::marker::Python::None(py),
-        },
+        weights: buffer
+            .weights
+            .map(|w| Py::new(py, weights_py(py, w)))
+            .transpose()?,
     })
 }
 
