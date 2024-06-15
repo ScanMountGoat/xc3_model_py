@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, types::PyList};
 
-use crate::{pyarray_to_vec4s, uvec2s_pyarray, uvec4_pyarray, vec4s_pyarray, RenderPassType};
+use crate::{map_py::MapPy, uvec2s_pyarray, uvec4_pyarray, RenderPassType};
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -26,9 +26,10 @@ impl Weights {
     }
 
     pub fn weight_buffer(&self, py: Python, flags2: u32) -> PyResult<Option<SkinWeights>> {
-        Ok(weights_rs(py, self)?
+        weights_rs(py, self)?
             .weight_buffer(flags2)
-            .map(|b| skin_weights_py(py, b)))
+            .map(|b| skin_weights_py(py, b))
+            .transpose()
     }
 
     // TODO: make this a method of WeightGroups?
@@ -49,7 +50,7 @@ impl Weights {
         let combined_weights = skin_weights_rs(py, combined_weights)?;
         weights.update_weights(combined_weights);
 
-        *self = weights_py(py, weights);
+        *self = weights_py(py, weights)?;
         Ok(())
     }
 }
@@ -94,7 +95,7 @@ impl SkinWeights {
             .collect::<PyResult<Vec<_>>>()?;
         let mut skin_weights = skin_weights_rs(py, self)?;
         let weight_indices = skin_weights.add_influences(&influences, vertex_count);
-        *self = skin_weights_py(py, skin_weights);
+        *self = skin_weights_py(py, skin_weights)?;
         Ok(uvec2s_pyarray(py, &weight_indices))
     }
 }
@@ -157,34 +158,34 @@ fn weight_buffers_rs(
 fn skin_weights_rs(py: Python, w: &SkinWeights) -> PyResult<xc3_model::skinning::SkinWeights> {
     Ok(xc3_model::skinning::SkinWeights {
         bone_indices: w.bone_indices.extract(py)?,
-        weights: pyarray_to_vec4s(py, &w.weights)?,
+        weights: w.weights.map_py(py)?,
         bone_names: w.bone_names.extract(py)?,
     })
 }
 
-fn skin_weights_py(py: Python, w: xc3_model::skinning::SkinWeights) -> SkinWeights {
-    SkinWeights {
+fn skin_weights_py(py: Python, w: xc3_model::skinning::SkinWeights) -> PyResult<SkinWeights> {
+    Ok(SkinWeights {
         bone_indices: uvec4_pyarray(py, &w.bone_indices),
-        weights: vec4s_pyarray(py, &w.weights),
+        weights: w.weights.map_py(py)?,
         bone_names: PyList::new_bound(py, &w.bone_names).into(),
-    }
+    })
 }
 
 fn weight_buffers_py(
     py: Python,
     weight_buffers: Vec<xc3_model::skinning::SkinWeights>,
-) -> Vec<SkinWeights> {
+) -> PyResult<Vec<SkinWeights>> {
     weight_buffers
         .into_iter()
         .map(|w| skin_weights_py(py, w))
         .collect()
 }
 
-pub fn weights_py(py: Python, weights: xc3_model::skinning::Weights) -> Weights {
-    Weights {
-        weight_buffers: weight_buffers_py(py, weights.weight_buffers),
+pub fn weights_py(py: Python, weights: xc3_model::skinning::Weights) -> PyResult<Weights> {
+    Ok(Weights {
+        weight_buffers: weight_buffers_py(py, weights.weight_buffers)?,
         weight_groups: weights.weight_groups,
-    }
+    })
 }
 
 pub fn weights_rs(py: Python, w: &Weights) -> PyResult<xc3_model::skinning::Weights> {

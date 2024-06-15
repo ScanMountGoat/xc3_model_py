@@ -1,12 +1,13 @@
 use std::path::Path;
 
-use glam::{Mat4, Vec2, Vec3, Vec4};
+use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
 use vertex::{model_buffers_py, model_buffers_rs, ModelBuffers};
 
 mod animation;
+mod map_py;
 mod skinning;
 mod vertex;
 
@@ -1437,59 +1438,6 @@ fn sampler_rs(s: &Sampler) -> xc3_model::Sampler {
     }
 }
 
-// TODO: Share code?
-fn vec2s_pyarray(py: Python, values: &[Vec2]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let count = values.len();
-    values
-        .iter()
-        .flat_map(|v| v.to_array())
-        .collect::<Vec<f32>>()
-        .into_pyarray_bound(py)
-        .reshape((count, 2))
-        .unwrap()
-        .into()
-}
-
-fn pyarray_to_vec2s(py: Python, values: &PyObject) -> PyResult<Vec<Vec2>> {
-    let values: Vec<[f32; 2]> = values.extract(py)?;
-    Ok(values.into_iter().map(Into::into).collect())
-}
-
-fn vec3s_pyarray(py: Python, values: &[Vec3]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let count = values.len();
-    values
-        .iter()
-        .flat_map(|v| v.to_array())
-        .collect::<Vec<f32>>()
-        .into_pyarray_bound(py)
-        .reshape((count, 3))
-        .unwrap()
-        .into()
-}
-
-fn pyarray_to_vec3s(py: Python, values: &PyObject) -> PyResult<Vec<Vec3>> {
-    let values: Vec<[f32; 3]> = values.extract(py)?;
-    Ok(values.into_iter().map(Into::into).collect())
-}
-
-fn vec4s_pyarray(py: Python, values: &[Vec4]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let count = values.len();
-    values
-        .iter()
-        .flat_map(|v| v.to_array())
-        .collect::<Vec<f32>>()
-        .into_pyarray_bound(py)
-        .reshape((count, 4))
-        .unwrap()
-        .into()
-}
-
 fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
     // This flatten will be optimized in Release mode.
     // This avoids needing unsafe code.
@@ -1503,11 +1451,6 @@ fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
         .reshape((count, 2))
         .unwrap()
         .into()
-}
-
-fn pyarray_to_vec4s(py: Python, values: &PyObject) -> PyResult<Vec<Vec4>> {
-    let values: Vec<[f32; 4]> = values.extract(py)?;
-    Ok(values.into_iter().map(Into::into).collect())
 }
 
 fn uvec4_pyarray(py: Python, values: &[[u8; 4]]) -> PyObject {
