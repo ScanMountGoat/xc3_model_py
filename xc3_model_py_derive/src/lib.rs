@@ -81,6 +81,8 @@ pub fn map_py_derive(input: TokenStream) -> TokenStream {
                 .into())
             }
         }
+
+        // TODO: Also derive conversion to and from Py<T>?
     }
     .into()
 }

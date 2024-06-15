@@ -1,11 +1,6 @@
-use numpy::IntoPyArray;
 use pyo3::{prelude::*, types::PyList};
 
-use crate::{
-    map_py::MapPy,
-    skinning::{weights_py, weights_rs, Weights},
-    uvec2s_pyarray, uvec4_pyarray,
-};
+use crate::{map_py::MapPy, skinning::Weights, uvec2s_pyarray, uvec4_pyarray};
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
@@ -32,24 +27,13 @@ impl ModelBuffers {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::vertex::VertexBuffer)]
 pub struct VertexBuffer {
     pub attributes: Py<PyList>,
     pub morph_blend_target: Py<PyList>,
     pub morph_targets: Py<PyList>,
     pub outline_buffer_index: Option<usize>,
-}
-
-impl ToPyObject for AttributeData {
-    fn to_object(&self, py: Python<'_>) -> PyObject {
-        self.clone().into_py(py)
-    }
-}
-
-impl ToPyObject for MorphTarget {
-    fn to_object(&self, py: Python<'_>) -> PyObject {
-        self.clone().into_py(py)
-    }
 }
 
 #[pymethods]
@@ -71,7 +55,8 @@ impl VertexBuffer {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::vertex::IndexBuffer)]
 pub struct IndexBuffer {
     pub indices: PyObject,
 }
@@ -179,64 +164,57 @@ pub fn vertex(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-pub fn model_buffers_rs(
-    py: Python,
-    buffer: &ModelBuffers,
-) -> PyResult<xc3_model::vertex::ModelBuffers> {
-    Ok(xc3_model::vertex::ModelBuffers {
-        vertex_buffers: buffer
-            .vertex_buffers
-            .extract::<'_, '_, Vec<VertexBuffer>>(py)?
-            .iter()
-            .map(|b| vertex_buffer_rs(py, b))
-            .collect::<PyResult<Vec<_>>>()?,
-        // TODO: Fill in all fields
-        outline_buffers: Vec::new(),
-        index_buffers: buffer
-            .index_buffers
-            .extract::<'_, '_, Vec<IndexBuffer>>(py)?
-            .iter()
-            .map(|b| {
-                Ok(xc3_model::vertex::IndexBuffer {
-                    indices: b.indices.extract(py)?,
-                })
-            })
-            .collect::<PyResult<Vec<_>>>()?,
-        unk_buffers: Vec::new(),
-        weights: buffer
-            .weights
-            .as_ref()
-            .map(|w| weights_rs(py, &w.extract(py)?))
-            .transpose()?,
-    })
+impl MapPy<xc3_model::vertex::ModelBuffers> for ModelBuffers {
+    fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::ModelBuffers> {
+        Ok(xc3_model::vertex::ModelBuffers {
+            vertex_buffers: self.vertex_buffers.map_py(py)?,
+            // TODO: Fill in all fields
+            outline_buffers: Vec::new(),
+            index_buffers: self.index_buffers.map_py(py)?,
+            unk_buffers: Vec::new(),
+            weights: self
+                .weights
+                .as_ref()
+                .map(|w| w.extract::<Weights>(py)?.map_py(py))
+                .transpose()?,
+        })
+    }
 }
 
-pub fn model_buffers_py(
-    py: Python,
-    buffer: xc3_model::vertex::ModelBuffers,
-) -> PyResult<ModelBuffers> {
-    Ok(ModelBuffers {
-        vertex_buffers: vertex_buffers_py(py, buffer.vertex_buffers)?,
-        index_buffers: index_buffers_py(py, buffer.index_buffers),
-        weights: match buffer.weights {
-            Some(w) => Some(Py::new(py, weights_py(py, w)?)?),
-            None => None,
-        },
-    })
+impl MapPy<ModelBuffers> for xc3_model::vertex::ModelBuffers {
+    fn map_py(&self, py: Python) -> PyResult<ModelBuffers> {
+        Ok(ModelBuffers {
+            vertex_buffers: self.vertex_buffers.map_py(py)?,
+            index_buffers: self.index_buffers.map_py(py)?,
+            weights: match self.weights.as_ref() {
+                Some(w) => Some(Py::new(py, w.map_py(py)?)?),
+                None => None,
+            },
+        })
+    }
 }
 
-fn vertex_attributes_py(
-    py: Python,
-    attributes: Vec<xc3_model::vertex::AttributeData>,
-) -> PyResult<Py<PyList>> {
-    Ok(PyList::new_bound(
-        py,
-        attributes
-            .into_iter()
-            .map(|attribute| Ok(attribute.map_py(py)?.into_py(py)))
-            .collect::<PyResult<Vec<_>>>()?,
-    )
-    .into())
+// Map from Python lists to Vec<T>
+impl crate::MapPy<Vec<xc3_model::vertex::ModelBuffers>> for Py<PyList> {
+    fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::vertex::ModelBuffers>> {
+        self.extract::<'_, '_, Vec<ModelBuffers>>(py)?
+            .iter()
+            .map(|v| v.map_py(py))
+            .collect::<Result<Vec<_>, _>>()
+    }
+}
+
+// Map from Vec<T> to Python lists
+impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::ModelBuffers> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
+        Ok(PyList::new_bound(
+            py,
+            self.into_iter()
+                .map(|v| Ok(v.map_py(py)?.into_py(py)))
+                .collect::<PyResult<Vec<_>>>()?,
+        )
+        .into())
+    }
 }
 
 impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
@@ -370,70 +348,25 @@ impl MapPy<xc3_model::vertex::AttributeData> for AttributeData {
     }
 }
 
-fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) -> Py<PyList> {
-    // TODO: avoid unwrap.
-    PyList::new_bound(
-        py,
-        targets.into_iter().map(|target| target.map_py(py).unwrap()),
-    )
-    .into()
+// Map from Python lists to Vec<T>
+impl crate::MapPy<Vec<xc3_model::vertex::AttributeData>> for Py<PyList> {
+    fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::vertex::AttributeData>> {
+        self.extract::<'_, '_, Vec<AttributeData>>(py)?
+            .iter()
+            .map(|v| v.map_py(py))
+            .collect::<Result<Vec<_>, _>>()
+    }
 }
 
-fn index_buffers_py(py: Python, index_buffers: Vec<xc3_model::vertex::IndexBuffer>) -> Py<PyList> {
-    PyList::new_bound(
-        py,
-        index_buffers.into_iter().map(|buffer| {
-            IndexBuffer {
-                indices: buffer.indices.into_pyarray_bound(py).into(),
-            }
-            .into_py(py)
-        }),
-    )
-    .into()
-}
-
-fn vertex_buffers_py(
-    py: Python,
-    vertex_buffers: Vec<xc3_model::vertex::VertexBuffer>,
-) -> PyResult<Py<PyList>> {
-    Ok(PyList::new_bound(
-        py,
-        vertex_buffers
-            .into_iter()
-            .map(|buffer| {
-                Ok(VertexBuffer {
-                    attributes: vertex_attributes_py(py, buffer.attributes)?,
-                    morph_blend_target: vertex_attributes_py(py, buffer.morph_blend_target)?,
-                    morph_targets: morph_targets_py(py, buffer.morph_targets),
-                    outline_buffer_index: buffer.outline_buffer_index,
-                }
-                .into_py(py))
-            })
-            .collect::<PyResult<Vec<_>>>()?,
-    )
-    .into())
-}
-
-fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex::VertexBuffer> {
-    Ok(xc3_model::vertex::VertexBuffer {
-        attributes: b
-            .attributes
-            .extract::<'_, '_, Vec<AttributeData>>(py)?
-            .iter()
-            .map(|a| a.map_py(py))
-            .collect::<PyResult<Vec<_>>>()?,
-        morph_blend_target: b
-            .morph_blend_target
-            .extract::<'_, '_, Vec<AttributeData>>(py)?
-            .iter()
-            .map(|a| a.map_py(py))
-            .collect::<PyResult<Vec<_>>>()?,
-        morph_targets: b
-            .morph_targets
-            .extract::<'_, '_, Vec<MorphTarget>>(py)?
-            .iter()
-            .map(|t| t.map_py(py))
-            .collect::<PyResult<Vec<_>>>()?,
-        outline_buffer_index: b.outline_buffer_index,
-    })
+// Map from Vec<T> to Python lists
+impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::AttributeData> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
+        Ok(PyList::new_bound(
+            py,
+            self.iter()
+                .map(|v| Ok(v.map_py(py)?.into_py(py)))
+                .collect::<PyResult<Vec<_>>>()?,
+        )
+        .into())
+    }
 }

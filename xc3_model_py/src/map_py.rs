@@ -3,15 +3,19 @@ use numpy::{IntoPyArray, PyArrayMethods};
 use pyo3::{prelude::*, types::PyList};
 pub use xc3_model_py_derive::MapPy;
 
-use crate::{mat4_to_pyarray, pyarray_to_mat4, uvec4_pyarray};
+use crate::{
+    mat4_to_pyarray, pyarray_to_mat4, pyarray_to_mat4s, transforms_pyarray, uvec4_pyarray,
+};
 
 // Define a mapping between types.
 // This allows for deriving the Python <-> Rust conversion.
 // The derive macro is mainly to automate mapping field names.
 pub trait MapPy<T> {
+    // TODO: take self by value to improve performance?
     fn map_py(&self, py: Python) -> PyResult<T>;
 }
 
+// TODO: can this be a blanket impl?
 // Implement for primitive types.
 macro_rules! map_py_impl {
     ($($t:ty),*) => {
@@ -27,6 +31,19 @@ macro_rules! map_py_impl {
 
 map_py_impl!(bool, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, f32, f64, String);
 
+impl MapPy<[f32; 3]> for Vec3 {
+    fn map_py(&self, _py: Python) -> PyResult<[f32; 3]> {
+        Ok(self.to_array())
+    }
+}
+
+impl MapPy<Vec3> for [f32; 3] {
+    fn map_py(&self, _py: Python) -> PyResult<Vec3> {
+        Ok((*self).into())
+    }
+}
+
+// TODO: macro for this
 impl MapPy<PyObject> for Vec<u32> {
     fn map_py(&self, py: Python) -> PyResult<PyObject> {
         // TODO: avoid clone?
@@ -36,6 +53,19 @@ impl MapPy<PyObject> for Vec<u32> {
 
 impl MapPy<Vec<u32>> for PyObject {
     fn map_py(&self, py: Python) -> PyResult<Vec<u32>> {
+        self.extract(py)
+    }
+}
+
+impl MapPy<PyObject> for Vec<u16> {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        // TODO: avoid clone?
+        Ok(self.clone().into_pyarray_bound(py).into())
+    }
+}
+
+impl MapPy<Vec<u16>> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Vec<u16>> {
         self.extract(py)
     }
 }
@@ -113,18 +143,6 @@ impl MapPy<Vec<[u8; 4]>> for PyObject {
     }
 }
 
-impl MapPy<PyObject> for Mat4 {
-    fn map_py(&self, py: Python) -> PyResult<PyObject> {
-        Ok(mat4_to_pyarray(py, *self))
-    }
-}
-
-impl MapPy<Mat4> for PyObject {
-    fn map_py(&self, py: Python) -> PyResult<Mat4> {
-        pyarray_to_mat4(py, self)
-    }
-}
-
 fn vectors_pyarray<const N: usize, T>(py: Python, values: &[T]) -> PyResult<PyObject>
 where
     T: Into<[f32; N]> + Copy,
@@ -149,4 +167,28 @@ where
 {
     let values: Vec<[f32; N]> = values.extract(py)?;
     Ok(values.into_iter().map(Into::into).collect())
+}
+
+impl MapPy<PyObject> for Mat4 {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        Ok(mat4_to_pyarray(py, *self))
+    }
+}
+
+impl MapPy<Mat4> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Mat4> {
+        pyarray_to_mat4(py, self)
+    }
+}
+
+impl MapPy<PyObject> for Vec<Mat4> {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        Ok(transforms_pyarray(py, self))
+    }
+}
+
+impl MapPy<Vec<Mat4>> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Vec<Mat4>> {
+        pyarray_to_mat4s(py, self)
+    }
 }

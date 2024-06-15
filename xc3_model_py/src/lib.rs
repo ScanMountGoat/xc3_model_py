@@ -5,7 +5,7 @@ use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
-use vertex::{model_buffers_py, model_buffers_rs, ModelBuffers};
+use vertex::ModelBuffers;
 
 mod animation;
 mod map_py;
@@ -80,7 +80,8 @@ pub struct MapRoot {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::ModelGroup)]
 pub struct ModelGroup {
     pub models: Py<PyList>,
     pub buffers: Py<PyList>,
@@ -95,7 +96,8 @@ impl ModelGroup {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Models)]
 pub struct Models {
     pub models: Py<PyList>,
     pub materials: Py<PyList>,
@@ -134,7 +136,8 @@ impl Models {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Model)]
 pub struct Model {
     pub meshes: Py<PyList>,
     // N x 4 x 4 numpy.ndarray
@@ -168,7 +171,8 @@ impl Model {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Mesh)]
 pub struct Mesh {
     pub vertex_buffer_index: usize,
     pub index_buffer_index: usize,
@@ -210,7 +214,8 @@ impl Mesh {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::LodData)]
 pub struct LodData {
     pub items: Py<PyList>,
     pub groups: Py<PyList>,
@@ -225,7 +230,8 @@ impl LodData {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::LodItem)]
 pub struct LodItem {
     pub unk2: f32,
     pub index: u8,
@@ -241,7 +247,8 @@ impl LodItem {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::LodGroup)]
 pub struct LodGroup {
     pub base_lod_index: usize,
     pub lod_count: usize,
@@ -392,7 +399,7 @@ impl Material {
             })
             .collect();
 
-        let assignments = material_rs(py, self)?.output_assignments(&image_textures);
+        let assignments = self.map_py(py)?.output_assignments(&image_textures);
         Ok(output_assignments_py(assignments))
     }
 }
@@ -522,7 +529,8 @@ impl MaterialParameters {
 pub struct Shader(xc3_model::shader_database::Shader);
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Texture)]
 pub struct Texture {
     pub image_texture_index: usize,
     pub sampler_index: usize,
@@ -1000,13 +1008,7 @@ fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
 fn map_root_py(py: Python, root: xc3_model::MapRoot) -> PyResult<MapRoot> {
     // TODO: Avoid unwrap.
     Ok(MapRoot {
-        groups: PyList::new_bound(
-            py,
-            root.groups
-                .into_iter()
-                .map(|group| model_group_py(py, group).unwrap().into_py(py)),
-        )
-        .into(),
+        groups: root.groups.map_py(py)?,
         image_textures: PyList::new_bound(
             py,
             root.image_textures
@@ -1019,8 +1021,8 @@ fn map_root_py(py: Python, root: xc3_model::MapRoot) -> PyResult<MapRoot> {
 
 fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> {
     Ok(ModelRoot {
-        models: Py::new(py, models_py(py, root.models))?,
-        buffers: Py::new(py, model_buffers_py(py, root.buffers)?)?,
+        models: Py::new(py, root.models.map_py(py)?)?,
+        buffers: Py::new(py, root.buffers.map_py(py)?)?,
         image_textures: PyList::new_bound(
             py,
             root.image_textures
@@ -1032,205 +1034,114 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> 
     })
 }
 
-fn models_py(py: Python, models: xc3_model::Models) -> Models {
-    Models {
-        models: PyList::new_bound(
-            py,
-            models
-                .models
-                .into_iter()
-                .map(|m| model_py(py, m).into_py(py)),
-        )
-        .into(),
-        materials: materials_py(py, models.materials),
-        samplers: PyList::new_bound(
-            py,
-            models
-                .samplers
-                .iter()
-                .map(|s| s.map_py(py).unwrap().into_py(py)),
-        )
-        .into(),
-        lod_data: models.lod_data.map(|data| LodData {
-            items: PyList::new_bound(
-                py,
-                data.items.into_iter().map(|i| {
-                    LodItem {
-                        unk2: i.unk2,
-                        index: i.index,
-                        unk5: i.unk5,
-                    }
-                    .into_py(py)
-                }),
-            )
-            .into(),
-            groups: PyList::new_bound(
-                py,
-                data.groups.into_iter().map(|g| {
-                    LodGroup {
-                        base_lod_index: g.base_lod_index,
-                        lod_count: g.lod_count,
-                    }
-                    .into_py(py)
-                }),
-            )
-            .into(),
-        }),
-        morph_controller_names: PyList::new_bound(py, models.morph_controller_names).into(),
-        animation_morph_names: PyList::new_bound(py, models.animation_morph_names).into(),
-        max_xyz: models.max_xyz.to_array(),
-        min_xyz: models.min_xyz.to_array(),
+// TODO: Create a proper type for this.
+impl MapPy<xc3_model::MeshRenderFlags2> for u32 {
+    fn map_py(&self, _py: Python) -> PyResult<xc3_model::MeshRenderFlags2> {
+        Ok((*self).try_into().unwrap())
     }
 }
 
-fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
-    Ok(xc3_model::Models {
-        models: models
-            .models
-            .extract::<'_, '_, Vec<Model>>(py)?
-            .iter()
-            .map(|model| model_rs(py, model))
-            .collect::<PyResult<Vec<_>>>()?,
-        materials: models
-            .materials
-            .extract::<'_, '_, Vec<Material>>(py)?
-            .iter()
-            .map(|m| material_rs(py, m))
-            .collect::<PyResult<Vec<_>>>()?,
-        samplers: models
-            .samplers
-            .extract::<'_, '_, Vec<Sampler>>(py)?
-            .iter()
-            .map(|s| s.map_py(py).unwrap())
-            .collect(),
-        lod_data: models
-            .lod_data
-            .as_ref()
-            .map(|data| lod_data_rs(data, py))
-            .transpose()?,
-        morph_controller_names: models.morph_controller_names.extract(py)?,
-        animation_morph_names: models.animation_morph_names.extract(py)?,
-        max_xyz: models.max_xyz.into(),
-        min_xyz: models.min_xyz.into(),
-    })
+impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
+    fn map_py(&self, _py: Python) -> PyResult<u32> {
+        Ok((*self).into())
+    }
 }
 
-fn lod_data_rs(data: &LodData, py: Python) -> PyResult<xc3_model::LodData> {
-    Ok(xc3_model::LodData {
-        items: data
-            .items
-            .extract::<'_, '_, Vec<LodItem>>(py)?
-            .iter()
-            .map(|i| xc3_model::LodItem {
-                unk2: i.unk2,
-                index: i.index,
-                unk5: i.unk5,
-            })
-            .collect(),
-        groups: data
-            .groups
-            .extract::<'_, '_, Vec<LodGroup>>(py)?
-            .iter()
-            .map(|g| xc3_model::LodGroup {
-                base_lod_index: g.base_lod_index,
-                lod_count: g.lod_count,
-            })
-            .collect(),
-    })
+impl MapPy<xc3_model::Material> for Material {
+    fn map_py(&self, py: Python) -> PyResult<xc3_model::Material> {
+        // TODO: Properly support flags conversions.
+        Ok(xc3_model::Material {
+            name: self.name.clone(),
+            flags: xc3_model::MaterialFlags::from(0u32),
+            render_flags: xc3_model::MaterialRenderFlags::from(0u32),
+            state_flags: self.state_flags.map_py(py)?,
+            textures: self.textures.map_py(py)?,
+            alpha_test: self
+                .alpha_test
+                .as_ref()
+                .map(|a| xc3_model::TextureAlphaTest {
+                    texture_index: a.texture_index,
+                    channel_index: a.channel_index,
+                }),
+            work_values: self.work_values.clone(),
+            shader_vars: self.shader_vars.clone(),
+            work_callbacks: self.work_callbacks.clone(),
+            alpha_test_ref: self.alpha_test_ref,
+            m_unks1_1: self.m_unks1_1,
+            m_unks1_2: self.m_unks1_2,
+            m_unks1_3: self.m_unks1_3,
+            m_unks1_4: self.m_unks1_4,
+            shader: self.shader.clone().map(|s| s.0),
+            technique_index: self.technique_index,
+            pass_type: self.pass_type.into(),
+            parameters: xc3_model::MaterialParameters {
+                mat_color: self.parameters.mat_color,
+                alpha_test_ref: self.parameters.alpha_test_ref,
+                tex_matrix: self.parameters.tex_matrix.clone(),
+                work_float4: self.parameters.work_float4.clone(),
+                work_color: self.parameters.work_color.clone(),
+            },
+            m_unks2_2: self.m_unks2_2,
+            m_unks3_1: self.m_unks3_1,
+        })
+    }
 }
 
-fn model_group_py(py: Python, group: xc3_model::ModelGroup) -> PyResult<ModelGroup> {
-    // TODO: avoid unwrap.
-    Ok(ModelGroup {
-        models: PyList::new_bound(
-            py,
-            group
-                .models
-                .into_iter()
-                .map(|models| models_py(py, models).into_py(py)),
-        )
-        .into(),
-        buffers: PyList::new_bound(
-            py,
-            group
-                .buffers
-                .into_iter()
-                .map(|buffer| model_buffers_py(py, buffer).unwrap().into_py(py)),
-        )
-        .into(),
-    })
-}
-
-fn model_rs(py: Python, model: &Model) -> PyResult<xc3_model::Model> {
-    Ok(xc3_model::Model {
-        meshes: model
-            .meshes
-            .extract::<'_, '_, Vec<Mesh>>(py)?
-            .iter()
-            .map(|mesh| xc3_model::Mesh {
-                vertex_buffer_index: mesh.vertex_buffer_index,
-                index_buffer_index: mesh.index_buffer_index,
-                index_buffer_index2: mesh.index_buffer_index2,
-                material_index: mesh.material_index,
-                ext_mesh_index: mesh.ext_mesh_index,
-                lod_item_index: mesh.lod_item_index,
-                flags1: mesh.flags1,
-                flags2: mesh.flags2.try_into().unwrap(),
-                base_mesh_index: mesh.base_mesh_index,
-            })
-            .collect(),
-        instances: pyarray_to_mat4s(py, &model.instances)?,
-        model_buffers_index: model.model_buffers_index,
-        max_xyz: model.max_xyz.into(),
-        min_xyz: model.min_xyz.into(),
-        bounding_radius: model.bounding_radius,
-    })
-}
-
-fn material_rs(py: Python, material: &Material) -> PyResult<xc3_model::Material> {
-    // TODO: Properly support flags conversions.
-    Ok(xc3_model::Material {
-        name: material.name.clone(),
-        flags: xc3_model::MaterialFlags::from(0u32),
-        render_flags: xc3_model::MaterialRenderFlags::from(0u32),
-        state_flags: material.state_flags.map_py(py)?,
-        textures: material
-            .textures
-            .extract::<'_, '_, Vec<Texture>>(py)?
-            .iter()
-            .map(|t| xc3_model::Texture {
-                image_texture_index: t.image_texture_index,
-                sampler_index: t.sampler_index,
-            })
-            .collect(),
-        alpha_test: material
-            .alpha_test
-            .as_ref()
-            .map(|a| xc3_model::TextureAlphaTest {
+impl MapPy<Material> for xc3_model::Material {
+    fn map_py(&self, py: Python) -> PyResult<Material> {
+        Ok(Material {
+            name: self.name.clone(),
+            state_flags: self.state_flags.map_py(py).unwrap(),
+            textures: self.textures.map_py(py).unwrap(),
+            alpha_test: self.alpha_test.clone().map(|a| TextureAlphaTest {
                 texture_index: a.texture_index,
                 channel_index: a.channel_index,
             }),
-        work_values: material.work_values.clone(),
-        shader_vars: material.shader_vars.clone(),
-        work_callbacks: material.work_callbacks.clone(),
-        alpha_test_ref: material.alpha_test_ref,
-        m_unks1_1: material.m_unks1_1,
-        m_unks1_2: material.m_unks1_2,
-        m_unks1_3: material.m_unks1_3,
-        m_unks1_4: material.m_unks1_4,
-        shader: material.shader.clone().map(|s| s.0),
-        technique_index: material.technique_index,
-        pass_type: material.pass_type.into(),
-        parameters: xc3_model::MaterialParameters {
-            mat_color: material.parameters.mat_color,
-            alpha_test_ref: material.parameters.alpha_test_ref,
-            tex_matrix: material.parameters.tex_matrix.clone(),
-            work_float4: material.parameters.work_float4.clone(),
-            work_color: material.parameters.work_color.clone(),
-        },
-        m_unks2_2: material.m_unks2_2,
-        m_unks3_1: material.m_unks3_1,
-    })
+            shader: self.shader.clone().map(Shader),
+            pass_type: self.pass_type.into(),
+            parameters: MaterialParameters {
+                mat_color: self.parameters.mat_color,
+                alpha_test_ref: self.parameters.alpha_test_ref,
+                tex_matrix: self.parameters.tex_matrix.clone(),
+                work_float4: self.parameters.work_float4.clone(),
+                work_color: self.parameters.work_color.clone(),
+            },
+            work_values: self.work_values.clone(),
+            shader_vars: self.shader_vars.clone(),
+            work_callbacks: self.work_callbacks.clone(),
+            alpha_test_ref: self.alpha_test_ref,
+            m_unks1_1: self.m_unks1_1,
+            m_unks1_2: self.m_unks1_2,
+            m_unks1_3: self.m_unks1_3,
+            m_unks1_4: self.m_unks1_4,
+            technique_index: self.technique_index,
+            m_unks2_2: self.m_unks2_2,
+            m_unks3_1: self.m_unks3_1,
+        })
+    }
+}
+
+// Map from Python lists to Vec<T>
+impl crate::MapPy<Vec<xc3_model::Material>> for Py<PyList> {
+    fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::Material>> {
+        self.extract::<'_, '_, Vec<Material>>(py)?
+            .iter()
+            .map(|v| v.map_py(py))
+            .collect::<Result<Vec<_>, _>>()
+    }
+}
+
+// Map from Vec<T> to Python lists
+impl crate::MapPy<Py<PyList>> for Vec<xc3_model::Material> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
+        Ok(PyList::new_bound(
+            py,
+            self.into_iter()
+                .map(|v| Ok(v.map_py(py)?.into_py(py)))
+                .collect::<PyResult<Vec<_>>>()?,
+        )
+        .into())
+    }
 }
 
 fn output_assignments_py(assignments: xc3_model::OutputAssignments) -> OutputAssignments {
@@ -1288,8 +1199,8 @@ fn image_texture_rs(image: &ImageTexture) -> xc3_model::ImageTexture {
 
 fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot> {
     Ok(xc3_model::ModelRoot {
-        models: models_rs(py, &root.models.extract(py)?)?,
-        buffers: model_buffers_rs(py, &root.buffers.extract(py)?)?,
+        models: root.models.extract::<Models>(py)?.map_py(py)?,
+        buffers: root.buffers.extract::<ModelBuffers>(py)?.map_py(py)?,
         image_textures: root
             .image_textures
             .extract::<'_, '_, Vec<ImageTexture>>(py)?
@@ -1298,84 +1209,6 @@ fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot>
             .collect(),
         skeleton: root.skeleton.as_ref().map(|s| s.map_py(py)).transpose()?,
     })
-}
-
-fn model_py(py: Python, model: xc3_model::Model) -> Model {
-    Model {
-        meshes: PyList::new_bound(
-            py,
-            model.meshes.into_iter().map(|mesh| {
-                Mesh {
-                    vertex_buffer_index: mesh.vertex_buffer_index,
-                    index_buffer_index: mesh.index_buffer_index,
-                    index_buffer_index2: mesh.index_buffer_index2,
-                    material_index: mesh.material_index,
-                    ext_mesh_index: mesh.ext_mesh_index,
-                    lod_item_index: mesh.lod_item_index,
-                    flags1: mesh.flags1,
-                    flags2: mesh.flags2.into(),
-                    base_mesh_index: mesh.base_mesh_index,
-                }
-                .into_py(py)
-            }),
-        )
-        .into(),
-        instances: transforms_pyarray(py, &model.instances),
-        model_buffers_index: model.model_buffers_index,
-        max_xyz: model.max_xyz.to_array(),
-        min_xyz: model.min_xyz.to_array(),
-        bounding_radius: model.bounding_radius,
-    }
-}
-
-fn materials_py(py: Python, materials: Vec<xc3_model::Material>) -> Py<PyList> {
-    // TODO: avoid unwrap.
-    PyList::new_bound(
-        py,
-        materials.into_iter().map(|material| {
-            Material {
-                name: material.name,
-                state_flags: material.state_flags.map_py(py).unwrap(),
-                textures: PyList::new_bound(
-                    py,
-                    material.textures.into_iter().map(|texture| {
-                        Texture {
-                            image_texture_index: texture.image_texture_index,
-                            sampler_index: texture.sampler_index,
-                        }
-                        .into_py(py)
-                    }),
-                )
-                .into(),
-                alpha_test: material.alpha_test.map(|a| TextureAlphaTest {
-                    texture_index: a.texture_index,
-                    channel_index: a.channel_index,
-                }),
-                shader: material.shader.map(Shader),
-                pass_type: material.pass_type.into(),
-                parameters: MaterialParameters {
-                    mat_color: material.parameters.mat_color,
-                    alpha_test_ref: material.parameters.alpha_test_ref,
-                    tex_matrix: material.parameters.tex_matrix,
-                    work_float4: material.parameters.work_float4,
-                    work_color: material.parameters.work_color,
-                },
-                work_values: material.work_values,
-                shader_vars: material.shader_vars,
-                work_callbacks: material.work_callbacks,
-                alpha_test_ref: material.alpha_test_ref,
-                m_unks1_1: material.m_unks1_1,
-                m_unks1_2: material.m_unks1_2,
-                m_unks1_3: material.m_unks1_3,
-                m_unks1_4: material.m_unks1_4,
-                technique_index: material.technique_index,
-                m_unks2_2: material.m_unks2_2,
-                m_unks3_1: material.m_unks3_1,
-            }
-            .into_py(py)
-        }),
-    )
-    .into()
 }
 
 fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
