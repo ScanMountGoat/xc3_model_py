@@ -69,7 +69,7 @@ pub struct ModelRoot {
     pub models: Py<Models>,
     pub buffers: Py<ModelBuffers>,
     pub image_textures: Py<PyList>,
-    pub skeleton: Option<Skeleton>,
+    pub skeleton: Option<Py<Skeleton>>,
 }
 
 #[pyclass(get_all, set_all)]
@@ -106,7 +106,7 @@ pub struct Models {
     pub animation_morph_names: Py<PyList>,
     pub max_xyz: [f32; 3],
     pub min_xyz: [f32; 3],
-    pub lod_data: Option<LodData>,
+    pub lod_data: Option<Py<LodData>>,
 }
 
 #[pymethods]
@@ -120,7 +120,7 @@ impl Models {
         min_xyz: [f32; 3],
         morph_controller_names: Py<PyList>,
         animation_morph_names: Py<PyList>,
-        lod_data: Option<LodData>,
+        lod_data: Option<Py<LodData>>,
     ) -> Self {
         Self {
             models,
@@ -783,7 +783,7 @@ impl ModelRoot {
         models: Py<Models>,
         buffers: Py<ModelBuffers>,
         image_textures: Py<PyList>,
-        skeleton: Option<Skeleton>,
+        skeleton: Option<Py<Skeleton>>,
     ) -> Self {
         Self {
             models,
@@ -1021,7 +1021,7 @@ fn map_root_py(py: Python, root: xc3_model::MapRoot) -> PyResult<MapRoot> {
 
 fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> {
     Ok(ModelRoot {
-        models: Py::new(py, root.models.map_py(py)?)?,
+        models: root.models.map_py(py)?,
         buffers: Py::new(py, root.buffers.map_py(py)?)?,
         image_textures: PyList::new_bound(
             py,
@@ -1030,7 +1030,7 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> 
                 .map(|t| image_texture_py(t).into_py(py)),
         )
         .into(),
-        skeleton: root.skeleton.map(|s| s.map_py(py)).transpose()?,
+        skeleton: root.skeleton.map_py(py)?,
     })
 }
 
@@ -1207,7 +1207,7 @@ fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot>
             .iter()
             .map(image_texture_rs)
             .collect(),
-        skeleton: root.skeleton.as_ref().map(|s| s.map_py(py)).transpose()?,
+        skeleton: root.skeleton.map_py(py)?,
     })
 }
 

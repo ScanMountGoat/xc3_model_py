@@ -75,14 +75,29 @@ pub fn map_py_derive(input: TokenStream) -> TokenStream {
                 Ok(PyList::new_bound(
                     py,
                     self.into_iter()
-                        .map(|v| Ok(v.map_py(py)?.into_py(py)))
+                        .map(|v| {
+                            let v2: #name = v.map_py(py)?;
+                            Ok(v2.into_py(py))
+                        })
                         .collect::<PyResult<Vec<_>>>()?,
                 )
                 .into())
             }
         }
 
-        // TODO: Also derive conversion to and from Py<T>?
+        // Map to and from Py<T>
+        impl MapPy<Py<#name>> for #map_type {
+            fn map_py(&self, py: Python) -> PyResult<Py<#name>> {
+                let value: #name = self.map_py(py)?;
+                Py::new(py, value)
+            }
+        }
+
+        impl MapPy<#map_type> for Py<#name> {
+            fn map_py(&self, py: Python) -> PyResult<#map_type> {
+                self.extract::<#name>(py)?.map_py(py)
+            }
+        }
     }
     .into()
 }
