@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::map_py::MapPy;
 use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
@@ -43,6 +44,18 @@ macro_rules! python_enum {
                 match value {
                     $(<$py_ty>::$i => Self::$i),*
                 }
+            }
+        }
+
+        impl $crate::map_py::MapPy<$rust_ty> for $py_ty {
+            fn map_py(&self, _py: Python) -> PyResult<$rust_ty> {
+                Ok((*self).into())
+            }
+        }
+
+        impl $crate::map_py::MapPy<$py_ty> for $rust_ty {
+            fn map_py(&self, _py: Python) -> PyResult<$py_ty> {
+                Ok((*self).into())
             }
         }
     };
@@ -393,7 +406,8 @@ python_enum!(
 );
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::StateFlags)]
 pub struct StateFlags {
     pub depth_write_mode: u8,
     pub blend_mode: BlendMode,
@@ -523,6 +537,7 @@ impl Texture {
     }
 }
 
+// TODO: MapPy won't work with threads?
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct ImageTexture {
@@ -627,7 +642,8 @@ python_enum!(
 );
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Sampler)]
 pub struct Sampler {
     pub address_mode_u: AddressMode,
     pub address_mode_v: AddressMode,
@@ -1036,7 +1052,10 @@ fn models_py(py: Python, models: xc3_model::Models) -> Models {
         materials: materials_py(py, models.materials),
         samplers: PyList::new_bound(
             py,
-            models.samplers.iter().map(|s| sampler_py(s).into_py(py)),
+            models
+                .samplers
+                .iter()
+                .map(|s| s.map_py(py).unwrap().into_py(py)),
         )
         .into(),
         lod_data: models.lod_data.map(|data| LodData {
@@ -1089,7 +1108,7 @@ fn models_rs(py: Python, models: &Models) -> PyResult<xc3_model::Models> {
             .samplers
             .extract::<'_, '_, Vec<Sampler>>(py)?
             .iter()
-            .map(sampler_rs)
+            .map(|s| s.map_py(py).unwrap())
             .collect(),
         lod_data: models
             .lod_data
@@ -1181,16 +1200,7 @@ fn material_rs(py: Python, material: &Material) -> PyResult<xc3_model::Material>
         name: material.name.clone(),
         flags: xc3_model::MaterialFlags::from(0u32),
         render_flags: xc3_model::MaterialRenderFlags::from(0u32),
-        state_flags: xc3_model::StateFlags {
-            depth_write_mode: material.state_flags.depth_write_mode,
-            blend_mode: material.state_flags.blend_mode.into(),
-            cull_mode: material.state_flags.cull_mode.into(),
-            unk4: material.state_flags.unk4,
-            stencil_value: material.state_flags.stencil_value.into(),
-            stencil_mode: material.state_flags.stencil_mode.into(),
-            depth_func: material.state_flags.depth_func.into(),
-            color_write_mode: material.state_flags.color_write_mode,
-        },
+        state_flags: material.state_flags.map_py(py)?,
         textures: material
             .textures
             .extract::<'_, '_, Vec<Texture>>(py)?
@@ -1357,21 +1367,13 @@ fn model_py(py: Python, model: xc3_model::Model) -> Model {
 }
 
 fn materials_py(py: Python, materials: Vec<xc3_model::Material>) -> Py<PyList> {
+    // TODO: avoid unwrap.
     PyList::new_bound(
         py,
         materials.into_iter().map(|material| {
             Material {
                 name: material.name,
-                state_flags: StateFlags {
-                    depth_write_mode: material.state_flags.depth_write_mode,
-                    blend_mode: material.state_flags.blend_mode.into(),
-                    cull_mode: material.state_flags.cull_mode.into(),
-                    unk4: material.state_flags.unk4,
-                    stencil_value: material.state_flags.stencil_value.into(),
-                    stencil_mode: material.state_flags.stencil_mode.into(),
-                    depth_func: material.state_flags.depth_func.into(),
-                    color_write_mode: material.state_flags.color_write_mode,
-                },
+                state_flags: material.state_flags.map_py(py).unwrap(),
                 textures: PyList::new_bound(
                     py,
                     material.textures.into_iter().map(|texture| {
@@ -1412,30 +1414,6 @@ fn materials_py(py: Python, materials: Vec<xc3_model::Material>) -> Py<PyList> {
         }),
     )
     .into()
-}
-
-fn sampler_py(sampler: &xc3_model::Sampler) -> Sampler {
-    Sampler {
-        address_mode_u: sampler.address_mode_u.into(),
-        address_mode_v: sampler.address_mode_v.into(),
-        address_mode_w: sampler.address_mode_w.into(),
-        min_filter: sampler.min_filter.into(),
-        mag_filter: sampler.mag_filter.into(),
-        mip_filter: sampler.mip_filter.into(),
-        mipmaps: sampler.mipmaps,
-    }
-}
-
-fn sampler_rs(s: &Sampler) -> xc3_model::Sampler {
-    xc3_model::Sampler {
-        address_mode_u: s.address_mode_u.into(),
-        address_mode_v: s.address_mode_v.into(),
-        address_mode_w: s.address_mode_w.into(),
-        min_filter: s.min_filter.into(),
-        mag_filter: s.mag_filter.into(),
-        mip_filter: s.mip_filter.into(),
-        mipmaps: s.mipmaps,
-    }
 }
 
 fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {

@@ -40,6 +40,18 @@ pub struct VertexBuffer {
     pub outline_buffer_index: Option<usize>,
 }
 
+impl ToPyObject for AttributeData {
+    fn to_object(&self, py: Python<'_>) -> PyObject {
+        self.clone().into_py(py)
+    }
+}
+
+impl ToPyObject for MorphTarget {
+    fn to_object(&self, py: Python<'_>) -> PyObject {
+        self.clone().into_py(py)
+    }
+}
+
 #[pymethods]
 impl VertexBuffer {
     #[new]
@@ -220,142 +232,140 @@ fn vertex_attributes_py(
         py,
         attributes
             .into_iter()
-            .map(|attribute| Ok(attribute_data_py(py, attribute)?.into_py(py)))
+            .map(|attribute| Ok(attribute.map_py(py)?.into_py(py)))
             .collect::<PyResult<Vec<_>>>()?,
     )
     .into())
 }
 
-fn attribute_data_py(
-    py: Python,
-    attribute: xc3_model::vertex::AttributeData,
-) -> PyResult<AttributeData> {
-    match attribute {
-        xc3_model::vertex::AttributeData::Position(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Position,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::Normal(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Normal,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::Tangent(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Tangent,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord0(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord0,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord1(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord1,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord2(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord2,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord3(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord3,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord4(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord4,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord5(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord5,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord6(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord6,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord7(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord7,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::TexCoord8(values) => Ok(AttributeData {
-            attribute_type: AttributeType::TexCoord8,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::VertexColor(values) => Ok(AttributeData {
-            attribute_type: AttributeType::VertexColor,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::Blend(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Blend,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::WeightIndex(values) => Ok(AttributeData {
-            attribute_type: AttributeType::WeightIndex,
-            data: uvec2s_pyarray(py, &values),
-        }),
-        xc3_model::vertex::AttributeData::Position2(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Position2,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::Normal4(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Normal4,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::OldPosition(values) => Ok(AttributeData {
-            attribute_type: AttributeType::OldPosition,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::Tangent2(values) => Ok(AttributeData {
-            attribute_type: AttributeType::Tangent2,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::SkinWeights(values) => Ok(AttributeData {
-            attribute_type: AttributeType::SkinWeights,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::SkinWeights2(values) => Ok(AttributeData {
-            attribute_type: AttributeType::SkinWeights2,
-            data: values.map_py(py)?,
-        }),
-        xc3_model::vertex::AttributeData::BoneIndices(values) => Ok(AttributeData {
-            attribute_type: AttributeType::BoneIndices,
-            data: uvec4_pyarray(py, &values),
-        }),
-        xc3_model::vertex::AttributeData::BoneIndices2(values) => Ok(AttributeData {
-            attribute_type: AttributeType::BoneIndices2,
-            data: uvec4_pyarray(py, &values),
-        }),
+impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
+    fn map_py(&self, py: Python) -> PyResult<AttributeData> {
+        match self {
+            xc3_model::vertex::AttributeData::Position(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Position,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Normal(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Normal,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Tangent(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Tangent,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord0(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord0,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord1(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord1,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord2,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord3(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord3,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord4(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord4,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord5(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord5,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord6(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord6,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord7(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord7,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::TexCoord8(values) => Ok(AttributeData {
+                attribute_type: AttributeType::TexCoord8,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::VertexColor(values) => Ok(AttributeData {
+                attribute_type: AttributeType::VertexColor,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Blend(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Blend,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::WeightIndex(values) => Ok(AttributeData {
+                attribute_type: AttributeType::WeightIndex,
+                data: uvec2s_pyarray(py, values),
+            }),
+            xc3_model::vertex::AttributeData::Position2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Position2,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Normal4(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Normal4,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::OldPosition(values) => Ok(AttributeData {
+                attribute_type: AttributeType::OldPosition,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Tangent2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Tangent2,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::SkinWeights(values) => Ok(AttributeData {
+                attribute_type: AttributeType::SkinWeights,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::SkinWeights2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::SkinWeights2,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::BoneIndices(values) => Ok(AttributeData {
+                attribute_type: AttributeType::BoneIndices,
+                data: uvec4_pyarray(py, values),
+            }),
+            xc3_model::vertex::AttributeData::BoneIndices2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::BoneIndices2,
+                data: uvec4_pyarray(py, values),
+            }),
+        }
     }
 }
 
-fn attribute_data_rs(
-    py: Python,
-    attribute: &AttributeData,
-) -> PyResult<xc3_model::vertex::AttributeData> {
-    use xc3_model::vertex::AttributeData as AttrRs;
+impl MapPy<xc3_model::vertex::AttributeData> for AttributeData {
+    fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::AttributeData> {
+        use xc3_model::vertex::AttributeData as AttrRs;
 
-    match attribute.attribute_type {
-        AttributeType::Position => Ok(AttrRs::Position(attribute.data.map_py(py)?)),
-        AttributeType::Normal => Ok(AttrRs::Normal(attribute.data.map_py(py)?)),
-        AttributeType::Tangent => Ok(AttrRs::Tangent(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord0 => Ok(AttrRs::TexCoord0(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord1 => Ok(AttrRs::TexCoord1(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord2 => Ok(AttrRs::TexCoord2(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord3 => Ok(AttrRs::TexCoord3(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord4 => Ok(AttrRs::TexCoord4(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord5 => Ok(AttrRs::TexCoord5(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord6 => Ok(AttrRs::TexCoord6(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord7 => Ok(AttrRs::TexCoord7(attribute.data.map_py(py)?)),
-        AttributeType::TexCoord8 => Ok(AttrRs::TexCoord8(attribute.data.map_py(py)?)),
-        AttributeType::VertexColor => Ok(AttrRs::VertexColor(attribute.data.map_py(py)?)),
-        AttributeType::Blend => Ok(AttrRs::Blend(attribute.data.map_py(py)?)),
-        AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(attribute.data.extract(py)?)),
-        AttributeType::Position2 => Ok(AttrRs::Position2(attribute.data.map_py(py)?)),
-        AttributeType::Normal4 => Ok(AttrRs::Normal4(attribute.data.map_py(py)?)),
-        AttributeType::OldPosition => Ok(AttrRs::OldPosition(attribute.data.map_py(py)?)),
-        AttributeType::Tangent2 => Ok(AttrRs::Tangent2(attribute.data.map_py(py)?)),
-        AttributeType::SkinWeights => Ok(AttrRs::SkinWeights(attribute.data.map_py(py)?)),
-        AttributeType::SkinWeights2 => Ok(AttrRs::SkinWeights2(attribute.data.map_py(py)?)),
-        AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(attribute.data.extract(py)?)),
-        AttributeType::BoneIndices2 => Ok(AttrRs::BoneIndices2(attribute.data.extract(py)?)),
+        match self.attribute_type {
+            AttributeType::Position => Ok(AttrRs::Position(self.data.map_py(py)?)),
+            AttributeType::Normal => Ok(AttrRs::Normal(self.data.map_py(py)?)),
+            AttributeType::Tangent => Ok(AttrRs::Tangent(self.data.map_py(py)?)),
+            AttributeType::TexCoord0 => Ok(AttrRs::TexCoord0(self.data.map_py(py)?)),
+            AttributeType::TexCoord1 => Ok(AttrRs::TexCoord1(self.data.map_py(py)?)),
+            AttributeType::TexCoord2 => Ok(AttrRs::TexCoord2(self.data.map_py(py)?)),
+            AttributeType::TexCoord3 => Ok(AttrRs::TexCoord3(self.data.map_py(py)?)),
+            AttributeType::TexCoord4 => Ok(AttrRs::TexCoord4(self.data.map_py(py)?)),
+            AttributeType::TexCoord5 => Ok(AttrRs::TexCoord5(self.data.map_py(py)?)),
+            AttributeType::TexCoord6 => Ok(AttrRs::TexCoord6(self.data.map_py(py)?)),
+            AttributeType::TexCoord7 => Ok(AttrRs::TexCoord7(self.data.map_py(py)?)),
+            AttributeType::TexCoord8 => Ok(AttrRs::TexCoord8(self.data.map_py(py)?)),
+            AttributeType::VertexColor => Ok(AttrRs::VertexColor(self.data.map_py(py)?)),
+            AttributeType::Blend => Ok(AttrRs::Blend(self.data.map_py(py)?)),
+            AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(self.data.extract(py)?)),
+            AttributeType::Position2 => Ok(AttrRs::Position2(self.data.map_py(py)?)),
+            AttributeType::Normal4 => Ok(AttrRs::Normal4(self.data.map_py(py)?)),
+            AttributeType::OldPosition => Ok(AttrRs::OldPosition(self.data.map_py(py)?)),
+            AttributeType::Tangent2 => Ok(AttrRs::Tangent2(self.data.map_py(py)?)),
+            AttributeType::SkinWeights => Ok(AttrRs::SkinWeights(self.data.map_py(py)?)),
+            AttributeType::SkinWeights2 => Ok(AttrRs::SkinWeights2(self.data.map_py(py)?)),
+            AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(self.data.extract(py)?)),
+            AttributeType::BoneIndices2 => Ok(AttrRs::BoneIndices2(self.data.extract(py)?)),
+        }
     }
 }
 
@@ -418,13 +428,13 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
             .attributes
             .extract::<'_, '_, Vec<AttributeData>>(py)?
             .iter()
-            .map(|a| attribute_data_rs(py, a))
+            .map(|a| a.map_py(py))
             .collect::<PyResult<Vec<_>>>()?,
         morph_blend_target: b
             .morph_blend_target
             .extract::<'_, '_, Vec<AttributeData>>(py)?
             .iter()
-            .map(|a| attribute_data_rs(py, a))
+            .map(|a| a.map_py(py))
             .collect::<PyResult<Vec<_>>>()?,
         morph_targets: b
             .morph_targets
