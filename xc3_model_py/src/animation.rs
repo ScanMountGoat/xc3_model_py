@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use xc3_model::animation::BoneIndex;
 
-use crate::{mat4_to_pyarray, python_enum, skeleton_rs, transforms_pyarray, Skeleton};
+use crate::{map_py::MapPy, mat4_to_pyarray, python_enum, transforms_pyarray, Skeleton};
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ impl Animation {
         frame: f32,
     ) -> PyResult<PyObject> {
         let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
+        let skeleton = skeleton.map_py(py)?;
         let transforms = animation.skinning_transforms(&skeleton, frame);
         Ok(transforms_pyarray(py, &transforms))
     }
@@ -41,7 +41,7 @@ impl Animation {
         frame: f32,
     ) -> PyResult<PyObject> {
         let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
+        let skeleton = skeleton.map_py(py)?;
         let transforms = animation.model_space_transforms(&skeleton, frame);
         Ok(transforms_pyarray(py, &transforms))
     }
@@ -53,7 +53,7 @@ impl Animation {
         frame: f32,
     ) -> PyResult<PyObject> {
         let animation = animation_rs(self);
-        let skeleton = skeleton_rs(py, &skeleton)?;
+        let skeleton = skeleton.map_py(py)?;
         let transforms = animation.local_space_transforms(&skeleton, frame);
         Ok(transforms_pyarray(py, &transforms))
     }

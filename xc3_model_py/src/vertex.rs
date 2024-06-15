@@ -132,7 +132,8 @@ pub enum AttributeType {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::vertex::MorphTarget)]
 pub struct MorphTarget {
     pub morph_controller_index: usize,
     // N x 3 numpy.ndarray
@@ -373,16 +374,7 @@ fn morph_targets_py(py: Python, targets: Vec<xc3_model::vertex::MorphTarget>) ->
     // TODO: avoid unwrap.
     PyList::new_bound(
         py,
-        targets.into_iter().map(|target| {
-            MorphTarget {
-                morph_controller_index: target.morph_controller_index,
-                position_deltas: target.position_deltas.map_py(py).unwrap(),
-                normals: target.normals.map_py(py).unwrap(),
-                tangents: target.tangents.map_py(py).unwrap(),
-                vertex_indices: target.vertex_indices.into_pyarray_bound(py).into(),
-            }
-            .into_py(py)
-        }),
+        targets.into_iter().map(|target| target.map_py(py).unwrap()),
     )
     .into()
 }
@@ -440,15 +432,7 @@ fn vertex_buffer_rs(py: Python, b: &VertexBuffer) -> PyResult<xc3_model::vertex:
             .morph_targets
             .extract::<'_, '_, Vec<MorphTarget>>(py)?
             .iter()
-            .map(|t| {
-                Ok(xc3_model::vertex::MorphTarget {
-                    morph_controller_index: t.morph_controller_index,
-                    position_deltas: t.position_deltas.map_py(py)?,
-                    normals: t.normals.map_py(py)?,
-                    tangents: t.tangents.map_py(py)?,
-                    vertex_indices: t.vertex_indices.extract(py)?,
-                })
-            })
+            .map(|t| t.map_py(py))
             .collect::<PyResult<Vec<_>>>()?,
         outline_buffer_index: b.outline_buffer_index,
     })

@@ -259,7 +259,8 @@ impl LodGroup {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Skeleton)]
 pub struct Skeleton {
     pub bones: Py<PyList>,
 }
@@ -273,13 +274,14 @@ impl Skeleton {
     }
 
     pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
-        let transforms = skeleton_rs(py, self)?.model_space_transforms();
+        let transforms = self.map_py(py)?.model_space_transforms();
         Ok(transforms_pyarray(py, &transforms))
     }
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Bone)]
 pub struct Bone {
     pub name: String,
     pub transform: PyObject,
@@ -1026,16 +1028,7 @@ fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> 
                 .map(|t| image_texture_py(t).into_py(py)),
         )
         .into(),
-        skeleton: root.skeleton.map(|skeleton| Skeleton {
-            bones: PyList::new_bound(
-                py,
-                skeleton
-                    .bones
-                    .into_iter()
-                    .map(|bone| bone_py(bone, py).into_py(py)),
-            )
-            .into(),
-        }),
+        skeleton: root.skeleton.map(|s| s.map_py(py)).transpose()?,
     })
 }
 
@@ -1303,39 +1296,8 @@ fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot>
             .iter()
             .map(image_texture_rs)
             .collect(),
-        skeleton: root
-            .skeleton
-            .as_ref()
-            .map(|s| skeleton_rs(py, s))
-            .transpose()?,
+        skeleton: root.skeleton.as_ref().map(|s| s.map_py(py)).transpose()?,
     })
-}
-
-fn skeleton_rs(py: Python, skeleton: &Skeleton) -> PyResult<xc3_model::Skeleton> {
-    Ok(xc3_model::Skeleton {
-        bones: skeleton
-            .bones
-            .extract::<'_, '_, Vec<Bone>>(py)?
-            .iter()
-            .map(|b| bone_rs(py, b))
-            .collect::<Result<Vec<_>, _>>()?,
-    })
-}
-
-fn bone_rs(py: Python, bone: &Bone) -> PyResult<xc3_model::Bone> {
-    Ok(xc3_model::Bone {
-        name: bone.name.clone(),
-        transform: pyarray_to_mat4(py, &bone.transform)?,
-        parent_index: bone.parent_index,
-    })
-}
-
-fn bone_py(bone: xc3_model::Bone, py: Python<'_>) -> Bone {
-    Bone {
-        name: bone.name,
-        transform: mat4_to_pyarray(py, bone.transform),
-        parent_index: bone.parent_index,
-    }
 }
 
 fn model_py(py: Python, model: xc3_model::Model) -> Model {

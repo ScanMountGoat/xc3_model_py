@@ -1,7 +1,9 @@
-use glam::{Vec2, Vec3, Vec4};
+use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArrayMethods};
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyList};
 pub use xc3_model_py_derive::MapPy;
+
+use crate::{mat4_to_pyarray, pyarray_to_mat4, uvec4_pyarray};
 
 // Define a mapping between types.
 // This allows for deriving the Python <-> Rust conversion.
@@ -25,6 +27,19 @@ macro_rules! map_py_impl {
 
 map_py_impl!(bool, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, f32, f64, String);
 
+impl MapPy<PyObject> for Vec<u32> {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        // TODO: avoid clone?
+        Ok(self.clone().into_pyarray_bound(py).into())
+    }
+}
+
+impl MapPy<Vec<u32>> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Vec<u32>> {
+        self.extract(py)
+    }
+}
+
 impl<T, U> MapPy<Option<U>> for Option<T>
 where
     T: MapPy<U>,
@@ -34,8 +49,20 @@ where
     }
 }
 
-// TODO: How to avoid overlapping definitions with numpy and Vec<T> for PyObject?
 // TODO: how to implement for Py<T>?
+
+// TODO: Derive for each type to avoid overlapping definitions with numpy and PyObject?
+impl MapPy<Vec<String>> for Py<PyList> {
+    fn map_py(&self, py: Python) -> PyResult<Vec<String>> {
+        self.extract(py)
+    }
+}
+
+impl MapPy<Py<PyList>> for Vec<String> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
+        Ok(PyList::new_bound(py, self).into())
+    }
+}
 
 impl MapPy<PyObject> for Vec<Vec2> {
     fn map_py(&self, py: Python) -> PyResult<PyObject> {
@@ -70,6 +97,31 @@ impl MapPy<PyObject> for Vec<Vec4> {
 impl MapPy<Vec<Vec4>> for PyObject {
     fn map_py(&self, py: Python) -> PyResult<Vec<Vec4>> {
         pyarray_vectors(py, self)
+    }
+}
+
+impl MapPy<PyObject> for Vec<[u8; 4]> {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        Ok(uvec4_pyarray(py, self))
+    }
+}
+
+impl MapPy<Vec<[u8; 4]>> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Vec<[u8; 4]>> {
+        // TODO: blanket impl for this?
+        self.extract(py)
+    }
+}
+
+impl MapPy<PyObject> for Mat4 {
+    fn map_py(&self, py: Python) -> PyResult<PyObject> {
+        Ok(mat4_to_pyarray(py, *self))
+    }
+}
+
+impl MapPy<Mat4> for PyObject {
+    fn map_py(&self, py: Python) -> PyResult<Mat4> {
+        pyarray_to_mat4(py, self)
     }
 }
 
