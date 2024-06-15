@@ -151,16 +151,42 @@ class Bone:
 
 class Material:
     name: str
+    state_flags: StateFlags
     textures: list[Texture]
     alpha_test: Optional[TextureAlphaTest]
+    work_values: list[float]
+    shader_vars: list[Tuple[int, int]]
+    work_callbacks: list[Tuple[int, int]]
+    alpha_test_ref: list[int]
+    m_unks1_1: int
+    m_unks1_2: int
+    m_unks1_3: int
+    m_unks1_4: int
     shader: Optional[Shader]
+    technique_index: int
     pass_type: RenderPassType
+    parameters: MaterialParameters
+    m_unks2_2: int
+    m_unks3_1: int
 
     def __init__(
         self,
         name: str,
+        state_flags: StateFlags,
         textures: list[Texture],
+        work_values: list[float],
+        shader_vars: list[Tuple[int, int]],
+        work_callbacks: list[Tuple[int, int]],
+        alpha_test_ref: list[int],
+        m_unks1_1: int,
+        m_unks1_2: int,
+        m_unks1_3: int,
+        m_unks1_4: int,
+        technique_index: int,
         pass_type: RenderPassType,
+        parameters: MaterialParameters,
+        m_unks2_2: int,
+        m_unks3_1: int,
         alpha_test: Optional[TextureAlphaTest],
         shader: Optional[Shader],
     ) -> None: ...
@@ -172,6 +198,55 @@ class RenderPassType:
     Unk6: ClassVar[RenderPassType]
     Unk7: ClassVar[RenderPassType]
     Unk9: ClassVar[RenderPassType]
+
+class StateFlags:
+    depth_write_mode: int
+    blend_mode: BlendMode
+    cull_mode: CullMode
+    unk4: int
+    stencil_value: StencilValue
+    stencil_mode: StencilMode
+    depth_func: DepthFunc
+    color_write_mode: int
+
+class BlendMode:
+    Disabled: ClassVar[BlendMode]
+    Blend: ClassVar[BlendMode]
+    Unk2: ClassVar[BlendMode]
+    Multiply: ClassVar[BlendMode]
+    MultiplyInverted: ClassVar[BlendMode]
+    Add: ClassVar[BlendMode]
+    Disabled2: ClassVar[BlendMode]
+
+class StencilValue:
+    Unk0: ClassVar[StencilValue]
+    Unk1: ClassVar[StencilValue]
+    Unk4: ClassVar[StencilValue]
+    Unk5: ClassVar[StencilValue]
+    Unk8: ClassVar[StencilValue]
+    Unk9: ClassVar[StencilValue]
+    Unk12: ClassVar[StencilValue]
+    Unk16: ClassVar[StencilValue]
+    Unk20: ClassVar[StencilValue]
+    Unk33: ClassVar[StencilValue]
+    Unk37: ClassVar[StencilValue]
+    Unk41: ClassVar[StencilValue]
+    Unk49: ClassVar[StencilValue]
+    Unk97: ClassVar[StencilValue]
+    Unk105: ClassVar[StencilValue]
+
+class StencilMode:
+    Unk0: ClassVar[StencilMode]
+    Unk1: ClassVar[StencilMode]
+    Unk2: ClassVar[StencilMode]
+    Unk6: ClassVar[StencilMode]
+    Unk7: ClassVar[StencilMode]
+    Unk8: ClassVar[StencilMode]
+
+class DepthFunc:
+    Disabled: ClassVar[DepthFunc]
+    LessEqual: ClassVar[DepthFunc]
+    Equal: ClassVar[DepthFunc]
 
 class TextureAlphaTest:
     texture_index: int
