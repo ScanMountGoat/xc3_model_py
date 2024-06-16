@@ -29,7 +29,23 @@ macro_rules! map_py_impl {
     }
 }
 
-map_py_impl!(bool, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, f32, f64, String);
+map_py_impl!(
+    bool,
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+    i8,
+    i16,
+    i32,
+    i64,
+    f32,
+    f64,
+    String,
+    Vec<u8>
+);
 
 impl MapPy<[f32; 3]> for Vec3 {
     fn map_py(&self, _py: Python) -> PyResult<[f32; 3]> {

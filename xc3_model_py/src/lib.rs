@@ -64,7 +64,8 @@ macro_rules! python_enum {
 // TODO: traits and functions to simplify list conversions?
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::ModelRoot)]
 pub struct ModelRoot {
     pub models: Py<Models>,
     pub buffers: Py<ModelBuffers>,
@@ -73,7 +74,8 @@ pub struct ModelRoot {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::MapRoot)]
 pub struct MapRoot {
     pub groups: Py<PyList>,
     pub image_textures: Py<PyList>,
@@ -549,7 +551,8 @@ impl Texture {
 
 // TODO: MapPy won't work with threads?
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::ImageTexture)]
 pub struct ImageTexture {
     pub name: Option<String>,
     pub usage: Option<TextureUsage>,
@@ -794,16 +797,12 @@ impl ModelRoot {
     }
 
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
-        let buffers = self
-            .image_textures
-            .extract::<'_, '_, Vec<ImageTexture>>(py)?
+        let textures: Vec<xc3_model::ImageTexture> = self.image_textures.map_py(py)?;
+        let buffers = textures
             .par_iter()
             .map(|image| {
                 // TODO: Use image_dds directly to avoid cloning?
-                let bytes = image_texture_rs(image)
-                    .to_image()
-                    .map_err(py_exception)?
-                    .into_raw();
+                let bytes = image.to_image().map_err(py_exception)?.into_raw();
 
                 Ok(bytes
                     .into_iter()
@@ -830,7 +829,7 @@ impl ModelRoot {
     }
 
     pub fn to_mxmd_model(&self, py: Python, mxmd: &Mxmd, msrd: &Msrd) -> PyResult<(Mxmd, Msrd)> {
-        let (mxmd, msrd) = model_root_rs(py, self)?.to_mxmd_model(&mxmd.0, &msrd.0);
+        let (mxmd, msrd) = self.map_py(py)?.to_mxmd_model(&mxmd.0, &msrd.0);
         Ok((Mxmd(mxmd), Msrd(msrd)))
     }
     // TODO: support texture edits as well?
@@ -847,16 +846,12 @@ impl MapRoot {
     }
 
     pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
-        let buffers = self
-            .image_textures
-            .extract::<'_, '_, Vec<ImageTexture>>(py)?
+        let textures: Vec<xc3_model::ImageTexture> = self.image_textures.map_py(py)?;
+        let buffers = textures
             .par_iter()
             .map(|image| {
                 // TODO: Use image_dds directly to avoid cloning?
-                let bytes = image_texture_rs(image)
-                    .to_image()
-                    .map_err(py_exception)?
-                    .into_raw();
+                let bytes = image.to_image().map_err(py_exception)?.into_raw();
 
                 Ok(bytes
                     .into_iter()
@@ -892,8 +887,8 @@ fn save_images_rgba8(
     ext: &str,
     flip_vertical: bool,
 ) -> PyResult<Vec<String>> {
-    image_textures
-        .extract::<'_, '_, Vec<ImageTexture>>(py)?
+    let textures: Vec<xc3_model::ImageTexture> = image_textures.map_py(py)?;
+    textures
         .par_iter()
         .enumerate()
         .map(|(i, texture)| {
@@ -905,7 +900,7 @@ fn save_images_rgba8(
                 .unwrap_or_else(|| format!("{prefix}.{i}.{ext}"));
             let path = Path::new(folder).join(filename);
 
-            let mut image = image_texture_rs(texture).to_image().map_err(py_exception)?;
+            let mut image = texture.to_image().map_err(py_exception)?;
             if flip_vertical {
                 // Xenoblade X images need to be flipped vertically to look as expected.
                 // TODO: Is there a better way of handling this?
@@ -967,17 +962,17 @@ fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyRe
         .transpose()
         .map_err(py_exception)?;
     let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
-    model_root_py(py, root)
+    root.map_py(py)
 }
 
 #[pyfunction]
 fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
     let root = xc3_model::load_model_legacy(camdo_path).map_err(py_exception)?;
-    model_root_py(py, root)
+    root.map_py(py)
 }
 
 #[pyfunction]
-fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyResult<Vec<MapRoot>> {
+fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyResult<Py<PyList>> {
     let database = database_path
         .map(xc3_model::shader_database::ShaderDatabase::from_file)
         .transpose()
@@ -986,10 +981,7 @@ fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyRes
     let roots = py.allow_threads(move || {
         xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)
     })?;
-    roots
-        .into_iter()
-        .map(|root| map_root_py(py, root))
-        .collect()
+    roots.map_py(py)
 }
 
 #[pyfunction]
@@ -1003,35 +995,6 @@ fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<animation::Anim
 
 fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
     PyErr::new::<Xc3ModelError, _>(format!("{e}"))
-}
-
-fn map_root_py(py: Python, root: xc3_model::MapRoot) -> PyResult<MapRoot> {
-    // TODO: Avoid unwrap.
-    Ok(MapRoot {
-        groups: root.groups.map_py(py)?,
-        image_textures: PyList::new_bound(
-            py,
-            root.image_textures
-                .into_iter()
-                .map(|t| image_texture_py(t).into_py(py)),
-        )
-        .into(),
-    })
-}
-
-fn model_root_py(py: Python, root: xc3_model::ModelRoot) -> PyResult<ModelRoot> {
-    Ok(ModelRoot {
-        models: root.models.map_py(py)?,
-        buffers: Py::new(py, root.buffers.map_py(py)?)?,
-        image_textures: PyList::new_bound(
-            py,
-            root.image_textures
-                .into_iter()
-                .map(|t| image_texture_py(t).into_py(py)),
-        )
-        .into(),
-        skeleton: root.skeleton.map_py(py)?,
-    })
 }
 
 // TODO: Create a proper type for this.
@@ -1167,48 +1130,6 @@ fn output_assignments_rs(assignments: &OutputAssignments) -> xc3_model::OutputAs
                 w: a.w.map(|v| v.0),
             }),
     }
-}
-
-fn image_texture_py(image: xc3_model::ImageTexture) -> ImageTexture {
-    ImageTexture {
-        name: image.name,
-        usage: image.usage.map(Into::into),
-        width: image.width,
-        height: image.height,
-        depth: image.depth,
-        view_dimension: image.view_dimension.into(),
-        image_format: image.image_format.into(),
-        mipmap_count: image.mipmap_count,
-        image_data: image.image_data,
-    }
-}
-
-fn image_texture_rs(image: &ImageTexture) -> xc3_model::ImageTexture {
-    xc3_model::ImageTexture {
-        name: image.name.clone(),
-        usage: image.usage.map(Into::into),
-        width: image.width,
-        height: image.height,
-        depth: image.depth,
-        view_dimension: image.view_dimension.into(),
-        image_format: image.image_format.into(),
-        mipmap_count: image.mipmap_count,
-        image_data: image.image_data.clone(),
-    }
-}
-
-fn model_root_rs(py: Python, root: &ModelRoot) -> PyResult<xc3_model::ModelRoot> {
-    Ok(xc3_model::ModelRoot {
-        models: root.models.extract::<Models>(py)?.map_py(py)?,
-        buffers: root.buffers.extract::<ModelBuffers>(py)?.map_py(py)?,
-        image_textures: root
-            .image_textures
-            .extract::<'_, '_, Vec<ImageTexture>>(py)?
-            .iter()
-            .map(image_texture_rs)
-            .collect(),
-        skeleton: root.skeleton.map_py(py)?,
-    })
 }
 
 fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
