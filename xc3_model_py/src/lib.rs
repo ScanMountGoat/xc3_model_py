@@ -314,6 +314,8 @@ impl Bone {
 pub struct Material {
     pub name: String,
     // TODO: how to handle flags?
+    pub flags: u32,
+    pub render_flags: u32,
     pub state_flags: StateFlags,
     pub textures: Py<PyList>,
     pub alpha_test: Option<TextureAlphaTest>,
@@ -338,6 +340,8 @@ impl Material {
     #[new]
     fn new(
         name: String,
+        flags: u32,
+        render_flags: u32,
         state_flags: StateFlags,
         textures: Py<PyList>,
         work_values: Vec<f32>,
@@ -358,6 +362,8 @@ impl Material {
     ) -> Self {
         Self {
             name,
+            flags,
+            render_flags,
             state_flags,
             textures,
             alpha_test,
@@ -1012,11 +1018,10 @@ impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
 
 impl MapPy<xc3_model::Material> for Material {
     fn map_py(&self, py: Python) -> PyResult<xc3_model::Material> {
-        // TODO: Properly support flags conversions.
         Ok(xc3_model::Material {
             name: self.name.clone(),
-            flags: xc3_model::MaterialFlags::from(0u32),
-            render_flags: xc3_model::MaterialRenderFlags::from(0u32),
+            flags: self.flags.into(),
+            render_flags: self.render_flags.into(),
             state_flags: self.state_flags.map_py(py)?,
             textures: self.textures.map_py(py)?,
             alpha_test: self
@@ -1054,6 +1059,8 @@ impl MapPy<Material> for xc3_model::Material {
     fn map_py(&self, py: Python) -> PyResult<Material> {
         Ok(Material {
             name: self.name.clone(),
+            flags: self.flags.into(),
+            render_flags: self.render_flags.into(),
             state_flags: self.state_flags.map_py(py).unwrap(),
             textures: self.textures.map_py(py).unwrap(),
             alpha_test: self.alpha_test.clone().map(|a| TextureAlphaTest {
@@ -1099,7 +1106,7 @@ impl crate::MapPy<Py<PyList>> for Vec<xc3_model::Material> {
     fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
         Ok(PyList::new_bound(
             py,
-            self.into_iter()
+            self.iter()
                 .map(|v| Ok(v.map_py(py)?.into_py(py)))
                 .collect::<PyResult<Vec<_>>>()?,
         )

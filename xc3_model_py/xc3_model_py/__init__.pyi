@@ -151,6 +151,8 @@ class Bone:
 
 class Material:
     name: str
+    flags: int
+    render_flags: int
     state_flags: StateFlags
     textures: list[Texture]
     alpha_test: Optional[TextureAlphaTest]
@@ -172,6 +174,8 @@ class Material:
     def __init__(
         self,
         name: str,
+        flags: int,
+        render_flags: int,
         state_flags: StateFlags,
         textures: list[Texture],
         work_values: list[float],
@@ -217,6 +221,12 @@ class BlendMode:
     MultiplyInverted: ClassVar[BlendMode]
     Add: ClassVar[BlendMode]
     Disabled2: ClassVar[BlendMode]
+
+class CullMode:
+    Back: ClassVar[CullMode]
+    Front: ClassVar[CullMode]
+    Disabled: ClassVar[CullMode]
+    Unk3: ClassVar[CullMode]
 
 class StencilValue:
     Unk0: ClassVar[StencilValue]

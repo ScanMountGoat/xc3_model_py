@@ -209,7 +209,7 @@ impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::ModelBuffers> {
     fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
         Ok(PyList::new_bound(
             py,
-            self.into_iter()
+            self.iter()
                 .map(|v| {
                     let v2: ModelBuffers = v.map_py(py)?;
                     Ok(v2.into_py(py))
