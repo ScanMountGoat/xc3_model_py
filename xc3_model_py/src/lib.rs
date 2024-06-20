@@ -999,8 +999,9 @@ fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<animation::Anim
         .collect())
 }
 
-fn py_exception<E: std::fmt::Display>(e: E) -> PyErr {
-    PyErr::new::<Xc3ModelError, _>(format!("{e}"))
+fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
+    // anyhow provides more detailed context for inner errors.
+    PyErr::new::<Xc3ModelError, _>(format!("{:?}", anyhow::anyhow!(e)))
 }
 
 // TODO: Create a proper type for this.
