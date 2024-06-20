@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Renamed `Mesh.unk_mesh_index1` to `Mesh.index_buffer_index2` to better reflect in game data.
 * Changed the behavior of `ModelRoot.to_mxmd_model` to also recreate materials.
+* Changed the output of exceptions to include inner errors for easier debugging.
 
 ## 0.6.0 - 2024-06-09
 ### Added
