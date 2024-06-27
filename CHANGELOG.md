@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `Mesh.unk_mesh_index1` to `Mesh.index_buffer_index2` to better reflect in game data.
 * Changed the behavior of `ModelRoot.to_mxmd_model` to also recreate materials.
 * Changed the output of exceptions to include inner errors for easier debugging.
+* Renamed `ChannelAssignmentTexture` to `TextureAssignment`.
+* Changed field `TextureAssignment.channel_index` to `TextureAssignment.channels`.
+* Renamed `Shader` to `ShaderProgram`.
+* Changed the `ShaderProgram.texture` method to `ShaderProgram.textures` method that returns an optional list of assigned textures.
 
 ## 0.6.0 - 2024-06-09
 ### Added

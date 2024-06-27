@@ -164,7 +164,7 @@ class Material:
     m_unks1_2: int
     m_unks1_3: int
     m_unks1_4: int
-    shader: Optional[Shader]
+    shader: Optional[ShaderProgram]
     technique_index: int
     pass_type: RenderPassType
     parameters: MaterialParameters
@@ -192,7 +192,7 @@ class Material:
         m_unks2_2: int,
         m_unks3_1: int,
         alpha_test: Optional[TextureAlphaTest],
-        shader: Optional[Shader],
+        shader: Optional[ShaderProgram],
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
 
@@ -283,7 +283,7 @@ class MaterialParameters:
         work_color: Optional[list[float]],
     ) -> None: ...
 
-class Shader:
+class ShaderProgram:
     pass
 
 class Texture:
@@ -414,13 +414,13 @@ class OutputAssignment:
     w: Optional[ChannelAssignment]
 
 class ChannelAssignment:
-    def texture(self) -> Optional[ChannelAssignmentTexture]: ...
+    def textures(self) -> Optional[list[TextureAssignment]]: ...
     def value(self) -> Optional[float]: ...
     def attribute(self) -> Optional[ChannelAssignmentAttribute]: ...
 
-class ChannelAssignmentTexture:
+class TextureAssignment:
     name: str
-    channel_index: int
+    channels: str
     texcoord_name: Optional[str]
     texcoord_scale: Optional[Tuple[float, float]]
 

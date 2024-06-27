@@ -327,7 +327,7 @@ pub struct Material {
     pub m_unks1_2: u32,
     pub m_unks1_3: u32,
     pub m_unks1_4: u32,
-    pub shader: Option<Shader>,
+    pub shader: Option<ShaderProgram>,
     pub technique_index: usize,
     pub pass_type: RenderPassType,
     pub parameters: MaterialParameters,
@@ -358,7 +358,7 @@ impl Material {
         m_unks2_2: u16,
         m_unks3_1: u16,
         alpha_test: Option<TextureAlphaTest>,
-        shader: Option<Shader>,
+        shader: Option<ShaderProgram>,
     ) -> Self {
         Self {
             name,
@@ -534,7 +534,7 @@ impl MaterialParameters {
 // TODO: Expose implementation details?
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Shader(xc3_model::shader_database::Shader);
+pub struct ShaderProgram(xc3_model::shader_database::ShaderProgram);
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone, MapPy)]
@@ -735,9 +735,9 @@ pub struct ChannelAssignment(xc3_model::ChannelAssignment);
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone)]
-pub struct ChannelAssignmentTexture {
+pub struct TextureAssignment {
     pub name: String,
-    pub channel_index: usize,
+    pub channels: String,
     pub texcoord_name: Option<String>,
     pub texcoord_scale: Option<(f32, f32)>,
 }
@@ -923,19 +923,19 @@ fn save_images_rgba8(
 #[pymethods]
 impl ChannelAssignment {
     // Workaround for representing Rust enums in Python.
-    pub fn texture(&self) -> Option<ChannelAssignmentTexture> {
-        match self.0.clone() {
-            xc3_model::ChannelAssignment::Texture {
-                name,
-                channel_index,
-                texcoord_name,
-                texcoord_scale,
-            } => Some(ChannelAssignmentTexture {
-                name,
-                channel_index,
-                texcoord_name,
-                texcoord_scale,
-            }),
+    pub fn textures(&self) -> Option<Vec<TextureAssignment>> {
+        match &self.0 {
+            xc3_model::ChannelAssignment::Textures(textures) => Some(
+                textures
+                    .iter()
+                    .map(|t| TextureAssignment {
+                        name: t.name.to_string(),
+                        channels: t.channels.to_string(),
+                        texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
+                        texcoord_scale: t.texcoord_scale.clone(),
+                    })
+                    .collect(),
+            ),
             _ => None,
         }
     }
@@ -953,7 +953,7 @@ impl ChannelAssignment {
                 name,
                 channel_index,
             } => Some(ChannelAssignmentAttribute {
-                name,
+                name: name.to_string(),
                 channel_index,
             }),
             _ => None,
@@ -1068,7 +1068,7 @@ impl MapPy<Material> for xc3_model::Material {
                 texture_index: a.texture_index,
                 channel_index: a.channel_index,
             }),
-            shader: self.shader.clone().map(Shader),
+            shader: self.shader.clone().map(ShaderProgram),
             pass_type: self.pass_type.into(),
             parameters: MaterialParameters {
                 mat_color: self.parameters.mat_color,
@@ -1239,7 +1239,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<StencilMode>()?;
     m.add_class::<DepthFunc>()?;
 
-    m.add_class::<Shader>()?;
+    m.add_class::<ShaderProgram>()?;
     m.add_class::<Texture>()?;
 
     m.add_class::<ImageTexture>()?;
@@ -1254,7 +1254,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<OutputAssignments>()?;
     m.add_class::<OutputAssignment>()?;
     m.add_class::<ChannelAssignment>()?;
-    m.add_class::<ChannelAssignmentTexture>()?;
+    m.add_class::<TextureAssignment>()?;
 
     m.add_class::<Mxmd>()?;
     m.add_class::<Msrd>()?;
