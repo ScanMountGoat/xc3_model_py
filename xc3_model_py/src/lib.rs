@@ -739,7 +739,7 @@ pub struct TextureAssignment {
     pub name: String,
     pub channels: String,
     pub texcoord_name: Option<String>,
-    pub texcoord_scale: Option<(f32, f32)>,
+    pub texcoord_transforms: Option<((f32, f32, f32, f32), (f32, f32, f32, f32))>,
 }
 
 #[pyclass(get_all, set_all)]
@@ -932,7 +932,9 @@ impl ChannelAssignment {
                         name: t.name.to_string(),
                         channels: t.channels.to_string(),
                         texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
-                        texcoord_scale: t.texcoord_scale.clone(),
+                        texcoord_transforms: t
+                            .texcoord_transforms
+                            .map(|(u, v)| (u.into(), v.into())),
                     })
                     .collect(),
             ),

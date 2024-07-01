@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed the output of exceptions to include inner errors for easier debugging.
 * Renamed `ChannelAssignmentTexture` to `TextureAssignment`.
 * Changed field `TextureAssignment.channel_index` to `TextureAssignment.channels`.
+* Changed field `TextureAssignment.texture_scale` to `TextureAssignment.texture_transforms`.
 * Renamed `Shader` to `ShaderProgram`.
 * Changed the `ShaderProgram.texture` method to `ShaderProgram.textures` method that returns an optional list of assigned textures.
 

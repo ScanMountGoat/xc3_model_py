@@ -422,7 +422,9 @@ class TextureAssignment:
     name: str
     channels: str
     texcoord_name: Optional[str]
-    texcoord_scale: Optional[Tuple[float, float]]
+    texcoord_transforms: Optional[
+        Tuple[Tuple[float, float, float, float], Tuple[float, float, float, float]]
+    ]
 
 class ChannelAssignmentAttribute:
     name: str
