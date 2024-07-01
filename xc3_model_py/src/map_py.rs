@@ -1,6 +1,7 @@
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArrayMethods};
 use pyo3::{prelude::*, types::PyList};
+use smol_str::SmolStr;
 pub use xc3_model_py_derive::MapPy;
 
 use crate::{
@@ -206,5 +207,33 @@ impl MapPy<PyObject> for Vec<Mat4> {
 impl MapPy<Vec<Mat4>> for PyObject {
     fn map_py(&self, py: Python) -> PyResult<Vec<Mat4>> {
         pyarray_to_mat4s(py, self)
+    }
+}
+
+// TODO: blanket impl using From/Into?
+impl MapPy<SmolStr> for String {
+    fn map_py(&self, _py: Python) -> PyResult<SmolStr> {
+        Ok(self.into())
+    }
+}
+
+impl MapPy<String> for SmolStr {
+    fn map_py(&self, _py: Python) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+}
+
+// TODO: const generics?
+impl<T, U> MapPy<[U; 4]> for [T; 4]
+where
+    T: MapPy<U>,
+{
+    fn map_py(&self, py: Python) -> PyResult<[U; 4]> {
+        Ok([
+            self[0].map_py(py)?,
+            self[1].map_py(py)?,
+            self[2].map_py(py)?,
+            self[3].map_py(py)?,
+        ])
     }
 }

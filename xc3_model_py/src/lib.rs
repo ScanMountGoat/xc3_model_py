@@ -5,10 +5,12 @@ use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
+use shader_database::{ShaderDatabase, ShaderProgram};
 use vertex::ModelBuffers;
 
 mod animation;
 mod map_py;
+mod shader_database;
 mod skinning;
 mod vertex;
 
@@ -484,7 +486,8 @@ python_enum!(
 python_enum!(DepthFunc, xc3_model::DepthFunc, Disabled, LessEqual, Equal);
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::TextureAlphaTest)]
 pub struct TextureAlphaTest {
     pub texture_index: usize,
     pub channel_index: usize,
@@ -530,11 +533,6 @@ impl MaterialParameters {
         }
     }
 }
-
-// TODO: Expose implementation details?
-#[pyclass]
-#[derive(Debug, Clone)]
-pub struct ShaderProgram(xc3_model::shader_database::ShaderProgram);
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone, MapPy)]
@@ -964,12 +962,13 @@ impl ChannelAssignment {
 }
 
 #[pyfunction]
-fn load_model(py: Python, wimdo_path: &str, database_path: Option<&str>) -> PyResult<ModelRoot> {
-    let database = database_path
-        .map(xc3_model::shader_database::ShaderDatabase::from_file)
-        .transpose()
-        .map_err(py_exception)?;
-    let root = xc3_model::load_model(wimdo_path, database.as_ref()).map_err(py_exception)?;
+fn load_model(
+    py: Python,
+    wimdo_path: &str,
+    shader_database: Option<&ShaderDatabase>,
+) -> PyResult<ModelRoot> {
+    let database = shader_database.map(|database| &database.0);
+    let root = xc3_model::load_model(wimdo_path, database).map_err(py_exception)?;
     root.map_py(py)
 }
 
@@ -980,15 +979,15 @@ fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
 }
 
 #[pyfunction]
-fn load_map(py: Python, wismhd_path: &str, database_path: Option<&str>) -> PyResult<Py<PyList>> {
-    let database = database_path
-        .map(xc3_model::shader_database::ShaderDatabase::from_file)
-        .transpose()
-        .map_err(py_exception)?;
+fn load_map(
+    py: Python,
+    wismhd_path: &str,
+    shader_database: Option<&ShaderDatabase>,
+) -> PyResult<Py<PyList>> {
+    let database = shader_database.map(|database| &database.0);
     // Prevent Python from locking up while Rust processes map data in parallel.
-    let roots = py.allow_threads(move || {
-        xc3_model::load_map(wismhd_path, database.as_ref()).map_err(py_exception)
-    })?;
+    let roots =
+        py.allow_threads(move || xc3_model::load_map(wismhd_path, database).map_err(py_exception))?;
     roots.map_py(py)
 }
 
@@ -1027,13 +1026,7 @@ impl MapPy<xc3_model::Material> for Material {
             render_flags: self.render_flags.into(),
             state_flags: self.state_flags.map_py(py)?,
             textures: self.textures.map_py(py)?,
-            alpha_test: self
-                .alpha_test
-                .as_ref()
-                .map(|a| xc3_model::TextureAlphaTest {
-                    texture_index: a.texture_index,
-                    channel_index: a.channel_index,
-                }),
+            alpha_test: self.alpha_test.map_py(py)?,
             work_values: self.work_values.clone(),
             shader_vars: self.shader_vars.clone(),
             work_callbacks: self.work_callbacks.clone(),
@@ -1042,7 +1035,7 @@ impl MapPy<xc3_model::Material> for Material {
             m_unks1_2: self.m_unks1_2,
             m_unks1_3: self.m_unks1_3,
             m_unks1_4: self.m_unks1_4,
-            shader: self.shader.clone().map(|s| s.0),
+            shader: self.shader.map_py(py)?,
             technique_index: self.technique_index,
             pass_type: self.pass_type.into(),
             parameters: xc3_model::MaterialParameters {
@@ -1066,11 +1059,8 @@ impl MapPy<Material> for xc3_model::Material {
             render_flags: self.render_flags.into(),
             state_flags: self.state_flags.map_py(py).unwrap(),
             textures: self.textures.map_py(py).unwrap(),
-            alpha_test: self.alpha_test.clone().map(|a| TextureAlphaTest {
-                texture_index: a.texture_index,
-                channel_index: a.channel_index,
-            }),
-            shader: self.shader.clone().map(ShaderProgram),
+            alpha_test: self.alpha_test.map_py(py)?,
+            shader: self.shader.map_py(py)?,
             pass_type: self.pass_type.into(),
             parameters: MaterialParameters {
                 mat_color: self.parameters.mat_color,
@@ -1211,6 +1201,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Match the module hierarchy and types of xc3_model as closely as possible.
     animation::animation(py, m)?;
+    shader_database::shader_database(py, m)?;
     skinning::skinning(py, m)?;
     vertex::vertex(py, m)?;
 
@@ -1241,7 +1232,6 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<StencilMode>()?;
     m.add_class::<DepthFunc>()?;
 
-    m.add_class::<ShaderProgram>()?;
     m.add_class::<Texture>()?;
 
     m.add_class::<ImageTexture>()?;

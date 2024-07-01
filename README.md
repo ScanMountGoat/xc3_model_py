@@ -14,9 +14,9 @@ Parsing and processing happens in optimized Rust code when calling `xc3_model_py
 import xc3_model_py
 
 # Get a list of MapRoot.
-roots = xc3_model_py.load_map(
-    "xenoblade3_dump/map/ma59a.wismhd", database_path="xc3.json"
-)
+database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.json")
+roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd", database)
+
 for root in roots:
     for group in root.groups:
         for models in group.models:
@@ -33,9 +33,9 @@ for root in roots:
 
 ```python
 # This returns only a single ModelRoot.
-root = xc3_model_py.load_model(
-    "xenoblade3_dump/chr/chr/01012013.wimdo", database_path="xc3.json"
-)
+database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.json")
+root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database)
+
 for material in root.models.materials:
     print(material.name)
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added type `ChannelAssignmentAttribute` for vertex attribute shader dependencies.
 * Added method `attribute` to `ChannelAssignment`.
 * Added fields `flags`, `render_flags`, `state_flags`, `work_values`, `shader_vars`, `work_callbacks`, `alpha_test_ref`, `m_unks1_1`, `m_unks1_2`, `m_unks1_3`, `m_unks1_4`, `technique_index`, `parameters`, `m_unks2_2`, and `m_unks3_1` to `Material`.
+* Added shader database types in the `shader_database` module for querying the database information.
 
 ### Changed
 * Renamed `Mesh.unk_mesh_index1` to `Mesh.index_buffer_index2` to better reflect in game data.
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed field `TextureAssignment.texture_scale` to `TextureAssignment.texture_transforms`.
 * Renamed `Shader` to `ShaderProgram`.
 * Changed the `ShaderProgram.texture` method to `ShaderProgram.textures` method that returns an optional list of assigned textures.
+* Changed `load_model` and `load_map` functions to take `xc3_model_py.shader_database.ShaderDatabase` instead of a path.
 
 ## 0.6.0 - 2024-06-09
 ### Added

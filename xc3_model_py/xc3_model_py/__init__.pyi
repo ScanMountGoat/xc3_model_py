@@ -4,10 +4,15 @@ import numpy
 from . import animation
 from . import skinning
 from . import vertex
+from . import shader_database
 
-def load_model(wimdo_path: str, database_path: Optional[str]) -> ModelRoot: ...
+def load_model(
+    wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]
+) -> ModelRoot: ...
 def load_model_legacy(camdo_path) -> ModelRoot: ...
-def load_map(wismhd: str, database_path: Optional[str]) -> list[MapRoot]: ...
+def load_map(
+    wismhd: str, shader_database: Optional[shader_database.ShaderDatabase]
+) -> list[MapRoot]: ...
 def load_animations(anim_path: str) -> list[animation.Animation]: ...
 
 class Xc3ModelError(Exception):
@@ -164,7 +169,7 @@ class Material:
     m_unks1_2: int
     m_unks1_3: int
     m_unks1_4: int
-    shader: Optional[ShaderProgram]
+    shader: Optional[shader_database.ShaderProgram]
     technique_index: int
     pass_type: RenderPassType
     parameters: MaterialParameters
@@ -192,7 +197,7 @@ class Material:
         m_unks2_2: int,
         m_unks3_1: int,
         alpha_test: Optional[TextureAlphaTest],
-        shader: Optional[ShaderProgram],
+        shader: Optional[shader_database.ShaderProgram],
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
 
@@ -282,9 +287,6 @@ class MaterialParameters:
         work_float4: Optional[list[float]],
         work_color: Optional[list[float]],
     ) -> None: ...
-
-class ShaderProgram:
-    pass
 
 class Texture:
     image_texture_index: int
