@@ -312,7 +312,8 @@ impl Bone {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::Material)]
 pub struct Material {
     pub name: String,
     // TODO: how to handle flags?
@@ -505,7 +506,8 @@ impl TextureAlphaTest {
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::MaterialParameters)]
 pub struct MaterialParameters {
     pub mat_color: [f32; 4],
     pub alpha_test_ref: f32,
@@ -1018,95 +1020,6 @@ impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
     }
 }
 
-impl MapPy<xc3_model::Material> for Material {
-    fn map_py(&self, py: Python) -> PyResult<xc3_model::Material> {
-        Ok(xc3_model::Material {
-            name: self.name.clone(),
-            flags: self.flags.into(),
-            render_flags: self.render_flags.into(),
-            state_flags: self.state_flags.map_py(py)?,
-            textures: self.textures.map_py(py)?,
-            alpha_test: self.alpha_test.map_py(py)?,
-            work_values: self.work_values.clone(),
-            shader_vars: self.shader_vars.clone(),
-            work_callbacks: self.work_callbacks.clone(),
-            alpha_test_ref: self.alpha_test_ref,
-            m_unks1_1: self.m_unks1_1,
-            m_unks1_2: self.m_unks1_2,
-            m_unks1_3: self.m_unks1_3,
-            m_unks1_4: self.m_unks1_4,
-            shader: self.shader.map_py(py)?,
-            technique_index: self.technique_index,
-            pass_type: self.pass_type.into(),
-            parameters: xc3_model::MaterialParameters {
-                mat_color: self.parameters.mat_color,
-                alpha_test_ref: self.parameters.alpha_test_ref,
-                tex_matrix: self.parameters.tex_matrix.clone(),
-                work_float4: self.parameters.work_float4.clone(),
-                work_color: self.parameters.work_color.clone(),
-            },
-            m_unks2_2: self.m_unks2_2,
-            m_unks3_1: self.m_unks3_1,
-        })
-    }
-}
-
-impl MapPy<Material> for xc3_model::Material {
-    fn map_py(&self, py: Python) -> PyResult<Material> {
-        Ok(Material {
-            name: self.name.clone(),
-            flags: self.flags.into(),
-            render_flags: self.render_flags.into(),
-            state_flags: self.state_flags.map_py(py).unwrap(),
-            textures: self.textures.map_py(py).unwrap(),
-            alpha_test: self.alpha_test.map_py(py)?,
-            shader: self.shader.map_py(py)?,
-            pass_type: self.pass_type.into(),
-            parameters: MaterialParameters {
-                mat_color: self.parameters.mat_color,
-                alpha_test_ref: self.parameters.alpha_test_ref,
-                tex_matrix: self.parameters.tex_matrix.clone(),
-                work_float4: self.parameters.work_float4.clone(),
-                work_color: self.parameters.work_color.clone(),
-            },
-            work_values: self.work_values.clone(),
-            shader_vars: self.shader_vars.clone(),
-            work_callbacks: self.work_callbacks.clone(),
-            alpha_test_ref: self.alpha_test_ref,
-            m_unks1_1: self.m_unks1_1,
-            m_unks1_2: self.m_unks1_2,
-            m_unks1_3: self.m_unks1_3,
-            m_unks1_4: self.m_unks1_4,
-            technique_index: self.technique_index,
-            m_unks2_2: self.m_unks2_2,
-            m_unks3_1: self.m_unks3_1,
-        })
-    }
-}
-
-// Map from Python lists to Vec<T>
-impl crate::MapPy<Vec<xc3_model::Material>> for Py<PyList> {
-    fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::Material>> {
-        self.extract::<'_, '_, Vec<Material>>(py)?
-            .iter()
-            .map(|v| v.map_py(py))
-            .collect::<Result<Vec<_>, _>>()
-    }
-}
-
-// Map from Vec<T> to Python lists
-impl crate::MapPy<Py<PyList>> for Vec<xc3_model::Material> {
-    fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-        Ok(PyList::new_bound(
-            py,
-            self.iter()
-                .map(|v| Ok(v.map_py(py)?.into_py(py)))
-                .collect::<PyResult<Vec<_>>>()?,
-        )
-        .into())
-    }
-}
-
 fn output_assignments_py(assignments: xc3_model::OutputAssignments) -> OutputAssignments {
     OutputAssignments {
         assignments: assignments.assignments.map(|a| OutputAssignment {
@@ -1194,6 +1107,9 @@ fn pyarray_to_mat4s(py: Python, values: &PyObject) -> PyResult<Vec<Mat4>> {
     let transforms: Vec<[[f32; 4]; 4]> = values.extract(py)?;
     Ok(transforms.iter().map(Mat4::from_cols_array_2d).collect())
 }
+
+map_py_into_impl!(xc3_model::MaterialFlags, u32);
+map_py_into_impl!(xc3_model::MaterialRenderFlags, u32);
 
 #[pymodule]
 fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {

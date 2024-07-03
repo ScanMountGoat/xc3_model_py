@@ -172,13 +172,13 @@ impl MapPy<IndexMap<SmolStr, Vec<xc3_model::shader_database::Dependency>>> for P
 
 // TODO: macro for this?
 impl MapPy<xc3_model::shader_database::TexCoordParams> for TexCoordParams {
-    fn map_py(&self, py: Python) -> PyResult<xc3_model::shader_database::TexCoordParams> {
+    fn map_py(&self, _py: Python) -> PyResult<xc3_model::shader_database::TexCoordParams> {
         Ok(self.0.clone())
     }
 }
 
 impl MapPy<TexCoordParams> for xc3_model::shader_database::TexCoordParams {
-    fn map_py(&self, py: Python) -> PyResult<TexCoordParams> {
+    fn map_py(&self, _py: Python) -> PyResult<TexCoordParams> {
         Ok(TexCoordParams(self.clone()))
     }
 }

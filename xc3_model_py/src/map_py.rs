@@ -45,20 +45,31 @@ map_py_impl!(
     f32,
     f64,
     String,
-    Vec<u8>
+    Vec<u8>,
+    Vec<f32>,
+    Vec<(u16, u16)>,
+    Vec<[f32; 4]>,
+    Vec<[f32; 8]>
 );
 
-impl MapPy<[f32; 3]> for Vec3 {
-    fn map_py(&self, _py: Python) -> PyResult<[f32; 3]> {
-        Ok(self.to_array())
-    }
+#[macro_export]
+macro_rules! map_py_into_impl {
+    ($t:ty,$u:ty) => {
+        impl MapPy<$u> for $t {
+            fn map_py(&self, _py: Python) -> PyResult<$u> {
+                Ok((*self).into())
+            }
+        }
+
+        impl MapPy<$t> for $u {
+            fn map_py(&self, _py: Python) -> PyResult<$t> {
+                Ok((*self).into())
+            }
+        }
+    };
 }
 
-impl MapPy<Vec3> for [f32; 3] {
-    fn map_py(&self, _py: Python) -> PyResult<Vec3> {
-        Ok((*self).into())
-    }
-}
+map_py_into_impl!(Vec3, [f32; 3]);
 
 // TODO: macro for this
 impl MapPy<PyObject> for Vec<u32> {
@@ -224,16 +235,12 @@ impl MapPy<String> for SmolStr {
 }
 
 // TODO: const generics?
-impl<T, U> MapPy<[U; 4]> for [T; 4]
+impl<T, U, const N: usize> MapPy<[U; N]> for [T; N]
 where
     T: MapPy<U>,
 {
-    fn map_py(&self, py: Python) -> PyResult<[U; 4]> {
-        Ok([
-            self[0].map_py(py)?,
-            self[1].map_py(py)?,
-            self[2].map_py(py)?,
-            self[3].map_py(py)?,
-        ])
+    fn map_py(&self, py: Python) -> PyResult<[U; N]> {
+        // TODO: avoid unwrap
+        Ok(std::array::from_fn(|i| self[i].map_py(py).unwrap()))
     }
 }

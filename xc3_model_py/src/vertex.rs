@@ -8,6 +8,7 @@ pub struct ModelBuffers {
     pub vertex_buffers: Py<PyList>,
     pub index_buffers: Py<PyList>,
     pub weights: Option<Py<Weights>>,
+    // TODO: add missing fields and derive conversions
 }
 
 #[pymethods]
