@@ -9,7 +9,9 @@ from . import shader_database
 def load_model(
     wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]
 ) -> ModelRoot: ...
-def load_model_legacy(camdo_path) -> ModelRoot: ...
+def load_model_legacy(
+    camdo_path, shader_database: Optional[shader_database.ShaderDatabase]
+) -> ModelRoot: ...
 def load_map(
     wismhd: str, shader_database: Optional[shader_database.ShaderDatabase]
 ) -> list[MapRoot]: ...
@@ -257,6 +259,17 @@ class StencilMode:
     Unk6: ClassVar[StencilMode]
     Unk7: ClassVar[StencilMode]
     Unk8: ClassVar[StencilMode]
+
+class ColorWriteMode:
+    Unk0: ClassVar[ColorWriteMode]
+    Unk1: ClassVar[ColorWriteMode]
+    Unk2: ClassVar[ColorWriteMode]
+    Unk3: ClassVar[ColorWriteMode]
+    Unk6: ClassVar[ColorWriteMode]
+    Unk9: ClassVar[ColorWriteMode]
+    Unk10: ClassVar[ColorWriteMode]
+    Unk11: ClassVar[ColorWriteMode]
+    Unk12: ClassVar[ColorWriteMode]
 
 class DepthFunc:
     Disabled: ClassVar[DepthFunc]

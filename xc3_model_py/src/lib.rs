@@ -436,7 +436,7 @@ pub struct StateFlags {
     pub stencil_value: StencilValue,
     pub stencil_mode: StencilMode,
     pub depth_func: DepthFunc,
-    pub color_write_mode: u8,
+    pub color_write_mode: ColorWriteMode,
 }
 
 python_enum!(
@@ -485,6 +485,20 @@ python_enum!(
 );
 
 python_enum!(DepthFunc, xc3_model::DepthFunc, Disabled, LessEqual, Equal);
+
+python_enum!(
+    ColorWriteMode,
+    xc3_model::ColorWriteMode,
+    Unk0,
+    Unk1,
+    Unk2,
+    Unk3,
+    Unk6,
+    Unk9,
+    Unk10,
+    Unk11,
+    Unk12
+);
 
 #[pyclass(get_all, set_all)]
 #[derive(Debug, Clone, MapPy)]
@@ -975,8 +989,13 @@ fn load_model(
 }
 
 #[pyfunction]
-fn load_model_legacy(py: Python, camdo_path: &str) -> PyResult<ModelRoot> {
-    let root = xc3_model::load_model_legacy(camdo_path).map_err(py_exception)?;
+fn load_model_legacy(
+    py: Python,
+    camdo_path: &str,
+    shader_database: Option<&ShaderDatabase>,
+) -> PyResult<ModelRoot> {
+    let database = shader_database.map(|database| &database.0);
+    let root = xc3_model::load_model_legacy(camdo_path, database).map_err(py_exception)?;
     root.map_py(py)
 }
 
@@ -1147,6 +1166,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<StencilValue>()?;
     m.add_class::<StencilMode>()?;
     m.add_class::<DepthFunc>()?;
+    m.add_class::<ColorWriteMode>()?;
 
     m.add_class::<Texture>()?;
 
