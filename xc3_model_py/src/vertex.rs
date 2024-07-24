@@ -6,6 +6,7 @@ use crate::{map_py::MapPy, skinning::Weights, uvec2s_pyarray, uvec4_pyarray};
 #[derive(Debug, Clone)]
 pub struct ModelBuffers {
     pub vertex_buffers: Py<PyList>,
+    pub outline_buffers: Py<PyList>,
     pub index_buffers: Py<PyList>,
     pub weights: Option<Py<Weights>>,
     // TODO: add missing fields and derive conversions
@@ -16,11 +17,13 @@ impl ModelBuffers {
     #[new]
     pub fn new(
         vertex_buffers: Py<PyList>,
+        outline_buffers: Py<PyList>,
         index_buffers: Py<PyList>,
         weights: Option<Py<Weights>>,
     ) -> Self {
         Self {
             vertex_buffers,
+            outline_buffers,
             index_buffers,
             weights,
         }
@@ -67,6 +70,21 @@ impl IndexBuffer {
     #[new]
     fn new(indices: PyObject) -> Self {
         Self { indices }
+    }
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::vertex::OutlineBuffer)]
+pub struct OutlineBuffer {
+    pub attributes: Py<PyList>,
+}
+
+#[pymethods]
+impl OutlineBuffer {
+    #[new]
+    fn new(attributes: Py<PyList>) -> Self {
+        Self { attributes }
     }
 }
 
@@ -156,6 +174,7 @@ pub fn vertex(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<ModelBuffers>()?;
     m.add_class::<VertexBuffer>()?;
+    m.add_class::<OutlineBuffer>()?;
     m.add_class::<IndexBuffer>()?;
     m.add_class::<AttributeData>()?;
     m.add_class::<AttributeType>()?;
@@ -169,9 +188,9 @@ impl MapPy<xc3_model::vertex::ModelBuffers> for ModelBuffers {
     fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::ModelBuffers> {
         Ok(xc3_model::vertex::ModelBuffers {
             vertex_buffers: self.vertex_buffers.map_py(py)?,
-            // TODO: Fill in all fields
-            outline_buffers: Vec::new(),
+            outline_buffers: self.outline_buffers.map_py(py)?,
             index_buffers: self.index_buffers.map_py(py)?,
+            // TODO: Fill in all fields
             unk_buffers: Vec::new(),
             weights: self
                 .weights
@@ -186,6 +205,7 @@ impl MapPy<ModelBuffers> for xc3_model::vertex::ModelBuffers {
     fn map_py(&self, py: Python) -> PyResult<ModelBuffers> {
         Ok(ModelBuffers {
             vertex_buffers: self.vertex_buffers.map_py(py)?,
+            outline_buffers: self.outline_buffers.map_py(py)?,
             index_buffers: self.index_buffers.map_py(py)?,
             weights: match self.weights.as_ref() {
                 Some(w) => Some(Py::new(py, w.map_py(py)?)?),

@@ -5,12 +5,14 @@ from xc3_model_py.skinning import Weights
 
 class ModelBuffers:
     vertex_buffers: list[VertexBuffer]
+    outline_buffers: list[OutlineBuffer]
     index_buffers: list[IndexBuffer]
     weights: Optional[Weights]
 
     def __init__(
         self,
         vertex_buffers: list[VertexBuffer],
+        outline_buffers: list[OutlineBuffer],
         index_buffers: list[IndexBuffer],
         weights: Optional[Weights],
     ) -> None: ...
@@ -79,3 +81,8 @@ class IndexBuffer:
     indices: numpy.ndarray
 
     def __init__(self, indices: numpy.ndarray) -> None: ...
+
+class OutlineBuffer:
+    attributes: list[AttributeData]
+
+    def __init__(self, attributes: list[AttributeData]) -> None: ...
