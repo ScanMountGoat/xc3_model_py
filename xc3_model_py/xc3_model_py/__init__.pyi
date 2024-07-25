@@ -161,6 +161,7 @@ class Material:
     flags: int
     render_flags: int
     state_flags: StateFlags
+    color: list[float]
     textures: list[Texture]
     alpha_test: Optional[TextureAlphaTest]
     work_values: list[float]
@@ -184,6 +185,7 @@ class Material:
         flags: int,
         render_flags: int,
         state_flags: StateFlags,
+        color: list[float],
         textures: list[Texture],
         work_values: list[float],
         shader_vars: list[Tuple[int, int]],
@@ -286,7 +288,6 @@ class TextureAlphaTest:
     ) -> None: ...
 
 class MaterialParameters:
-    mat_color: list[float]
     alpha_test_ref: float
     tex_matrix: Optional[list[float]]
     work_float4: Optional[list[float]]
@@ -294,7 +295,6 @@ class MaterialParameters:
 
     def __init__(
         self,
-        mat_color: list[float],
         alpha_test_ref: float,
         tex_matrix: Optional[list[float]],
         work_float4: Optional[list[float]],

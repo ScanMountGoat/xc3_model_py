@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added field `outline_buffers` to `vertex.ModelBuffers`.
 * Added type `vertex.OutlineBuffer`.
+* Added field `color` to `Material`.
+
+### Removed
+* Removed field `mat_color` from `MaterialParameters`.
 
 ## 0.7.0 - 2024-07-22
 ### Added

@@ -320,6 +320,7 @@ pub struct Material {
     pub flags: u32,
     pub render_flags: u32,
     pub state_flags: StateFlags,
+    pub color: [f32; 4],
     pub textures: Py<PyList>,
     pub alpha_test: Option<TextureAlphaTest>,
     pub work_values: Vec<f32>,
@@ -346,6 +347,7 @@ impl Material {
         flags: u32,
         render_flags: u32,
         state_flags: StateFlags,
+        color: [f32; 4],
         textures: Py<PyList>,
         work_values: Vec<f32>,
         shader_vars: Vec<(u16, u16)>,
@@ -368,6 +370,7 @@ impl Material {
             flags,
             render_flags,
             state_flags,
+            color,
             textures,
             alpha_test,
             work_values,
@@ -523,7 +526,6 @@ impl TextureAlphaTest {
 #[derive(Debug, Clone, MapPy)]
 #[map(xc3_model::MaterialParameters)]
 pub struct MaterialParameters {
-    pub mat_color: [f32; 4],
     pub alpha_test_ref: f32,
     pub tex_matrix: Option<Vec<[f32; 8]>>,
     pub work_float4: Option<Vec<[f32; 4]>>,
@@ -534,14 +536,12 @@ pub struct MaterialParameters {
 impl MaterialParameters {
     #[new]
     fn new(
-        mat_color: [f32; 4],
         alpha_test_ref: f32,
         tex_matrix: Option<Vec<[f32; 8]>>,
         work_float4: Option<Vec<[f32; 4]>>,
         work_color: Option<Vec<[f32; 4]>>,
     ) -> Self {
         Self {
-            mat_color,
             alpha_test_ref,
             tex_matrix,
             work_float4,
