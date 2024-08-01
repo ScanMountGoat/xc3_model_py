@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed field `mat_color` from `MaterialParameters`.
 
+### Fixed
+* Fixed an issue where `ModelRoot.save_images_rgba8` and `MapRoot.save_images_rgba8` did not work due to incorrect feature flags.
+
 ## 0.7.0 - 2024-07-22
 ### Added
 * Added type `ChannelAssignmentAttribute` for vertex attribute shader dependencies.
