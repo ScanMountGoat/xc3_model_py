@@ -38,8 +38,10 @@ class AttributeData:
 
 class AttributeType:
     Position: ClassVar[AttributeType]
-    Normal: ClassVar[AttributeType]
-    Tangent: ClassVar[AttributeType]
+    SkinWeights2: ClassVar[AttributeType]
+    BoneIndices2: ClassVar[AttributeType]
+    WeightIndex: ClassVar[AttributeType]
+    WeightIndex2: ClassVar[AttributeType]
     TexCoord0: ClassVar[AttributeType]
     TexCoord1: ClassVar[AttributeType]
     TexCoord2: ClassVar[AttributeType]
@@ -50,16 +52,21 @@ class AttributeType:
     TexCoord7: ClassVar[AttributeType]
     TexCoord8: ClassVar[AttributeType]
     VertexColor: ClassVar[AttributeType]
+    Unk18: ClassVar[AttributeType]
     Blend: ClassVar[AttributeType]
-    WeightIndex: ClassVar[AttributeType]
+    Unk15: ClassVar[AttributeType]
+    Unk16: ClassVar[AttributeType]
+    Normal: ClassVar[AttributeType]
+    Tangent: ClassVar[AttributeType]
+    Unk31: ClassVar[AttributeType]
+    Normal2: ClassVar[AttributeType]
+    ValInf: ClassVar[AttributeType]
     Position2: ClassVar[AttributeType]
     Normal4: ClassVar[AttributeType]
     OldPosition: ClassVar[AttributeType]
     Tangent2: ClassVar[AttributeType]
     SkinWeights: ClassVar[AttributeType]
-    SkinWeights2: ClassVar[AttributeType]
     BoneIndices: ClassVar[AttributeType]
-    BoneIndices2: ClassVar[AttributeType]
 
 class MorphTarget:
     morph_controller_index: int
@@ -79,10 +86,19 @@ class MorphTarget:
 
 class IndexBuffer:
     indices: numpy.ndarray
+    primitive_type: PrimitiveType
 
-    def __init__(self, indices: numpy.ndarray) -> None: ...
+    def __init__(
+        self, indices: numpy.ndarray, primitive_type: PrimitiveType
+    ) -> None: ...
 
 class OutlineBuffer:
     attributes: list[AttributeData]
 
     def __init__(self, attributes: list[AttributeData]) -> None: ...
+
+class PrimitiveType:
+    TriangleList: ClassVar[PrimitiveType]
+    QuadList: ClassVar[PrimitiveType]
+    TriangleStrip: ClassVar[PrimitiveType]
+    TriangleListAdjacency: ClassVar[PrimitiveType]

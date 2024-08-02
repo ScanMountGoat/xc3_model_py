@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `outline_buffers` to `vertex.ModelBuffers`.
 * Added type `vertex.OutlineBuffer`.
 * Added field `color` to `Material`.
+* Added field `primitive_type` to `vertex.IndexBuffer`.
+* Added type `vertex.PrimitiveType`.
+* Added variants `Unk15`, `Unk16`, `Unk18`, `Unk31`, `Normal2`, `ValInf`, and `WeightIndex2` to `vertex.AttributeType`.
+
+### Changed
+* Improved accuracy of vertex data rebuilding.
 
 ### Removed
 * Removed field `mat_color` from `MaterialParameters`.
