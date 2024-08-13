@@ -16,12 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added type `EncodeSurfaceRgba8Args` for encoding images.
 * Added function `encode_images_rgbaf32` for encoding floating point images in parallel.
 * Added function `encode_images_rgba8` for encoding images in parallel.
+* Added function `decode_images_rgbaf32` for decoding images in parallel.
 
 ### Changed
 * Improved accuracy of vertex data rebuilding.
 
 ### Removed
 * Removed field `mat_color` from `MaterialParameters`.
+* Removed method `ModelRoot.decode_images_rgbaf32`. Use `decode_images_rgbaf32` instead.
+* Removed method `MapRoot.decode_images_rgbaf32`. Use `decode_images_rgbaf32` instead.
 
 ### Fixed
 * Fixed an issue where `ModelRoot.save_images_rgba8` and `MapRoot.save_images_rgba8` did not work due to incorrect feature flags.

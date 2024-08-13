@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{ops::Deref, path::Path};
 
 use crate::map_py::MapPy;
 use glam::Mat4;
@@ -615,6 +615,7 @@ impl ImageTexture {
 }
 
 // Helper types for enabling parallel encoding.
+// TODO: Initialize this without copies?
 #[pyclass(get_all, set_all)]
 pub struct EncodeSurfaceRgba32FloatArgs {
     pub width: u32,
@@ -623,7 +624,7 @@ pub struct EncodeSurfaceRgba32FloatArgs {
     pub view_dimension: ViewDimension,
     pub image_format: ImageFormat,
     pub mipmaps: bool,
-    pub data: Vec<f32>,
+    pub data: PyObject,
     pub name: Option<String>,
     pub usage: Option<TextureUsage>,
 }
@@ -638,7 +639,7 @@ impl EncodeSurfaceRgba32FloatArgs {
         view_dimension: ViewDimension,
         image_format: ImageFormat,
         mipmaps: bool,
-        data: Vec<f32>,
+        data: PyObject,
         name: Option<String>,
         usage: Option<TextureUsage>,
     ) -> Self {
@@ -655,8 +656,8 @@ impl EncodeSurfaceRgba32FloatArgs {
         }
     }
 
-    fn encode(&self) -> PyResult<ImageTexture> {
-        let surface = self.as_surface();
+    fn encode(&self, py: Python) -> PyResult<ImageTexture> {
+        let surface = self.to_surface(py)?;
 
         let format: xc3_model::ImageFormat = self.image_format.into();
         let encoded_surface = surface
@@ -686,8 +687,8 @@ impl EncodeSurfaceRgba32FloatArgs {
 }
 
 impl EncodeSurfaceRgba32FloatArgs {
-    fn as_surface(&self) -> image_dds::SurfaceRgba32Float<&[f32]> {
-        image_dds::SurfaceRgba32Float {
+    fn to_surface(&self, py: Python) -> PyResult<image_dds::SurfaceRgba32Float<Vec<f32>>> {
+        Ok(image_dds::SurfaceRgba32Float {
             width: self.width,
             height: self.height,
             depth: self.depth,
@@ -697,8 +698,8 @@ impl EncodeSurfaceRgba32FloatArgs {
                 1
             },
             mipmaps: 1,
-            data: &self.data,
-        }
+            data: self.data.extract(py)?,
+        })
     }
 }
 
@@ -991,27 +992,6 @@ impl ModelRoot {
         }
     }
 
-    pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
-        let textures: Vec<xc3_model::ImageTexture> = self.image_textures.map_py(py)?;
-        let buffers = textures
-            .par_iter()
-            .map(|image| {
-                // TODO: Use image_dds directly to avoid cloning?
-                let bytes = image.to_image().map_err(py_exception)?.into_raw();
-
-                Ok(bytes
-                    .into_iter()
-                    .map(|u| u as f32 / 255.0)
-                    .collect::<Vec<_>>())
-            })
-            .collect::<PyResult<Vec<_>>>()?;
-
-        Ok(buffers
-            .into_iter()
-            .map(|buffer| buffer.into_pyarray_bound(py).into())
-            .collect())
-    }
-
     pub fn save_images_rgba8(
         &self,
         py: Python,
@@ -1038,27 +1018,6 @@ impl MapRoot {
             groups,
             image_textures,
         }
-    }
-
-    pub fn decode_images_rgbaf32(&self, py: Python) -> PyResult<Vec<PyObject>> {
-        let textures: Vec<xc3_model::ImageTexture> = self.image_textures.map_py(py)?;
-        let buffers = textures
-            .par_iter()
-            .map(|image| {
-                // TODO: Use image_dds directly to avoid cloning?
-                let bytes = image.to_image().map_err(py_exception)?.into_raw();
-
-                Ok(bytes
-                    .into_iter()
-                    .map(|u| u as f32 / 255.0)
-                    .collect::<Vec<_>>())
-            })
-            .collect::<PyResult<Vec<_>>>()?;
-
-        Ok(buffers
-            .into_iter()
-            .map(|buffer| buffer.into_pyarray_bound(py).into())
-            .collect())
     }
 
     pub fn save_images_rgba8(
@@ -1197,6 +1156,43 @@ fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<animation::Anim
 }
 
 #[pyfunction]
+fn decode_images_rgbaf32(
+    py: Python,
+    image_textures: Vec<PyRef<ImageTexture>>,
+) -> PyResult<Vec<PyObject>> {
+    let textures: Vec<&ImageTexture> = image_textures.iter().map(|i| i.deref()).collect();
+    let buffers = textures
+        .par_iter()
+        .map(|image| {
+            let format: xc3_model::ImageFormat = image.image_format.into();
+            let surface = image_dds::Surface {
+                width: image.width,
+                height: image.height,
+                depth: image.depth,
+                layers: if image.view_dimension == ViewDimension::Cube {
+                    6
+                } else {
+                    1
+                },
+                mipmaps: image.mipmap_count,
+                image_format: format.into(),
+                data: &image.image_data,
+            };
+
+            Ok(surface
+                .decode_layers_mipmaps_rgbaf32(0..surface.layers, 0..1)
+                .map_err(py_exception)?
+                .data)
+        })
+        .collect::<PyResult<Vec<_>>>()?;
+
+    Ok(buffers
+        .into_iter()
+        .map(|buffer| buffer.into_pyarray_bound(py).into())
+        .collect())
+}
+
+#[pyfunction]
 fn encode_images_rgba8(
     py: Python,
     images: Vec<PyRef<EncodeSurfaceRgba8Args>>,
@@ -1258,18 +1254,18 @@ fn encode_images_rgbaf32(
     py: Python,
     images: Vec<PyRef<EncodeSurfaceRgba32FloatArgs>>,
 ) -> PyResult<Vec<ImageTexture>> {
-    let surfaces: Vec<_> = images
+    let surfaces = images
         .iter()
         .map(|image| {
-            (
+            Ok((
                 image.name.clone(),
                 image.usage.clone(),
                 image.image_format,
                 image.mipmaps,
-                image.as_surface(),
-            )
+                image.to_surface(py)?,
+            ))
         })
-        .collect();
+        .collect::<PyResult<Vec<_>>>()?;
 
     // Prevent Python from locking up while Rust processes data in parallel.
     py.allow_threads(move || {
@@ -1484,6 +1480,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_model_legacy, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
     m.add_function(wrap_pyfunction!(load_animations, m)?)?;
+    m.add_function(wrap_pyfunction!(decode_images_rgbaf32, m)?)?;
     m.add_function(wrap_pyfunction!(encode_images_rgba8, m)?)?;
     m.add_function(wrap_pyfunction!(encode_images_rgbaf32, m)?)?;
 
