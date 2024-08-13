@@ -1197,7 +1197,10 @@ fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<animation::Anim
 }
 
 #[pyfunction]
-fn encode_images_rgba8(images: Vec<PyRef<EncodeSurfaceRgba8Args>>) -> PyResult<Vec<ImageTexture>> {
+fn encode_images_rgba8(
+    py: Python,
+    images: Vec<PyRef<EncodeSurfaceRgba8Args>>,
+) -> PyResult<Vec<ImageTexture>> {
     let surfaces: Vec<_> = images
         .iter()
         .map(|image| {
@@ -1211,44 +1214,48 @@ fn encode_images_rgba8(images: Vec<PyRef<EncodeSurfaceRgba8Args>>) -> PyResult<V
         })
         .collect();
 
-    surfaces
-        .into_par_iter()
-        .map(|(name, usage, image_format, mipmaps, surface)| {
-            // TODO: quality?
-            let format: xc3_model::ImageFormat = image_format.into();
-            let encoded_surface = surface
-                .encode(
-                    format.into(),
-                    image_dds::Quality::Normal,
-                    if mipmaps {
-                        image_dds::Mipmaps::GeneratedAutomatic
-                    } else {
-                        image_dds::Mipmaps::Disabled
-                    },
-                )
-                .map_err(py_exception)?;
+    // Prevent Python from locking up while Rust processes data in parallel.
+    py.allow_threads(move || {
+        surfaces
+            .into_par_iter()
+            .map(|(name, usage, image_format, mipmaps, surface)| {
+                // TODO: quality?
+                let format: xc3_model::ImageFormat = image_format.into();
+                let encoded_surface = surface
+                    .encode(
+                        format.into(),
+                        image_dds::Quality::Normal,
+                        if mipmaps {
+                            image_dds::Mipmaps::GeneratedAutomatic
+                        } else {
+                            image_dds::Mipmaps::Disabled
+                        },
+                    )
+                    .map_err(py_exception)?;
 
-            Ok(ImageTexture {
-                name,
-                usage,
-                width: surface.width,
-                height: surface.height,
-                depth: surface.depth,
-                view_dimension: if surface.layers == 6 {
-                    ViewDimension::Cube
-                } else {
-                    ViewDimension::D2
-                },
-                image_format,
-                mipmap_count: encoded_surface.mipmaps,
-                image_data: encoded_surface.data,
+                Ok(ImageTexture {
+                    name,
+                    usage,
+                    width: surface.width,
+                    height: surface.height,
+                    depth: surface.depth,
+                    view_dimension: if surface.layers == 6 {
+                        ViewDimension::Cube
+                    } else {
+                        ViewDimension::D2
+                    },
+                    image_format,
+                    mipmap_count: encoded_surface.mipmaps,
+                    image_data: encoded_surface.data,
+                })
             })
-        })
-        .collect()
+            .collect()
+    })
 }
 
 #[pyfunction]
 fn encode_images_rgbaf32(
+    py: Python,
     images: Vec<PyRef<EncodeSurfaceRgba32FloatArgs>>,
 ) -> PyResult<Vec<ImageTexture>> {
     let surfaces: Vec<_> = images
@@ -1264,40 +1271,43 @@ fn encode_images_rgbaf32(
         })
         .collect();
 
-    surfaces
-        .into_par_iter()
-        .map(|(name, usage, image_format, mipmaps, surface)| {
-            // TODO: quality?
-            let format: xc3_model::ImageFormat = image_format.into();
-            let encoded_surface = surface
-                .encode(
-                    format.into(),
-                    image_dds::Quality::Normal,
-                    if mipmaps {
-                        image_dds::Mipmaps::GeneratedAutomatic
-                    } else {
-                        image_dds::Mipmaps::Disabled
-                    },
-                )
-                .map_err(py_exception)?;
+    // Prevent Python from locking up while Rust processes data in parallel.
+    py.allow_threads(move || {
+        surfaces
+            .into_par_iter()
+            .map(|(name, usage, image_format, mipmaps, surface)| {
+                // TODO: quality?
+                let format: xc3_model::ImageFormat = image_format.into();
+                let encoded_surface = surface
+                    .encode(
+                        format.into(),
+                        image_dds::Quality::Normal,
+                        if mipmaps {
+                            image_dds::Mipmaps::GeneratedAutomatic
+                        } else {
+                            image_dds::Mipmaps::Disabled
+                        },
+                    )
+                    .map_err(py_exception)?;
 
-            Ok(ImageTexture {
-                name,
-                usage,
-                width: surface.width,
-                height: surface.height,
-                depth: surface.depth,
-                view_dimension: if surface.layers == 6 {
-                    ViewDimension::Cube
-                } else {
-                    ViewDimension::D2
-                },
-                image_format,
-                mipmap_count: encoded_surface.mipmaps,
-                image_data: encoded_surface.data,
+                Ok(ImageTexture {
+                    name,
+                    usage,
+                    width: surface.width,
+                    height: surface.height,
+                    depth: surface.depth,
+                    view_dimension: if surface.layers == 6 {
+                        ViewDimension::Cube
+                    } else {
+                        ViewDimension::D2
+                    },
+                    image_format,
+                    mipmap_count: encoded_surface.mipmaps,
+                    image_data: encoded_surface.data,
+                })
             })
-        })
-        .collect()
+            .collect()
+    })
 }
 
 fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
