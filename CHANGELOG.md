@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `primitive_type` to `vertex.IndexBuffer`.
 * Added type `vertex.PrimitiveType`.
 * Added variants `Unk15`, `Unk16`, `Unk18`, `Unk31`, `Normal2`, `ValInf`, and `WeightIndex2` to `vertex.AttributeType`.
+* Added static method `ImageTexture.encode_image_rgbaf32`.
+* Added static method `ImageTexture.encode_image_rgba8`.
 
 ### Changed
 * Improved accuracy of vertex data rebuilding.

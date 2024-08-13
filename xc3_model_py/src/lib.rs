@@ -27,7 +27,7 @@ create_exception!(xc3_model_py, Xc3ModelError, PyException);
 macro_rules! python_enum {
     ($py_ty:ident, $rust_ty:ty, $( $i:ident ),+) => {
         #[pyclass]
-        #[derive(Debug, Clone, Copy)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub enum $py_ty {
             $($i),*
         }
@@ -611,6 +611,110 @@ impl ImageTexture {
             mipmap_count,
             image_data,
         }
+    }
+
+    // TODO: encode and decode
+    // TODO: Share code with xc3_tex?
+    #[staticmethod]
+    fn encode_image_rgbaf32(
+        width: u32,
+        height: u32,
+        depth: u32,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        image_data: Vec<f32>,
+        name: Option<String>,
+        usage: Option<TextureUsage>,
+    ) -> PyResult<Self> {
+        let surface = image_dds::SurfaceRgba32Float {
+            width,
+            height,
+            depth,
+            layers: if view_dimension == ViewDimension::Cube {
+                6
+            } else {
+                1
+            },
+            mipmaps: 1,
+            data: image_data,
+        };
+
+        let format: xc3_model::ImageFormat = image_format.into();
+        let encoded_surface = surface
+            .encode(
+                format.into(),
+                image_dds::Quality::Normal,
+                if mipmaps {
+                    image_dds::Mipmaps::GeneratedAutomatic
+                } else {
+                    image_dds::Mipmaps::Disabled
+                },
+            )
+            .map_err(py_exception)?;
+
+        Ok(Self {
+            name,
+            usage,
+            width,
+            height,
+            depth,
+            view_dimension,
+            image_format,
+            mipmap_count: encoded_surface.mipmaps,
+            image_data: encoded_surface.data,
+        })
+    }
+
+    #[staticmethod]
+    fn encode_image_rgba8(
+        width: u32,
+        height: u32,
+        depth: u32,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        image_data: Vec<u8>,
+        name: Option<String>,
+        usage: Option<TextureUsage>,
+    ) -> PyResult<Self> {
+        let surface = image_dds::SurfaceRgba8 {
+            width,
+            height,
+            depth,
+            layers: if view_dimension == ViewDimension::Cube {
+                6
+            } else {
+                1
+            },
+            mipmaps: 1,
+            data: image_data,
+        };
+
+        let format: xc3_model::ImageFormat = image_format.into();
+        let encoded_surface = surface
+            .encode(
+                format.into(),
+                image_dds::Quality::Normal,
+                if mipmaps {
+                    image_dds::Mipmaps::GeneratedAutomatic
+                } else {
+                    image_dds::Mipmaps::Disabled
+                },
+            )
+            .map_err(py_exception)?;
+
+        Ok(Self {
+            name,
+            usage,
+            width,
+            height,
+            depth,
+            view_dimension,
+            image_format,
+            mipmap_count: encoded_surface.mipmaps,
+            image_data: encoded_surface.data,
+        })
     }
 }
 

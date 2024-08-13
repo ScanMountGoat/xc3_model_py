@@ -330,6 +330,30 @@ class ImageTexture:
         name: Optional[str],
         usage: Optional[TextureUsage],
     ) -> None: ...
+    @staticmethod
+    def encode_image_rgbaf32(
+        width: int,
+        height: int,
+        depth: int,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        image_data: numpy.ndarray,
+        name: Optional[str],
+        usage: Optional[TextureUsage],
+    ) -> ImageTexture: ...
+    @staticmethod
+    def encode_image_rgba8(
+        width: int,
+        height: int,
+        depth: int,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        image_data: numpy.ndarray,
+        name: Optional[str],
+        usage: Optional[TextureUsage],
+    ) -> ImageTexture: ...
 
 class TextureUsage:
     Unk0: ClassVar[TextureUsage]
