@@ -2,7 +2,7 @@ use std::{ops::Deref, path::Path};
 
 use crate::map_py::MapPy;
 use glam::Mat4;
-use numpy::{IntoPyArray, PyArray, PyArrayMethods};
+use numpy::{IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArrayDyn};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
 use shader_database::{ShaderDatabase, ShaderProgram};
@@ -687,7 +687,11 @@ impl EncodeSurfaceRgba32FloatArgs {
 }
 
 impl EncodeSurfaceRgba32FloatArgs {
-    fn to_surface(&self, py: Python) -> PyResult<image_dds::SurfaceRgba32Float<Vec<f32>>> {
+    fn to_surface<'a>(&'a self, py: Python) -> PyResult<image_dds::SurfaceRgba32Float<Vec<f32>>> {
+        // Handle any dimensions but require the right data type.
+        // Converting to a vec will "flatten" the array.
+        let data: PyReadonlyArrayDyn<'_, f32> = self.data.extract(py)?;
+
         Ok(image_dds::SurfaceRgba32Float {
             width: self.width,
             height: self.height,
@@ -698,7 +702,7 @@ impl EncodeSurfaceRgba32FloatArgs {
                 1
             },
             mipmaps: 1,
-            data: self.data.extract(py)?,
+            data: data.to_vec()?,
         })
     }
 }
