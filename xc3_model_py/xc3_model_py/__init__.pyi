@@ -16,6 +16,10 @@ def load_map(
     wismhd: str, shader_database: Optional[shader_database.ShaderDatabase]
 ) -> list[MapRoot]: ...
 def load_animations(anim_path: str) -> list[animation.Animation]: ...
+def encode_images_rgba8(images: list[EncodeSurfaceRgba8Args]) -> list[ImageTexture]: ...
+def encode_images_rgbaf32(
+    images: list[EncodeSurfaceRgba32FloatArgs],
+) -> list[ImageTexture]: ...
 
 class Xc3ModelError(Exception):
     pass
@@ -330,30 +334,6 @@ class ImageTexture:
         name: Optional[str],
         usage: Optional[TextureUsage],
     ) -> None: ...
-    @staticmethod
-    def encode_image_rgbaf32(
-        width: int,
-        height: int,
-        depth: int,
-        view_dimension: ViewDimension,
-        image_format: ImageFormat,
-        mipmaps: bool,
-        image_data: numpy.ndarray,
-        name: Optional[str],
-        usage: Optional[TextureUsage],
-    ) -> ImageTexture: ...
-    @staticmethod
-    def encode_image_rgba8(
-        width: int,
-        height: int,
-        depth: int,
-        view_dimension: ViewDimension,
-        image_format: ImageFormat,
-        mipmaps: bool,
-        image_data: numpy.ndarray,
-        name: Optional[str],
-        usage: Optional[TextureUsage],
-    ) -> ImageTexture: ...
 
 class TextureUsage:
     Unk0: ClassVar[TextureUsage]
@@ -411,6 +391,56 @@ class ImageFormat:
     BC56UFloat: ClassVar[ImageFormat]
     BC7Unorm: ClassVar[ImageFormat]
     B8G8R8A8Unorm: ClassVar[ImageFormat]
+
+class EncodeSurfaceRgba32FloatArgs:
+    width: int
+    height: int
+    depth: int
+    view_dimension: ViewDimension
+    image_format: ImageFormat
+    mipmaps: bool
+    data: numpy.ndarray
+    name: Optional[str]
+    usage: Optional[TextureUsage]
+
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        depth: int,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        data: numpy.ndarray,
+        name: Optional[str],
+        usage: Optional[TextureUsage],
+    ) -> None: ...
+    def encode(self) -> ImageTexture: ...
+
+class EncodeSurfaceRgba8Args:
+    width: int
+    height: int
+    depth: int
+    view_dimension: ViewDimension
+    image_format: ImageFormat
+    mipmaps: bool
+    data: bytes
+    name: Optional[str]
+    usage: Optional[TextureUsage]
+
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        depth: int,
+        view_dimension: ViewDimension,
+        image_format: ImageFormat,
+        mipmaps: bool,
+        data: bytes,
+        name: Optional[str],
+        usage: Optional[TextureUsage],
+    ) -> None: ...
+    def encode(self) -> ImageTexture: ...
 
 class Sampler:
     address_mode_u: AddressMode

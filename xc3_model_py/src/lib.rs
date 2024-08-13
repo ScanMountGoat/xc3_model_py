@@ -612,40 +612,58 @@ impl ImageTexture {
             image_data,
         }
     }
+}
 
-    // TODO: encode and decode
-    // TODO: Share code with xc3_tex?
-    #[staticmethod]
-    fn encode_image_rgbaf32(
+// Helper types for enabling parallel encoding.
+#[pyclass(get_all, set_all)]
+pub struct EncodeSurfaceRgba32FloatArgs {
+    pub width: u32,
+    pub height: u32,
+    pub depth: u32,
+    pub view_dimension: ViewDimension,
+    pub image_format: ImageFormat,
+    pub mipmaps: bool,
+    pub data: Vec<f32>,
+    pub name: Option<String>,
+    pub usage: Option<TextureUsage>,
+}
+
+#[pymethods]
+impl EncodeSurfaceRgba32FloatArgs {
+    #[new]
+    fn new(
         width: u32,
         height: u32,
         depth: u32,
         view_dimension: ViewDimension,
         image_format: ImageFormat,
         mipmaps: bool,
-        image_data: Vec<f32>,
+        data: Vec<f32>,
         name: Option<String>,
         usage: Option<TextureUsage>,
-    ) -> PyResult<Self> {
-        let surface = image_dds::SurfaceRgba32Float {
+    ) -> Self {
+        Self {
             width,
             height,
             depth,
-            layers: if view_dimension == ViewDimension::Cube {
-                6
-            } else {
-                1
-            },
-            mipmaps: 1,
-            data: image_data,
-        };
+            view_dimension,
+            image_format,
+            mipmaps,
+            data,
+            name,
+            usage,
+        }
+    }
 
-        let format: xc3_model::ImageFormat = image_format.into();
+    fn encode(&self) -> PyResult<ImageTexture> {
+        let surface = self.as_surface();
+
+        let format: xc3_model::ImageFormat = self.image_format.into();
         let encoded_surface = surface
             .encode(
                 format.into(),
                 image_dds::Quality::Normal,
-                if mipmaps {
+                if self.mipmaps {
                     image_dds::Mipmaps::GeneratedAutomatic
                 } else {
                     image_dds::Mipmaps::Disabled
@@ -653,50 +671,86 @@ impl ImageTexture {
             )
             .map_err(py_exception)?;
 
-        Ok(Self {
-            name,
-            usage,
-            width,
-            height,
-            depth,
-            view_dimension,
-            image_format,
+        Ok(ImageTexture {
+            name: self.name.clone(),
+            usage: self.usage.clone(),
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            view_dimension: self.view_dimension,
+            image_format: self.image_format,
             mipmap_count: encoded_surface.mipmaps,
             image_data: encoded_surface.data,
         })
     }
+}
 
-    #[staticmethod]
-    fn encode_image_rgba8(
+impl EncodeSurfaceRgba32FloatArgs {
+    fn as_surface(&self) -> image_dds::SurfaceRgba32Float<&[f32]> {
+        image_dds::SurfaceRgba32Float {
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            layers: if self.view_dimension == ViewDimension::Cube {
+                6
+            } else {
+                1
+            },
+            mipmaps: 1,
+            data: &self.data,
+        }
+    }
+}
+
+#[pyclass(get_all, set_all)]
+pub struct EncodeSurfaceRgba8Args {
+    pub width: u32,
+    pub height: u32,
+    pub depth: u32,
+    pub view_dimension: ViewDimension,
+    pub image_format: ImageFormat,
+    pub mipmaps: bool,
+    pub data: Vec<u8>,
+    pub name: Option<String>,
+    pub usage: Option<TextureUsage>,
+}
+
+#[pymethods]
+impl EncodeSurfaceRgba8Args {
+    #[new]
+    fn new(
         width: u32,
         height: u32,
         depth: u32,
         view_dimension: ViewDimension,
         image_format: ImageFormat,
         mipmaps: bool,
-        image_data: Vec<u8>,
+        data: Vec<u8>,
         name: Option<String>,
         usage: Option<TextureUsage>,
-    ) -> PyResult<Self> {
-        let surface = image_dds::SurfaceRgba8 {
+    ) -> Self {
+        Self {
             width,
             height,
             depth,
-            layers: if view_dimension == ViewDimension::Cube {
-                6
-            } else {
-                1
-            },
-            mipmaps: 1,
-            data: image_data,
-        };
+            view_dimension,
+            image_format,
+            mipmaps,
+            data,
+            name,
+            usage,
+        }
+    }
 
-        let format: xc3_model::ImageFormat = image_format.into();
+    fn encode(&self) -> PyResult<ImageTexture> {
+        let surface = self.as_surface();
+
+        let format: xc3_model::ImageFormat = self.image_format.into();
         let encoded_surface = surface
             .encode(
                 format.into(),
                 image_dds::Quality::Normal,
-                if mipmaps {
+                if self.mipmaps {
                     image_dds::Mipmaps::GeneratedAutomatic
                 } else {
                     image_dds::Mipmaps::Disabled
@@ -704,17 +758,34 @@ impl ImageTexture {
             )
             .map_err(py_exception)?;
 
-        Ok(Self {
-            name,
-            usage,
-            width,
-            height,
-            depth,
-            view_dimension,
-            image_format,
+        Ok(ImageTexture {
+            name: self.name.clone(),
+            usage: self.usage.clone(),
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            view_dimension: self.view_dimension,
+            image_format: self.image_format,
             mipmap_count: encoded_surface.mipmaps,
             image_data: encoded_surface.data,
         })
+    }
+}
+
+impl EncodeSurfaceRgba8Args {
+    fn as_surface(&self) -> image_dds::SurfaceRgba8<&[u8]> {
+        image_dds::SurfaceRgba8 {
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            layers: if self.view_dimension == ViewDimension::Cube {
+                6
+            } else {
+                1
+            },
+            mipmaps: 1,
+            data: &self.data,
+        }
     }
 }
 
@@ -1125,6 +1196,110 @@ fn load_animations(_py: Python, anim_path: &str) -> PyResult<Vec<animation::Anim
         .collect())
 }
 
+#[pyfunction]
+fn encode_images_rgba8(images: Vec<PyRef<EncodeSurfaceRgba8Args>>) -> PyResult<Vec<ImageTexture>> {
+    let surfaces: Vec<_> = images
+        .iter()
+        .map(|image| {
+            (
+                image.name.clone(),
+                image.usage.clone(),
+                image.image_format,
+                image.mipmaps,
+                image.as_surface(),
+            )
+        })
+        .collect();
+
+    surfaces
+        .into_par_iter()
+        .map(|(name, usage, image_format, mipmaps, surface)| {
+            // TODO: quality?
+            let format: xc3_model::ImageFormat = image_format.into();
+            let encoded_surface = surface
+                .encode(
+                    format.into(),
+                    image_dds::Quality::Normal,
+                    if mipmaps {
+                        image_dds::Mipmaps::GeneratedAutomatic
+                    } else {
+                        image_dds::Mipmaps::Disabled
+                    },
+                )
+                .map_err(py_exception)?;
+
+            Ok(ImageTexture {
+                name,
+                usage,
+                width: surface.width,
+                height: surface.height,
+                depth: surface.depth,
+                view_dimension: if surface.layers == 6 {
+                    ViewDimension::Cube
+                } else {
+                    ViewDimension::D2
+                },
+                image_format,
+                mipmap_count: encoded_surface.mipmaps,
+                image_data: encoded_surface.data,
+            })
+        })
+        .collect()
+}
+
+#[pyfunction]
+fn encode_images_rgbaf32(
+    images: Vec<PyRef<EncodeSurfaceRgba32FloatArgs>>,
+) -> PyResult<Vec<ImageTexture>> {
+    let surfaces: Vec<_> = images
+        .iter()
+        .map(|image| {
+            (
+                image.name.clone(),
+                image.usage.clone(),
+                image.image_format,
+                image.mipmaps,
+                image.as_surface(),
+            )
+        })
+        .collect();
+
+    surfaces
+        .into_par_iter()
+        .map(|(name, usage, image_format, mipmaps, surface)| {
+            // TODO: quality?
+            let format: xc3_model::ImageFormat = image_format.into();
+            let encoded_surface = surface
+                .encode(
+                    format.into(),
+                    image_dds::Quality::Normal,
+                    if mipmaps {
+                        image_dds::Mipmaps::GeneratedAutomatic
+                    } else {
+                        image_dds::Mipmaps::Disabled
+                    },
+                )
+                .map_err(py_exception)?;
+
+            Ok(ImageTexture {
+                name,
+                usage,
+                width: surface.width,
+                height: surface.height,
+                depth: surface.depth,
+                view_dimension: if surface.layers == 6 {
+                    ViewDimension::Cube
+                } else {
+                    ViewDimension::D2
+                },
+                image_format,
+                mipmap_count: encoded_surface.mipmaps,
+                image_data: encoded_surface.data,
+            })
+        })
+        .collect()
+}
+
 fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
     // anyhow provides more detailed context for inner errors.
     PyErr::new::<Xc3ModelError, _>(format!("{:?}", anyhow::anyhow!(e)))
@@ -1278,6 +1453,8 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TextureUsage>()?;
     m.add_class::<ViewDimension>()?;
     m.add_class::<ImageFormat>()?;
+    m.add_class::<EncodeSurfaceRgba32FloatArgs>()?;
+    m.add_class::<EncodeSurfaceRgba8Args>()?;
 
     m.add_class::<Sampler>()?;
     m.add_class::<AddressMode>()?;
@@ -1297,6 +1474,8 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_model_legacy, m)?)?;
     m.add_function(wrap_pyfunction!(load_map, m)?)?;
     m.add_function(wrap_pyfunction!(load_animations, m)?)?;
+    m.add_function(wrap_pyfunction!(encode_images_rgba8, m)?)?;
+    m.add_function(wrap_pyfunction!(encode_images_rgbaf32, m)?)?;
 
     Ok(())
 }
