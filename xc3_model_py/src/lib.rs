@@ -7,6 +7,7 @@ use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList}
 use rayon::prelude::*;
 use shader_database::{ShaderDatabase, ShaderProgram};
 use vertex::ModelBuffers;
+use xc3_lib::dds::DdsExt;
 
 mod animation;
 mod map_py;
@@ -612,6 +613,18 @@ impl ImageTexture {
             image_data,
         }
     }
+
+    #[staticmethod]
+    fn from_dds(
+        py: Python,
+        dds: PyRef<Dds>,
+        name: Option<String>,
+        usage: Option<TextureUsage>,
+    ) -> PyResult<Self> {
+        xc3_model::ImageTexture::from_dds(&dds.0, name, usage.map(Into::into))
+            .map_err(py_exception)?
+            .map_py(py)
+    }
 }
 
 // Helper types for enabling parallel encoding.
@@ -791,6 +804,24 @@ impl EncodeSurfaceRgba8Args {
             mipmaps: 1,
             data: &self.data,
         }
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct Dds(image_dds::ddsfile::Dds);
+
+#[pymethods]
+impl Dds {
+    #[staticmethod]
+    pub fn from_file(path: &str) -> PyResult<Self> {
+        image_dds::ddsfile::Dds::from_file(path)
+            .map(Dds)
+            .map_err(py_exception)
+    }
+
+    pub fn save(&self, path: &str) -> PyResult<()> {
+        self.0.save(path).map_err(py_exception)
     }
 }
 
@@ -1465,6 +1496,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ImageFormat>()?;
     m.add_class::<EncodeSurfaceRgba32FloatArgs>()?;
     m.add_class::<EncodeSurfaceRgba8Args>()?;
+    m.add_class::<Dds>()?;
 
     m.add_class::<Sampler>()?;
     m.add_class::<AddressMode>()?;

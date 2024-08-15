@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added function `encode_images_rgbaf32` for encoding floating point images in parallel.
 * Added function `encode_images_rgba8` for encoding images in parallel.
 * Added function `decode_images_rgbaf32` for decoding images in parallel.
+* Added type `Dds` as an opaque wrapper for DDS files.
+* Added static method `ImageTexture.from_dds` for low cost conversion of DDS files.
 
 ### Changed
 * Improved accuracy of vertex data rebuilding.

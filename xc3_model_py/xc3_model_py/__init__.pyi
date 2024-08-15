@@ -333,6 +333,10 @@ class ImageTexture:
         name: Optional[str],
         usage: Optional[TextureUsage],
     ) -> None: ...
+    @staticmethod
+    def from_dds(
+        dds: Dds, name: Optional[str], usage: Optional[TextureUsage]
+    ) -> ImageTexture: ...
 
 class TextureUsage:
     Unk0: ClassVar[TextureUsage]
@@ -440,6 +444,11 @@ class EncodeSurfaceRgba8Args:
         usage: Optional[TextureUsage],
     ) -> None: ...
     def encode(self) -> ImageTexture: ...
+
+class Dds:
+    @staticmethod
+    def from_file(path: str) -> Dds: ...
+    def save(self, path: str): ...
 
 class Sampler:
     address_mode_u: AddressMode
