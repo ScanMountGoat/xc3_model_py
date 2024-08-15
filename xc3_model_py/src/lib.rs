@@ -674,7 +674,7 @@ impl EncodeSurfaceRgba32FloatArgs {
 
         Ok(ImageTexture {
             name: self.name.clone(),
-            usage: self.usage.clone(),
+            usage: self.usage,
             width: self.width,
             height: self.height,
             depth: self.depth,
@@ -687,7 +687,7 @@ impl EncodeSurfaceRgba32FloatArgs {
 }
 
 impl EncodeSurfaceRgba32FloatArgs {
-    fn to_surface<'a>(&'a self, py: Python) -> PyResult<image_dds::SurfaceRgba32Float<Vec<f32>>> {
+    fn to_surface(&self, py: Python) -> PyResult<image_dds::SurfaceRgba32Float<Vec<f32>>> {
         // Handle any dimensions but require the right data type.
         // Converting to a vec will "flatten" the array.
         let data: PyReadonlyArrayDyn<'_, f32> = self.data.extract(py)?;
@@ -765,7 +765,7 @@ impl EncodeSurfaceRgba8Args {
 
         Ok(ImageTexture {
             name: self.name.clone(),
-            usage: self.usage.clone(),
+            usage: self.usage,
             width: self.width,
             height: self.height,
             depth: self.depth,
@@ -1206,7 +1206,7 @@ fn encode_images_rgba8(
         .map(|image| {
             (
                 image.name.clone(),
-                image.usage.clone(),
+                image.usage,
                 image.image_format,
                 image.mipmaps,
                 image.as_surface(),
@@ -1263,7 +1263,7 @@ fn encode_images_rgbaf32(
         .map(|image| {
             Ok((
                 image.name.clone(),
-                image.usage.clone(),
+                image.usage,
                 image.image_format,
                 image.mipmaps,
                 image.to_surface(py)?,

@@ -137,22 +137,29 @@ pub enum AttributeType {
     TexCoord6,
     TexCoord7,
     TexCoord8,
-    VertexColor,
-    Unk18,
     Blend,
     Unk15,
     Unk16,
+    VertexColor,
+    Unk18,
+    Unk24,
+    Unk25,
+    Unk26,
     Normal,
     Tangent,
+    Unk30,
     Unk31,
     Normal2,
     ValInf,
+    Normal3,
+    VertexColor3,
     Position2,
     Normal4,
     OldPosition,
     Tangent2,
     SkinWeights,
     BoneIndices,
+    Flow,
 }
 
 #[pyclass(get_all, set_all)]
@@ -284,13 +291,21 @@ impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
                 attribute_type: AttributeType::Position,
                 data: values.map_py(py)?,
             }),
-            xc3_model::vertex::AttributeData::Normal(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Normal,
+            xc3_model::vertex::AttributeData::SkinWeights2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::SkinWeights2,
                 data: values.map_py(py)?,
             }),
-            xc3_model::vertex::AttributeData::Tangent(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Tangent,
-                data: values.map_py(py)?,
+            xc3_model::vertex::AttributeData::BoneIndices2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::BoneIndices2,
+                data: uvec4_pyarray(py, values),
+            }),
+            xc3_model::vertex::AttributeData::WeightIndex(values) => Ok(AttributeData {
+                attribute_type: AttributeType::WeightIndex,
+                data: uvec2s_pyarray(py, values),
+            }),
+            xc3_model::vertex::AttributeData::WeightIndex2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::WeightIndex2,
+                data: uvec2s_pyarray(py, values),
             }),
             xc3_model::vertex::AttributeData::TexCoord0(values) => Ok(AttributeData {
                 attribute_type: AttributeType::TexCoord0,
@@ -328,17 +343,69 @@ impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
                 attribute_type: AttributeType::TexCoord8,
                 data: values.map_py(py)?,
             }),
-            xc3_model::vertex::AttributeData::VertexColor(values) => Ok(AttributeData {
-                attribute_type: AttributeType::VertexColor,
-                data: values.map_py(py)?,
-            }),
             xc3_model::vertex::AttributeData::Blend(values) => Ok(AttributeData {
                 attribute_type: AttributeType::Blend,
                 data: values.map_py(py)?,
             }),
-            xc3_model::vertex::AttributeData::WeightIndex(values) => Ok(AttributeData {
-                attribute_type: AttributeType::WeightIndex,
+            xc3_model::vertex::AttributeData::Unk15(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk15,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk16(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk16,
                 data: uvec2s_pyarray(py, values),
+            }),
+            xc3_model::vertex::AttributeData::VertexColor(values) => Ok(AttributeData {
+                attribute_type: AttributeType::VertexColor,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk18(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk18,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk24(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk24,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk25(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk25,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk26(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk26,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Normal(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Normal,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Tangent(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Tangent,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk30(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk30,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Unk31(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Unk31,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Normal2(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Normal2,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::ValInf(values) => Ok(AttributeData {
+                attribute_type: AttributeType::ValInf,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::Normal3(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Normal3,
+                data: values.map_py(py)?,
+            }),
+            xc3_model::vertex::AttributeData::VertexColor3(values) => Ok(AttributeData {
+                attribute_type: AttributeType::VertexColor3,
+                data: values.map_py(py)?,
             }),
             xc3_model::vertex::AttributeData::Position2(values) => Ok(AttributeData {
                 attribute_type: AttributeType::Position2,
@@ -360,44 +427,12 @@ impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
                 attribute_type: AttributeType::SkinWeights,
                 data: values.map_py(py)?,
             }),
-            xc3_model::vertex::AttributeData::SkinWeights2(values) => Ok(AttributeData {
-                attribute_type: AttributeType::SkinWeights2,
-                data: values.map_py(py)?,
-            }),
             xc3_model::vertex::AttributeData::BoneIndices(values) => Ok(AttributeData {
                 attribute_type: AttributeType::BoneIndices,
                 data: uvec4_pyarray(py, values),
             }),
-            xc3_model::vertex::AttributeData::BoneIndices2(values) => Ok(AttributeData {
-                attribute_type: AttributeType::BoneIndices2,
-                data: uvec4_pyarray(py, values),
-            }),
-            xc3_model::vertex::AttributeData::WeightIndex2(values) => Ok(AttributeData {
-                attribute_type: AttributeType::WeightIndex2,
-                data: uvec2s_pyarray(py, values),
-            }),
-            xc3_model::vertex::AttributeData::Unk15(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Unk15,
-                data: values.map_py(py)?,
-            }),
-            xc3_model::vertex::AttributeData::Unk16(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Unk16,
-                data: uvec2s_pyarray(py, values),
-            }),
-            xc3_model::vertex::AttributeData::Unk18(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Unk18,
-                data: values.map_py(py)?,
-            }),
-            xc3_model::vertex::AttributeData::Unk31(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Unk31,
-                data: values.map_py(py)?,
-            }),
-            xc3_model::vertex::AttributeData::Normal2(values) => Ok(AttributeData {
-                attribute_type: AttributeType::Normal2,
-                data: values.map_py(py)?,
-            }),
-            xc3_model::vertex::AttributeData::ValInf(values) => Ok(AttributeData {
-                attribute_type: AttributeType::ValInf,
+            xc3_model::vertex::AttributeData::Flow(values) => Ok(AttributeData {
+                attribute_type: AttributeType::Flow,
                 data: values.map_py(py)?,
             }),
         }
@@ -422,22 +457,29 @@ impl MapPy<xc3_model::vertex::AttributeData> for AttributeData {
             AttributeType::TexCoord6 => Ok(AttrRs::TexCoord6(self.data.map_py(py)?)),
             AttributeType::TexCoord7 => Ok(AttrRs::TexCoord7(self.data.map_py(py)?)),
             AttributeType::TexCoord8 => Ok(AttrRs::TexCoord8(self.data.map_py(py)?)),
-            AttributeType::VertexColor => Ok(AttrRs::VertexColor(self.data.map_py(py)?)),
-            AttributeType::Unk18 => Ok(AttrRs::Unk18(self.data.map_py(py)?)),
             AttributeType::Blend => Ok(AttrRs::Blend(self.data.map_py(py)?)),
             AttributeType::Unk15 => Ok(AttrRs::Unk15(self.data.map_py(py)?)),
             AttributeType::Unk16 => Ok(AttrRs::Unk16(self.data.extract(py)?)),
+            AttributeType::VertexColor => Ok(AttrRs::VertexColor(self.data.map_py(py)?)),
+            AttributeType::Unk18 => Ok(AttrRs::Unk18(self.data.map_py(py)?)),
+            AttributeType::Unk24 => Ok(AttrRs::Unk24(self.data.map_py(py)?)),
+            AttributeType::Unk25 => Ok(AttrRs::Unk25(self.data.map_py(py)?)),
+            AttributeType::Unk26 => Ok(AttrRs::Unk26(self.data.map_py(py)?)),
             AttributeType::Normal => Ok(AttrRs::Normal(self.data.map_py(py)?)),
             AttributeType::Tangent => Ok(AttrRs::Tangent(self.data.map_py(py)?)),
+            AttributeType::Unk30 => Ok(AttrRs::Unk30(self.data.map_py(py)?)),
             AttributeType::Unk31 => Ok(AttrRs::Unk31(self.data.map_py(py)?)),
             AttributeType::Normal2 => Ok(AttrRs::Normal2(self.data.map_py(py)?)),
             AttributeType::ValInf => Ok(AttrRs::ValInf(self.data.map_py(py)?)),
+            AttributeType::Normal3 => Ok(AttrRs::Normal3(self.data.map_py(py)?)),
+            AttributeType::VertexColor3 => Ok(AttrRs::VertexColor3(self.data.map_py(py)?)),
             AttributeType::Position2 => Ok(AttrRs::Position2(self.data.map_py(py)?)),
             AttributeType::Normal4 => Ok(AttrRs::Normal4(self.data.map_py(py)?)),
             AttributeType::OldPosition => Ok(AttrRs::OldPosition(self.data.map_py(py)?)),
             AttributeType::Tangent2 => Ok(AttrRs::Tangent2(self.data.map_py(py)?)),
             AttributeType::SkinWeights => Ok(AttrRs::SkinWeights(self.data.map_py(py)?)),
             AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(self.data.map_py(py)?)),
+            AttributeType::Flow => Ok(AttrRs::Flow(self.data.map_py(py)?)),
         }
     }
 }
