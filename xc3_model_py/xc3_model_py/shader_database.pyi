@@ -16,6 +16,7 @@ class MapPrograms:
 
 class ShaderProgram:
     output_dependencies: dict[str, list[Dependency]]
+    normal_layers: list[TextureLayer]
 
 class Dependency:
     def constant(self) -> Optional[float]: ...
@@ -50,3 +51,8 @@ class TexCoordParams:
 class AttributeDependency:
     name: str
     channels: str
+
+class TextureLayer:
+    name: str
+    channel: Optional[str]
+    ratio: Optional[Dependency]

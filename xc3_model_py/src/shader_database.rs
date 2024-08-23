@@ -5,7 +5,7 @@ use pyo3::{
 };
 use smol_str::SmolStr;
 
-use crate::{map_py::MapPy, py_exception};
+use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception};
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -50,6 +50,7 @@ pub struct MapPrograms {
 #[map(xc3_model::shader_database::ShaderProgram)]
 pub struct ShaderProgram {
     pub output_dependencies: Py<PyDict>,
+    pub normal_layers: Py<PyList>,
 }
 
 #[pyclass]
@@ -114,6 +115,15 @@ pub struct AttributeDependency {
     pub channels: String,
 }
 
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::shader_database::TextureLayer)]
+pub struct TextureLayer {
+    pub name: String,
+    pub channel: Option<char>,
+    pub ratio: Option<Py<Dependency>>,
+}
+
 // Workaround for representing Rust enums in Python.
 #[pymethods]
 impl Dependency {
@@ -170,32 +180,8 @@ impl MapPy<IndexMap<SmolStr, Vec<xc3_model::shader_database::Dependency>>> for P
     }
 }
 
-// TODO: macro for this?
-impl MapPy<xc3_model::shader_database::TexCoordParams> for TexCoordParams {
-    fn map_py(&self, _py: Python) -> PyResult<xc3_model::shader_database::TexCoordParams> {
-        Ok(self.0.clone())
-    }
-}
-
-impl MapPy<TexCoordParams> for xc3_model::shader_database::TexCoordParams {
-    fn map_py(&self, _py: Python) -> PyResult<TexCoordParams> {
-        Ok(TexCoordParams(self.clone()))
-    }
-}
-
-// Map to and from Py<T>
-impl MapPy<Py<TexCoordParams>> for xc3_model::shader_database::TexCoordParams {
-    fn map_py(&self, py: Python) -> PyResult<Py<TexCoordParams>> {
-        let value: TexCoordParams = self.map_py(py)?;
-        Py::new(py, value)
-    }
-}
-
-impl MapPy<xc3_model::shader_database::TexCoordParams> for Py<TexCoordParams> {
-    fn map_py(&self, py: Python) -> PyResult<xc3_model::shader_database::TexCoordParams> {
-        self.extract::<TexCoordParams>(py)?.map_py(py)
-    }
-}
+map_py_wrapper_impl!(xc3_model::shader_database::TexCoordParams, TexCoordParams);
+map_py_wrapper_impl!(xc3_model::shader_database::Dependency, Dependency);
 
 pub fn shader_database(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(py, "shader_database")?;
@@ -209,6 +195,7 @@ pub fn shader_database(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()>
     m.add_class::<TexCoord>()?;
     m.add_class::<TexCoordParams>()?;
     m.add_class::<AttributeDependency>()?;
+    m.add_class::<TextureLayer>()?;
 
     module.add_submodule(&m)?;
     Ok(())

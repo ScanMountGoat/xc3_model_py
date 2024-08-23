@@ -31,6 +31,7 @@ macro_rules! map_py_impl {
 }
 
 map_py_impl!(
+    char,
     bool,
     u8,
     u16,
@@ -243,4 +244,35 @@ where
         // TODO: avoid unwrap
         Ok(std::array::from_fn(|i| self[i].map_py(py).unwrap()))
     }
+}
+
+#[macro_export]
+macro_rules! map_py_wrapper_impl {
+    ($rs:ty, $py:path) => {
+        impl MapPy<$rs> for $py {
+            fn map_py(&self, _py: Python) -> PyResult<$rs> {
+                Ok(self.0.clone())
+            }
+        }
+
+        impl MapPy<$py> for $rs {
+            fn map_py(&self, _py: Python) -> PyResult<$py> {
+                Ok($py(self.clone()))
+            }
+        }
+
+        // Map to and from Py<T>
+        impl MapPy<Py<$py>> for $rs {
+            fn map_py(&self, py: Python) -> PyResult<Py<$py>> {
+                let value: $py = self.map_py(py)?;
+                Py::new(py, value)
+            }
+        }
+
+        impl MapPy<$rs> for Py<$py> {
+            fn map_py(&self, py: Python) -> PyResult<$rs> {
+                self.extract::<$py>(py)?.map_py(py)
+            }
+        }
+    };
 }
