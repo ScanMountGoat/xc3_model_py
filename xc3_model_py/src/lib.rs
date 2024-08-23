@@ -414,8 +414,17 @@ impl Material {
             })
             .collect();
 
-        let assignments = self.map_py(py)?.output_assignments(&image_textures);
-        Ok(output_assignments_py(assignments))
+        let assignments: xc3_model::OutputAssignments =
+            self.map_py(py)?.output_assignments(&image_textures);
+        assignments.map_py(py)
+    }
+
+    pub fn normal_layers(&self, py: Python) -> PyResult<Vec<TextureLayer>> {
+        let m: xc3_model::Material = self.map_py(py)?;
+        m.normal_layers()
+            .into_iter()
+            .map(|l| l.map_py(py))
+            .collect()
     }
 }
 
@@ -933,20 +942,23 @@ python_enum!(
 python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::OutputAssignments)]
 pub struct OutputAssignments {
     pub assignments: [OutputAssignment; 6],
 }
 
 #[pymethods]
 impl OutputAssignments {
-    fn mat_id(&self) -> Option<u32> {
-        output_assignments_rs(self).mat_id()
+    fn mat_id(&self, py: Python) -> PyResult<Option<u32>> {
+        let assignments: xc3_model::OutputAssignments = self.map_py(py)?;
+        Ok(assignments.mat_id())
     }
 }
 
 #[pyclass(get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::OutputAssignment)]
 pub struct OutputAssignment {
     pub x: Option<ChannelAssignment>,
     pub y: Option<ChannelAssignment>,
@@ -972,6 +984,15 @@ pub struct TextureAssignment {
 pub struct ChannelAssignmentAttribute {
     pub name: String,
     pub channel_index: usize,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::TextureLayer)]
+pub struct TextureLayer {
+    pub name: String,
+    pub channel: Option<char>,
+    pub ratio: Option<Py<ChannelAssignment>>,
 }
 
 #[pyclass]
@@ -1346,6 +1367,8 @@ fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
     PyErr::new::<Xc3ModelError, _>(format!("{:?}", anyhow::anyhow!(e)))
 }
 
+map_py_wrapper_impl!(xc3_model::ChannelAssignment, ChannelAssignment);
+
 // TODO: Create a proper type for this.
 impl MapPy<xc3_model::MeshRenderFlags2> for u32 {
     fn map_py(&self, _py: Python) -> PyResult<xc3_model::MeshRenderFlags2> {
@@ -1356,31 +1379,6 @@ impl MapPy<xc3_model::MeshRenderFlags2> for u32 {
 impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
     fn map_py(&self, _py: Python) -> PyResult<u32> {
         Ok((*self).into())
-    }
-}
-
-fn output_assignments_py(assignments: xc3_model::OutputAssignments) -> OutputAssignments {
-    OutputAssignments {
-        assignments: assignments.assignments.map(|a| OutputAssignment {
-            x: a.x.map(ChannelAssignment),
-            y: a.y.map(ChannelAssignment),
-            z: a.z.map(ChannelAssignment),
-            w: a.w.map(ChannelAssignment),
-        }),
-    }
-}
-
-fn output_assignments_rs(assignments: &OutputAssignments) -> xc3_model::OutputAssignments {
-    xc3_model::OutputAssignments {
-        assignments: assignments
-            .assignments
-            .clone()
-            .map(|a| xc3_model::OutputAssignment {
-                x: a.x.map(|v| v.0),
-                y: a.y.map(|v| v.0),
-                z: a.z.map(|v| v.0),
-                w: a.w.map(|v| v.0),
-            }),
     }
 }
 

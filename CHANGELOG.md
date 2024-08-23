@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added field `normal_layers` to `shader_database.ShaderProgram`.
 * Added type `shader_database.TextureLayer`.
+* Added type `TextureLayer`.
+* Added method `Material.normal_layers` for more easily accessing normal layer names and weights.
 
 ## 0.8.0 - 2024-08-16
 ### Added

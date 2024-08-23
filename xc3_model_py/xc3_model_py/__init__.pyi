@@ -207,6 +207,7 @@ class Material:
         shader: Optional[shader_database.ShaderProgram],
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
+    def normal_layers(self) -> list[TextureLayer]: ...
 
 class RenderPassType:
     Unk0: ClassVar[RenderPassType]
@@ -506,6 +507,11 @@ class TextureAssignment:
 class ChannelAssignmentAttribute:
     name: str
     channel_index: int
+
+class TextureLayer:
+    name: str
+    channel: Optional[str]
+    ratio: Optional[ChannelAssignment]
 
 class Mxmd:
     @staticmethod
