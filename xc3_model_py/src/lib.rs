@@ -418,14 +418,6 @@ impl Material {
             self.map_py(py)?.output_assignments(&image_textures);
         assignments.map_py(py)
     }
-
-    pub fn normal_layers(&self, py: Python) -> PyResult<Vec<TextureLayer>> {
-        let m: xc3_model::Material = self.map_py(py)?;
-        m.normal_layers()
-            .into_iter()
-            .map(|l| l.map_py(py))
-            .collect()
-    }
 }
 
 python_enum!(
@@ -964,6 +956,18 @@ pub struct OutputAssignment {
     pub y: Option<ChannelAssignment>,
     pub z: Option<ChannelAssignment>,
     pub w: Option<ChannelAssignment>,
+    pub layers: Py<PyList>,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Debug, Clone, MapPy)]
+#[map(xc3_model::OutputLayerAssignment)]
+pub struct OutputLayerAssignment {
+    pub x: Option<ChannelAssignment>,
+    pub y: Option<ChannelAssignment>,
+    pub z: Option<ChannelAssignment>,
+    pub w: Option<ChannelAssignment>,
+    pub weight: Option<ChannelAssignment>,
 }
 
 #[pyclass]
@@ -984,15 +988,6 @@ pub struct TextureAssignment {
 pub struct ChannelAssignmentAttribute {
     pub name: String,
     pub channel_index: usize,
-}
-
-#[pyclass(get_all, set_all)]
-#[derive(Debug, Clone, MapPy)]
-#[map(xc3_model::TextureLayer)]
-pub struct TextureLayer {
-    pub name: String,
-    pub channel: Option<char>,
-    pub ratio: Option<Py<ChannelAssignment>>,
 }
 
 #[pyclass]
@@ -1502,6 +1497,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<OutputAssignments>()?;
     m.add_class::<OutputAssignment>()?;
+    m.add_class::<OutputLayerAssignment>()?;
     m.add_class::<ChannelAssignment>()?;
     m.add_class::<TextureAssignment>()?;
 
