@@ -1122,21 +1122,14 @@ fn save_images_rgba8(
 #[pymethods]
 impl ChannelAssignment {
     // Workaround for representing Rust enums in Python.
-    pub fn textures(&self) -> Option<Vec<TextureAssignment>> {
+    pub fn textures(&self) -> Option<TextureAssignment> {
         match &self.0 {
-            xc3_model::ChannelAssignment::Textures(textures) => Some(
-                textures
-                    .iter()
-                    .map(|t| TextureAssignment {
-                        name: t.name.to_string(),
-                        channels: t.channels.to_string(),
-                        texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
-                        texcoord_transforms: t
-                            .texcoord_transforms
-                            .map(|(u, v)| (u.into(), v.into())),
-                    })
-                    .collect(),
-            ),
+            xc3_model::ChannelAssignment::Texture(t) => Some(TextureAssignment {
+                name: t.name.to_string(),
+                channels: t.channels.to_string(),
+                texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
+                texcoord_transforms: t.texcoord_transforms.map(|(u, v)| (u.into(), v.into())),
+            }),
             _ => None,
         }
     }

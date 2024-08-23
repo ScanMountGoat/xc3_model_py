@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `layers` to `OutputAssignment`.
 * Added type `OutputLayerAssignment`.
 
+### Changed
+* Changed method `ChannelAssignment.textures` to `ChannelAssignment.texture` with a single texture assignment.
+
 ## 0.8.0 - 2024-08-16
 ### Added
 * Added field `outline_buffers` to `vertex.ModelBuffers`.
