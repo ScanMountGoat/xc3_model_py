@@ -16,6 +16,7 @@ class MapPrograms:
 
 class ShaderProgram:
     output_dependencies: dict[str, list[Dependency]]
+    color_layers: list[TextureLayer]
     normal_layers: list[TextureLayer]
 
 class Dependency:

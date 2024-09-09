@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `normal_layers` to `shader_database.ShaderProgram`.
 * Added field `layers` to `OutputAssignment`.
 * Added type `OutputLayerAssignment`.
+* Added field `color_layers` to `shader_database.ShaderProgram`.
 
 ### Changed
 * Changed method `ChannelAssignment.textures` to `ChannelAssignment.texture` with a single texture assignment.

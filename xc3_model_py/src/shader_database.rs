@@ -50,6 +50,7 @@ pub struct MapPrograms {
 #[map(xc3_model::shader_database::ShaderProgram)]
 pub struct ShaderProgram {
     pub output_dependencies: Py<PyDict>,
+    pub color_layers: Py<PyList>,
     pub normal_layers: Py<PyList>,
 }
 
