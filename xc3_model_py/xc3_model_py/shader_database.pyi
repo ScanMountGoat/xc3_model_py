@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import ClassVar, Optional, Tuple
 
 class ShaderDatabase:
     @staticmethod
@@ -54,6 +54,13 @@ class AttributeDependency:
     channels: str
 
 class TextureLayer:
-    name: str
-    channel: Optional[str]
+    value: Dependency
     ratio: Optional[Dependency]
+    blend_mode: LayerBlendMode
+    is_fresnel: bool
+
+class LayerBlendMode:
+    Mix: ClassVar[LayerBlendMode]
+    MixRatio: ClassVar[LayerBlendMode]
+    Add: ClassVar[LayerBlendMode]
+    AddNormal: ClassVar[LayerBlendMode]

@@ -5,7 +5,7 @@ use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArrayDyn};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
-use shader_database::{ShaderDatabase, ShaderProgram};
+use shader_database::{ShaderDatabase, ShaderProgram, LayerBlendMode};
 use vertex::ModelBuffers;
 use xc3_lib::dds::DdsExt;
 
@@ -968,6 +968,8 @@ pub struct OutputLayerAssignment {
     pub z: Option<ChannelAssignment>,
     pub w: Option<ChannelAssignment>,
     pub weight: Option<ChannelAssignment>,
+    pub blend_mode: LayerBlendMode,
+    pub is_fresnel: bool
 }
 
 #[pyclass]

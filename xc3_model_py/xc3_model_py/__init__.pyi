@@ -497,6 +497,8 @@ class OutputLayerAssignment:
     z: Optional[ChannelAssignment]
     w: Optional[ChannelAssignment]
     weight: Optional[ChannelAssignment]
+    blend_mode: shader_database.LayerBlendMode
+    is_fresnel: bool
 
 class ChannelAssignment:
     def texture(self) -> Optional[TextureAssignment]: ...

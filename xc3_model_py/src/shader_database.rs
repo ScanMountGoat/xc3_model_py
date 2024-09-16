@@ -5,7 +5,7 @@ use pyo3::{
 };
 use smol_str::SmolStr;
 
-use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception};
+use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception, python_enum};
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -120,10 +120,20 @@ pub struct AttributeDependency {
 #[derive(Debug, Clone, MapPy)]
 #[map(xc3_model::shader_database::TextureLayer)]
 pub struct TextureLayer {
-    pub name: String,
-    pub channel: Option<char>,
+    pub value: Dependency,
     pub ratio: Option<Py<Dependency>>,
+    pub blend_mode: LayerBlendMode,
+    pub is_fresnel: bool,
 }
+
+python_enum!(
+    LayerBlendMode,
+    xc3_model::shader_database::LayerBlendMode,
+    Mix,
+    MixRatio,
+    Add,
+    AddNormal
+);
 
 // Workaround for representing Rust enums in Python.
 #[pymethods]
@@ -197,6 +207,7 @@ pub fn shader_database(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()>
     m.add_class::<TexCoordParams>()?;
     m.add_class::<AttributeDependency>()?;
     m.add_class::<TextureLayer>()?;
+    m.add_class::<LayerBlendMode>()?;
 
     module.add_submodule(&m)?;
     Ok(())

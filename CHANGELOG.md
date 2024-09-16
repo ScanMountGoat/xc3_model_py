@@ -10,9 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `layers` to `OutputAssignment`.
 * Added type `OutputLayerAssignment`.
 * Added field `color_layers` to `shader_database.ShaderProgram`.
+* Added fields `blend_mode` and `is_fresnel` to `OutputLayerAssignment`.
+* Added fields `blend_mode` and `is_fresnel` to `shader_database.TextureLayer`.
+* Added type `shader_database.LayerBlendMode`.
 
 ### Changed
 * Changed method `ChannelAssignment.textures` to `ChannelAssignment.texture` with a single texture assignment.
+* Combined fields `name` and `channel` for `shader_database.TextureLayer` to a single field `value` of type `shader_database.Dependency`.
 
 ## 0.8.0 - 2024-08-16
 ### Added
