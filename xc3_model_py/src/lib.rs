@@ -5,12 +5,13 @@ use glam::Mat4;
 use numpy::{IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArrayDyn};
 use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
-use shader_database::{ShaderDatabase, ShaderProgram, LayerBlendMode};
+use shader_database::{LayerBlendMode, ShaderDatabase, ShaderProgram};
 use vertex::ModelBuffers;
 use xc3_lib::dds::DdsExt;
 
 mod animation;
 mod map_py;
+mod monolib;
 mod shader_database;
 mod skinning;
 mod vertex;
@@ -969,7 +970,7 @@ pub struct OutputLayerAssignment {
     pub w: Option<ChannelAssignment>,
     pub weight: Option<ChannelAssignment>,
     pub blend_mode: LayerBlendMode,
-    pub is_fresnel: bool
+    pub is_fresnel: bool,
 }
 
 #[pyclass]
@@ -1447,6 +1448,7 @@ fn xc3_model_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     shader_database::shader_database(py, m)?;
     skinning::skinning(py, m)?;
     vertex::vertex(py, m)?;
+    monolib::monolib(py, m)?;
 
     m.add_class::<ModelRoot>()?;
     m.add_class::<MapRoot>()?;

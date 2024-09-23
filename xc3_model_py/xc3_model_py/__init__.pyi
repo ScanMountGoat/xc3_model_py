@@ -2,9 +2,10 @@ from typing import Optional, ClassVar, Tuple
 import numpy
 
 from . import animation
+from . import monolib
+from . import shader_database
 from . import skinning
 from . import vertex
-from . import shader_database
 
 def load_model(
     wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]
