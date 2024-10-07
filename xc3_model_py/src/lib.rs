@@ -28,7 +28,7 @@ create_exception!(xc3_model_py, Xc3ModelError, PyException);
 #[macro_export]
 macro_rules! python_enum {
     ($py_ty:ident, $rust_ty:ty, $( $i:ident ),+) => {
-        #[pyclass]
+        #[pyclass(eq, eq_int)]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub enum $py_ty {
             $($i),*
