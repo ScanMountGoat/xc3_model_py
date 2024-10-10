@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added type `monolib.ShaderTextures`.
+* Added type `material.FurShellParams`.
+* Added type `material.WorkCallback` for the element type of `Material.work_callbacks`.
+
+### Changed
+* Moved material types in `materials` module.
 
 ## 0.9.0 - 2024-09-18
 ### Added

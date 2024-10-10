@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 pub mod skinning {
     use pyo3::{prelude::*, types::PyList};
 
-    use crate::{map_py::MapPy, uvec2s_pyarray, RenderPassType};
+    use crate::{map_py::MapPy, material::RenderPassType, uvec2s_pyarray};
 
     #[pyclass]
     #[derive(Debug, Clone)]

@@ -2,6 +2,7 @@ from typing import Optional, ClassVar, Tuple
 import numpy
 
 from . import animation
+from . import material
 from . import monolib
 from . import shader_database
 from . import skinning
@@ -65,7 +66,7 @@ class ModelGroup:
 
 class Models:
     models: list[Model]
-    materials: list[Material]
+    materials: list[material.Material]
     samplers: list[Sampler]
     lod_data: Optional[LodData]
     morph_controller_names: list[str]
@@ -76,7 +77,7 @@ class Models:
     def __init__(
         self,
         models: list[Model],
-        materials: list[Material],
+        materials: list[material.Material],
         samplers: list[Sampler],
         max_xyz: list[float],
         min_xyz: list[float],
@@ -159,157 +160,6 @@ class Bone:
     def __init__(
         self, name: str, transform: numpy.ndarray, parent_index: Optional[int]
     ) -> None: ...
-
-class Material:
-    name: str
-    flags: int
-    render_flags: int
-    state_flags: StateFlags
-    color: list[float]
-    textures: list[Texture]
-    alpha_test: Optional[TextureAlphaTest]
-    work_values: list[float]
-    shader_vars: list[Tuple[int, int]]
-    work_callbacks: list[Tuple[int, int]]
-    alpha_test_ref: list[int]
-    m_unks1_1: int
-    m_unks1_2: int
-    m_unks1_3: int
-    m_unks1_4: int
-    shader: Optional[shader_database.ShaderProgram]
-    technique_index: int
-    pass_type: RenderPassType
-    parameters: MaterialParameters
-    m_unks2_2: int
-    m_unks3_1: int
-
-    def __init__(
-        self,
-        name: str,
-        flags: int,
-        render_flags: int,
-        state_flags: StateFlags,
-        color: list[float],
-        textures: list[Texture],
-        work_values: list[float],
-        shader_vars: list[Tuple[int, int]],
-        work_callbacks: list[Tuple[int, int]],
-        alpha_test_ref: list[int],
-        m_unks1_1: int,
-        m_unks1_2: int,
-        m_unks1_3: int,
-        m_unks1_4: int,
-        technique_index: int,
-        pass_type: RenderPassType,
-        parameters: MaterialParameters,
-        m_unks2_2: int,
-        m_unks3_1: int,
-        alpha_test: Optional[TextureAlphaTest],
-        shader: Optional[shader_database.ShaderProgram],
-    ) -> None: ...
-    def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
-
-class RenderPassType:
-    Unk0: ClassVar[RenderPassType]
-    Unk1: ClassVar[RenderPassType]
-    Unk6: ClassVar[RenderPassType]
-    Unk7: ClassVar[RenderPassType]
-    Unk9: ClassVar[RenderPassType]
-
-class StateFlags:
-    depth_write_mode: int
-    blend_mode: BlendMode
-    cull_mode: CullMode
-    unk4: int
-    stencil_value: StencilValue
-    stencil_mode: StencilMode
-    depth_func: DepthFunc
-    color_write_mode: int
-
-class BlendMode:
-    Disabled: ClassVar[BlendMode]
-    Blend: ClassVar[BlendMode]
-    Unk2: ClassVar[BlendMode]
-    Multiply: ClassVar[BlendMode]
-    MultiplyInverted: ClassVar[BlendMode]
-    Add: ClassVar[BlendMode]
-    Disabled2: ClassVar[BlendMode]
-
-class CullMode:
-    Back: ClassVar[CullMode]
-    Front: ClassVar[CullMode]
-    Disabled: ClassVar[CullMode]
-    Unk3: ClassVar[CullMode]
-
-class StencilValue:
-    Unk0: ClassVar[StencilValue]
-    Unk1: ClassVar[StencilValue]
-    Unk4: ClassVar[StencilValue]
-    Unk5: ClassVar[StencilValue]
-    Unk8: ClassVar[StencilValue]
-    Unk9: ClassVar[StencilValue]
-    Unk12: ClassVar[StencilValue]
-    Unk16: ClassVar[StencilValue]
-    Unk20: ClassVar[StencilValue]
-    Unk33: ClassVar[StencilValue]
-    Unk37: ClassVar[StencilValue]
-    Unk41: ClassVar[StencilValue]
-    Unk49: ClassVar[StencilValue]
-    Unk97: ClassVar[StencilValue]
-    Unk105: ClassVar[StencilValue]
-
-class StencilMode:
-    Unk0: ClassVar[StencilMode]
-    Unk1: ClassVar[StencilMode]
-    Unk2: ClassVar[StencilMode]
-    Unk6: ClassVar[StencilMode]
-    Unk7: ClassVar[StencilMode]
-    Unk8: ClassVar[StencilMode]
-
-class ColorWriteMode:
-    Unk0: ClassVar[ColorWriteMode]
-    Unk1: ClassVar[ColorWriteMode]
-    Unk2: ClassVar[ColorWriteMode]
-    Unk3: ClassVar[ColorWriteMode]
-    Unk6: ClassVar[ColorWriteMode]
-    Unk9: ClassVar[ColorWriteMode]
-    Unk10: ClassVar[ColorWriteMode]
-    Unk11: ClassVar[ColorWriteMode]
-    Unk12: ClassVar[ColorWriteMode]
-
-class DepthFunc:
-    Disabled: ClassVar[DepthFunc]
-    LessEqual: ClassVar[DepthFunc]
-    Equal: ClassVar[DepthFunc]
-
-class TextureAlphaTest:
-    texture_index: int
-    channel_index: int
-    ref_value: float
-
-    def __init__(
-        self, texture_index: int, channel_index: int, ref_value: float
-    ) -> None: ...
-
-class MaterialParameters:
-    alpha_test_ref: float
-    tex_matrix: Optional[list[float]]
-    work_float4: Optional[list[float]]
-    work_color: Optional[list[float]]
-
-    def __init__(
-        self,
-        alpha_test_ref: float,
-        tex_matrix: Optional[list[float]],
-        work_float4: Optional[list[float]],
-        work_color: Optional[list[float]],
-    ) -> None: ...
-
-class Texture:
-    image_texture_index: int
-    sampler_index: int
-
-    def __init__(self, image_texture_index: int, sampler_index: int) -> None: ...
 
 class ImageTexture:
     name: Optional[str]
@@ -479,44 +329,6 @@ class AddressMode:
 class FilterMode:
     Nearest: ClassVar[FilterMode]
     Linear: ClassVar[FilterMode]
-
-class OutputAssignments:
-    assignments: list[OutputAssignment]
-
-    def mat_id(self) -> Optional[int]: ...
-
-class OutputAssignment:
-    x: Optional[ChannelAssignment]
-    y: Optional[ChannelAssignment]
-    z: Optional[ChannelAssignment]
-    w: Optional[ChannelAssignment]
-    layers: list[OutputLayerAssignment]
-
-class OutputLayerAssignment:
-    x: Optional[ChannelAssignment]
-    y: Optional[ChannelAssignment]
-    z: Optional[ChannelAssignment]
-    w: Optional[ChannelAssignment]
-    weight: Optional[ChannelAssignment]
-    blend_mode: shader_database.LayerBlendMode
-    is_fresnel: bool
-
-class ChannelAssignment:
-    def texture(self) -> Optional[TextureAssignment]: ...
-    def value(self) -> Optional[float]: ...
-    def attribute(self) -> Optional[ChannelAssignmentAttribute]: ...
-
-class TextureAssignment:
-    name: str
-    channels: str
-    texcoord_name: Optional[str]
-    texcoord_transforms: Optional[
-        Tuple[Tuple[float, float, float, float], Tuple[float, float, float, float]]
-    ]
-
-class ChannelAssignmentAttribute:
-    name: str
-    channel_index: int
 
 class Mxmd:
     @staticmethod
