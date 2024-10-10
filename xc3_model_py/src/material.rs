@@ -137,7 +137,7 @@ python_enum!(
 
 #[pymodule]
 pub mod material {
-    use crate::shader_database::shader_database::{LayerBlendMode, ShaderProgram};
+    use crate::shader_database::{shader_database::ShaderProgram, LayerBlendMode};
     use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
     use pyo3::prelude::*;
     use pyo3::types::PyList;

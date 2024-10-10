@@ -1,4 +1,15 @@
 use pyo3::prelude::*;
+use crate::python_enum;
+
+python_enum!(
+    LayerBlendMode,
+    xc3_model::shader_database::LayerBlendMode,
+    Mix,
+    MixRatio,
+    Add,
+    AddNormal
+);
+
 
 #[pymodule]
 pub mod shader_database {
@@ -10,7 +21,10 @@ pub mod shader_database {
     };
     use smol_str::SmolStr;
 
-    use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception, python_enum};
+    use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception};
+
+    #[pymodule_export]
+    use super::LayerBlendMode;
 
     #[pyclass]
     #[derive(Debug, Clone)]
@@ -131,15 +145,6 @@ pub mod shader_database {
         pub blend_mode: LayerBlendMode,
         pub is_fresnel: bool,
     }
-
-    python_enum!(
-        LayerBlendMode,
-        xc3_model::shader_database::LayerBlendMode,
-        Mix,
-        MixRatio,
-        Add,
-        AddNormal
-    );
 
     // Workaround for representing Rust enums in Python.
     #[pymethods]
