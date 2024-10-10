@@ -1,5 +1,5 @@
 use glam::{Mat4, Vec2, Vec3, Vec4};
-use numpy::{IntoPyArray, PyArrayMethods};
+use numpy::{IntoPyArray, PyArrayMethods, ToPyArray};
 use pyo3::{prelude::*, types::PyList};
 use smol_str::SmolStr;
 pub use xc3_model_py_derive::MapPy;
@@ -72,32 +72,26 @@ macro_rules! map_py_into_impl {
 
 map_py_into_impl!(Vec3, [f32; 3]);
 
-// TODO: macro for this
-impl MapPy<PyObject> for Vec<u32> {
-    fn map_py(&self, py: Python) -> PyResult<PyObject> {
-        // TODO: avoid clone?
-        Ok(self.clone().into_pyarray_bound(py).into())
+#[macro_export]
+macro_rules! map_py_pyobject_ndarray_impl {
+    ($($t:ty),*) => {
+        $(
+            impl MapPy<PyObject> for Vec<$t> {
+                fn map_py(&self, py: Python) -> PyResult<PyObject> {
+                    Ok(self.to_pyarray_bound(py).into())
+                }
+            }
+
+            impl MapPy<Vec<$t>> for PyObject {
+                fn map_py(&self, py: Python) -> PyResult<Vec<$t>> {
+                    self.extract(py)
+                }
+            }
+        )*
     }
 }
 
-impl MapPy<Vec<u32>> for PyObject {
-    fn map_py(&self, py: Python) -> PyResult<Vec<u32>> {
-        self.extract(py)
-    }
-}
-
-impl MapPy<PyObject> for Vec<u16> {
-    fn map_py(&self, py: Python) -> PyResult<PyObject> {
-        // TODO: avoid clone?
-        Ok(self.clone().into_pyarray_bound(py).into())
-    }
-}
-
-impl MapPy<Vec<u16>> for PyObject {
-    fn map_py(&self, py: Python) -> PyResult<Vec<u16>> {
-        self.extract(py)
-    }
-}
+map_py_pyobject_ndarray_impl!(u16, u32, f32);
 
 impl<T, U> MapPy<Option<U>> for Option<T>
 where
