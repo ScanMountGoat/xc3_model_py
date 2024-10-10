@@ -13,7 +13,7 @@ class Material:
     alpha_test: Optional[TextureAlphaTest]
     work_values: list[float]
     shader_vars: list[Tuple[int, int]]
-    work_callbacks: list[Tuple[int, int]]
+    work_callbacks: list[WorkCallback]
     alpha_test_ref: list[int]
     m_unks1_1: int
     m_unks1_2: int
@@ -25,6 +25,7 @@ class Material:
     parameters: MaterialParameters
     m_unks2_2: int
     m_unks3_1: int
+    fur_params: Optional[FurShellParams]
 
     def __init__(
         self,
@@ -49,6 +50,7 @@ class Material:
         m_unks3_1: int,
         alpha_test: Optional[TextureAlphaTest],
         shader: Optional[ShaderProgram],
+        fur_params: Optional[FurShellParams],
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
 
