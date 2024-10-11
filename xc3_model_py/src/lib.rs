@@ -195,6 +195,9 @@ mod xc3_model_py {
     }
 
     #[pymodule_export]
+    use animation::animation;
+
+    #[pymodule_export]
     use material::material;
 
     #[pymodule_export]
