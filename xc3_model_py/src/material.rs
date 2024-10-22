@@ -421,17 +421,17 @@ pub mod material {
         pub y: Option<ChannelAssignment>,
         pub z: Option<ChannelAssignment>,
         pub w: Option<ChannelAssignment>,
-        pub layers: Py<PyList>,
+        pub x_layers: Py<PyList>,
+        pub y_layers: Py<PyList>,
+        pub z_layers: Py<PyList>,
+        pub w_layers: Py<PyList>,
     }
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::OutputLayerAssignment)]
-    pub struct OutputLayerAssignment {
-        pub x: Option<ChannelAssignment>,
-        pub y: Option<ChannelAssignment>,
-        pub z: Option<ChannelAssignment>,
-        pub w: Option<ChannelAssignment>,
+    #[map(xc3_model::material::LayerChannelAssignment)]
+    pub struct LayerChannelAssignment {
+        pub value: Option<ChannelAssignment>,
         pub weight: Option<ChannelAssignment>,
         pub blend_mode: LayerBlendMode,
         pub is_fresnel: bool,

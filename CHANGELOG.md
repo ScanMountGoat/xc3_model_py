@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added type `monolib.ShaderTextures`.
 * Added type `material.FurShellParams`.
 * Added type `material.WorkCallback` for the element type of `Material.work_callbacks`.
+* Added variant `Overlay` to `shader_database.LayerBlendMode`.
+* Added type `shader_database.OutputDependencies` to store dependencies and layers.
 
 ### Changed
 * Moved material types in `materials` module.
+* Changed `material.OutputAssignment` to store layers per channel.
+* Changed `material.OutputLayerAssignment` to `material.LayerChannelAssignment`.
+
+### Removed
+* Removed fields `color_layers` and `normal_layers` from `shader_database.ShaderProgram`.
 
 ## 0.9.0 - 2024-09-18
 ### Added

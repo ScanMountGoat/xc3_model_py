@@ -183,13 +183,13 @@ class OutputAssignment:
     y: Optional[ChannelAssignment]
     z: Optional[ChannelAssignment]
     w: Optional[ChannelAssignment]
-    layers: list[OutputLayerAssignment]
+    x_layers: list[LayerChannelAssignment]
+    y_layers: list[LayerChannelAssignment]
+    z_layers: list[LayerChannelAssignment]
+    w_layers: list[LayerChannelAssignment]
 
-class OutputLayerAssignment:
-    x: Optional[ChannelAssignment]
-    y: Optional[ChannelAssignment]
-    z: Optional[ChannelAssignment]
-    w: Optional[ChannelAssignment]
+class LayerChannelAssignment:
+    value: Optional[ChannelAssignment]
     weight: Optional[ChannelAssignment]
     blend_mode: LayerBlendMode
     is_fresnel: bool

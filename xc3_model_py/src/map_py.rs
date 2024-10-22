@@ -268,5 +268,31 @@ macro_rules! map_py_wrapper_impl {
                 self.extract::<$py>(py)?.map_py(py)
             }
         }
+
+        // Map from Python lists to Vec<T>
+        impl MapPy<Vec<$rs>> for Py<pyo3::types::PyList> {
+            fn map_py(&self, py: Python) -> PyResult<Vec<$rs>> {
+                self.extract::<'_, '_, Vec<$py>>(py)?
+                    .iter()
+                    .map(|v| v.map_py(py))
+                    .collect::<Result<Vec<_>, _>>()
+            }
+        }
+
+        // Map from Vec<T> to Python lists
+        impl MapPy<Py<pyo3::types::PyList>> for Vec<$rs> {
+            fn map_py(&self, py: Python) -> PyResult<Py<pyo3::types::PyList>> {
+                Ok(pyo3::types::PyList::new_bound(
+                    py,
+                    self.into_iter()
+                        .map(|v| {
+                            let v2: $py = v.map_py(py)?;
+                            Ok(v2.into_py(py))
+                        })
+                        .collect::<PyResult<Vec<_>>>()?,
+                )
+                .into())
+            }
+        }
     };
 }

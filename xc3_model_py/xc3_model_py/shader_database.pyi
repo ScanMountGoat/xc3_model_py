@@ -15,9 +15,13 @@ class MapPrograms:
     env_models: list[ModelPrograms]
 
 class ShaderProgram:
-    output_dependencies: dict[str, list[Dependency]]
+    output_dependencies: dict[str, list[OutputDependencies]]
     color_layers: list[TextureLayer]
     normal_layers: list[TextureLayer]
+
+class OutputDependencies:
+    dependencies: list[Dependency]
+    layers: list[TextureLayer]
 
 class Dependency:
     def constant(self) -> Optional[float]: ...
@@ -64,3 +68,4 @@ class LayerBlendMode:
     MixRatio: ClassVar[LayerBlendMode]
     Add: ClassVar[LayerBlendMode]
     AddNormal: ClassVar[LayerBlendMode]
+    Overlay: ClassVar[LayerBlendMode]

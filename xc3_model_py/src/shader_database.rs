@@ -1,5 +1,5 @@
-use pyo3::prelude::*;
 use crate::python_enum;
+use pyo3::prelude::*;
 
 python_enum!(
     LayerBlendMode,
@@ -7,9 +7,9 @@ python_enum!(
     Mix,
     MixRatio,
     Add,
-    AddNormal
+    AddNormal,
+    Overlay
 );
-
 
 #[pymodule]
 pub mod shader_database {
@@ -70,8 +70,14 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::ShaderProgram)]
     pub struct ShaderProgram {
         pub output_dependencies: Py<PyDict>,
-        pub color_layers: Py<PyList>,
-        pub normal_layers: Py<PyList>,
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::shader_database::OutputDependencies)]
+    pub struct OutputDependencies {
+        pub dependencies: Py<PyList>,
+        pub layers: Py<PyList>,
     }
 
     #[pyclass]
@@ -178,28 +184,26 @@ pub mod shader_database {
         }
     }
 
-    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, Vec<xc3_model::shader_database::Dependency>> {
+    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies> {
         fn map_py(&self, py: Python) -> PyResult<Py<PyDict>> {
             let dict = PyDict::new_bound(py);
             for (k, v) in self.iter() {
-                let values =
-                    PyList::new_bound(py, v.iter().map(|v| Dependency(v.clone()).into_py(py)));
-                dict.set_item(k.to_string(), values)?;
+                let v: OutputDependencies = v.map_py(py)?;
+                dict.set_item(k.to_string(), v.into_py(py))?;
             }
             Ok(dict.into())
         }
     }
 
-    impl MapPy<IndexMap<SmolStr, Vec<xc3_model::shader_database::Dependency>>> for Py<PyDict> {
+    impl MapPy<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> for Py<PyDict> {
         fn map_py(
             &self,
             py: Python,
-        ) -> PyResult<IndexMap<SmolStr, Vec<xc3_model::shader_database::Dependency>>> {
-            Ok(self
-                .extract::<IndexMap<String, Vec<Dependency>>>(py)?
+        ) -> PyResult<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> {
+            self.extract::<IndexMap<String, OutputDependencies>>(py)?
                 .into_iter()
-                .map(|(k, v)| (k.into(), v.into_iter().map(|v| v.0).collect()))
-                .collect())
+                .map(|(k, v)| Ok((k.into(), v.map_py(py)?)))
+                .collect()
         }
     }
 
