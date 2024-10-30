@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 * Removed fields `color_layers` and `normal_layers` from `shader_database.ShaderProgram`.
+* Removed field `alpha_test_ref` from `material.MaterialParameters`.
 
 ## 0.9.0 - 2024-09-18
 ### Added

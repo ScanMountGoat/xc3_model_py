@@ -314,7 +314,6 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::MaterialParameters)]
     pub struct MaterialParameters {
-        pub alpha_test_ref: f32,
         pub tex_matrix: Option<Vec<[f32; 8]>>,
         pub work_float4: Option<Vec<[f32; 4]>>,
         pub work_color: Option<Vec<[f32; 4]>>,
@@ -324,13 +323,11 @@ pub mod material {
     impl MaterialParameters {
         #[new]
         fn new(
-            alpha_test_ref: f32,
             tex_matrix: Option<Vec<[f32; 8]>>,
             work_float4: Option<Vec<[f32; 4]>>,
             work_color: Option<Vec<[f32; 4]>>,
         ) -> Self {
             Self {
-                alpha_test_ref,
                 tex_matrix,
                 work_float4,
                 work_color,
@@ -378,22 +375,28 @@ pub mod material {
     #[map(xc3_model::material::FurShellParams)]
     pub struct FurShellParams {
         pub instance_count: u32,
-        pub unk2: f32,
-        pub unk3: f32,
-        pub unk4: f32,
-        pub unk5: f32,
+        pub view_distance: f32,
+        pub shell_width: f32,
+        pub y_offset: f32,
+        pub alpha: f32,
     }
 
     #[pymethods]
     impl FurShellParams {
         #[new]
-        fn new(instance_count: u32, unk2: f32, unk3: f32, unk4: f32, unk5: f32) -> Self {
+        fn new(
+            instance_count: u32,
+            view_distance: f32,
+            shell_width: f32,
+            y_offset: f32,
+            alpha: f32,
+        ) -> Self {
             Self {
                 instance_count,
-                unk2,
-                unk3,
-                unk4,
-                unk5,
+                view_distance,
+                shell_width,
+                y_offset,
+                alpha,
             }
         }
     }

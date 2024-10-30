@@ -137,14 +137,12 @@ class TextureAlphaTest:
     ) -> None: ...
 
 class MaterialParameters:
-    alpha_test_ref: float
     tex_matrix: Optional[list[float]]
     work_float4: Optional[list[float]]
     work_color: Optional[list[float]]
 
     def __init__(
         self,
-        alpha_test_ref: float,
         tex_matrix: Optional[list[float]],
         work_float4: Optional[list[float]],
         work_color: Optional[list[float]],
@@ -164,13 +162,18 @@ class WorkCallback:
 
 class FurShellParams:
     instance_count: int
-    unk2: float
-    unk3: float
-    unk4: float
-    unk5: float
+    view_distance: float
+    shell_width: float
+    y_offset: float
+    alpha: float
 
     def __init__(
-        self, instance_count: int, unk2: float, unk3: float, unk4: float, unk5: float
+        self,
+        instance_count: int,
+        view_distance: float,
+        shell_width: float,
+        y_offset: float,
+        alpha: float,
     ) -> None: ...
 
 class OutputAssignments:
