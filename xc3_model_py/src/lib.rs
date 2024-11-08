@@ -953,6 +953,7 @@ mod xc3_model_py {
     fn decode_images_png(
         py: Python,
         image_textures: Vec<PyRef<ImageTexture>>,
+        flip_vertical: bool,
     ) -> PyResult<Vec<Py<PyBytes>>> {
         let textures: Vec<&ImageTexture> = image_textures.iter().map(|i| i.deref()).collect();
         let buffers = textures
@@ -987,12 +988,16 @@ mod xc3_model_py {
             .map(|(buffer, texture)| {
                 // TODO: avoid unwrap.
                 let mut writer = Cursor::new(Vec::new());
-                let image =
+                let mut image =
                     image_dds::image::RgbaImage::from_raw(texture.width, texture.height, buffer)
                         .unwrap();
+                if flip_vertical {
+                    image = image_dds::image::imageops::flip_vertical(&image);
+                }
                 image
                     .write_to(&mut writer, image_dds::image::ImageFormat::Png)
                     .unwrap();
+
                 Ok(PyBytes::new_bound(py, &writer.into_inner()).into())
             })
             .collect()
