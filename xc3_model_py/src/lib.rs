@@ -178,6 +178,7 @@ python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 mod xc3_model_py {
     use super::*;
 
+    use std::io::Cursor;
     use std::{ops::Deref, path::Path};
 
     use crate::map_py::MapPy;
@@ -185,6 +186,7 @@ mod xc3_model_py {
     use crate::shader_database::shader_database::ShaderDatabase;
     use crate::vertex::vertex::ModelBuffers;
     use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArrayDyn};
+    use pyo3::types::PyBytes;
     use pyo3::types::PyList;
     use xc3_lib::dds::DdsExt;
 
@@ -948,6 +950,55 @@ mod xc3_model_py {
     }
 
     #[pyfunction]
+    fn decode_images_png(
+        py: Python,
+        image_textures: Vec<PyRef<ImageTexture>>,
+    ) -> PyResult<Vec<Py<PyBytes>>> {
+        let textures: Vec<&ImageTexture> = image_textures.iter().map(|i| i.deref()).collect();
+        let buffers = textures
+            .par_iter()
+            .map(|image| {
+                let format: xc3_model::ImageFormat = image.image_format.into();
+                // TODO: expose to_surface in xc3_model.
+                let surface = image_dds::Surface {
+                    width: image.width,
+                    height: image.height,
+                    depth: image.depth,
+                    layers: if image.view_dimension == ViewDimension::Cube {
+                        6
+                    } else {
+                        1
+                    },
+                    mipmaps: image.mipmap_count,
+                    image_format: format.into(),
+                    data: &image.image_data,
+                };
+
+                Ok(surface
+                    .decode_layers_mipmaps_rgba8(0..surface.layers, 0..1)
+                    .map_err(py_exception)?
+                    .data)
+            })
+            .collect::<PyResult<Vec<_>>>()?;
+
+        buffers
+            .into_iter()
+            .zip(textures)
+            .map(|(buffer, texture)| {
+                // TODO: avoid unwrap.
+                let mut writer = Cursor::new(Vec::new());
+                let image =
+                    image_dds::image::RgbaImage::from_raw(texture.width, texture.height, buffer)
+                        .unwrap();
+                image
+                    .write_to(&mut writer, image_dds::image::ImageFormat::Png)
+                    .unwrap();
+                Ok(PyBytes::new_bound(py, &writer.into_inner()).into())
+            })
+            .collect()
+    }
+
+    #[pyfunction]
     fn decode_images_rgbaf32(
         py: Python,
         image_textures: Vec<PyRef<ImageTexture>>,
@@ -957,6 +1008,7 @@ mod xc3_model_py {
             .par_iter()
             .map(|image| {
                 let format: xc3_model::ImageFormat = image.image_format.into();
+                // TODO: expose to_surface in xc3_model.
                 let surface = image_dds::Surface {
                     width: image.width,
                     height: image.height,

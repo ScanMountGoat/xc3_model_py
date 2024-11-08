@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added type `material.WorkCallback` for the element type of `Material.work_callbacks`.
 * Added variant `Overlay` to `shader_database.LayerBlendMode`.
 * Added type `shader_database.OutputDependencies` to store dependencies and layers.
+* Added function `decode_images_png`.
 
 ### Changed
 * Moved material types in `materials` module.
