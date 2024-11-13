@@ -70,6 +70,7 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::ShaderProgram)]
     pub struct ShaderProgram {
         pub output_dependencies: Py<PyDict>,
+        pub outline_width: Option<Dependency>,
     }
 
     #[pyclass(get_all, set_all)]
@@ -90,8 +91,8 @@ pub mod shader_database {
     pub struct BufferDependency {
         pub name: String,
         pub field: String,
-        pub index: usize,
-        pub channels: String,
+        pub index: Option<usize>,
+        pub channel: Option<char>,
     }
 
     #[pyclass(get_all, set_all)]
@@ -99,7 +100,7 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::TextureDependency)]
     pub struct TextureDependency {
         pub name: String,
-        pub channels: String,
+        pub channel: Option<char>,
         pub texcoords: Py<PyList>,
     }
 
@@ -108,7 +109,7 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::TexCoord)]
     pub struct TexCoord {
         pub name: String,
-        pub channels: String,
+        pub channel: Option<char>,
         pub params: Option<Py<TexCoordParams>>,
     }
 
@@ -139,7 +140,7 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::AttributeDependency)]
     pub struct AttributeDependency {
         pub name: String,
-        pub channels: String,
+        pub channel: Option<char>,
     }
 
     #[pyclass(get_all, set_all)]

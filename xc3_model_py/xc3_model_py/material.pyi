@@ -1,6 +1,6 @@
 from typing import Optional, ClassVar, Tuple
 
-from xc3_model_py import ImageTexture
+from xc3_model_py.xc3_model_py import ImageTexture
 from xc3_model_py.shader_database import LayerBlendMode, ShaderProgram
 
 class Material:
@@ -178,6 +178,7 @@ class FurShellParams:
 
 class OutputAssignments:
     assignments: list[OutputAssignment]
+    outline_width: Optional[ChannelAssignment]
 
     def mat_id(self) -> Optional[int]: ...
 

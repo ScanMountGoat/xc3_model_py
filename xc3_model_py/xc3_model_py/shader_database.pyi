@@ -16,8 +16,7 @@ class MapPrograms:
 
 class ShaderProgram:
     output_dependencies: dict[str, list[OutputDependencies]]
-    color_layers: list[TextureLayer]
-    normal_layers: list[TextureLayer]
+    outline_width: Optional[Dependency]
 
 class OutputDependencies:
     dependencies: list[Dependency]
@@ -32,17 +31,17 @@ class Dependency:
 class BufferDependency:
     name: str
     field: str
-    index: int
-    channels: str
+    index: Optional[int]
+    channel: Optional[str]
 
 class TextureDependency:
     name: str
-    channels: str
+    channel: Optional[str]
     texcoords: list[TexCoord]
 
 class TexCoord:
     name: str
-    channels: str
+    channel: Optional[str]
     params: Optional[TexCoordParams]
 
 class TexCoordParams:
@@ -55,7 +54,7 @@ class TexCoordParams:
 
 class AttributeDependency:
     name: str
-    channels: str
+    channel: Optional[str]
 
 class TextureLayer:
     value: Dependency

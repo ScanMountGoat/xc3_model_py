@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+### Added
+* Added field `outline_width` to `material.OutputAssignments`.
+* Added field `outline_width` to `shader_database.ShaderProgram`.
+
+### Changed
+* Changed `shader_database.BufferDependency.index` to be an `int` or `None`.
+* Changed `channels` fields for all types in `shader_database` to `channel` with a single character string or `None`.
+
 ## 0.10.0 - 2024-10-31
 ### Added
 * Added type `monolib.ShaderTextures`.

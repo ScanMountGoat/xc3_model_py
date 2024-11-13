@@ -406,6 +406,7 @@ pub mod material {
     #[map(xc3_model::material::OutputAssignments)]
     pub struct OutputAssignments {
         pub assignments: [OutputAssignment; 6],
+        pub outline_width: Option<ChannelAssignment>,
     }
 
     #[pymethods]
