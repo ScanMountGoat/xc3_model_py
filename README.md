@@ -8,13 +8,13 @@ Installing: `pip install xc3_model_py`
 Updating: `pip install xc3_model_py --upgrade`
 
 ## Introduction
-Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader JSON databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases). For more advanced usage, see [xenoblade_blender](https://github.com/ScanMountGoat/xenoblade_blender).
+Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases). For more advanced usage, see [xenoblade_blender](https://github.com/ScanMountGoat/xenoblade_blender).
 
 ```python
 import xc3_model_py
 
 # Get a list of MapRoot.
-database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.json")
+database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.bin")
 roots = xc3_model_py.load_map("xenoblade3_dump/map/ma59a.wismhd", database)
 
 for root in roots:
@@ -22,7 +22,7 @@ for root in roots:
         for models in group.models:
             for material in models.materials:
                 print(material.name)
-                # The shader contains assignment information when specifying a JSON database.
+                # The shader contains assignment information when specifying a database.
 
             for model in models.models:
                 buffers = group.buffers[model.model_buffers_index]
@@ -33,7 +33,7 @@ for root in roots:
 
 ```python
 # This returns only a single ModelRoot.
-database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.json")
+database = xc3_model_py.shader_database.ShaderDatabase.from_file("xc3.bin")
 root = xc3_model_py.load_model("xenoblade3_dump/chr/chr/01012013.wimdo", database)
 
 for material in root.models.materials:
