@@ -71,6 +71,7 @@ class Models:
     models: list[Model]
     materials: list[material.Material]
     samplers: list[Sampler]
+    skinning: Optional[skinning.Skinning]
     lod_data: Optional[LodData]
     morph_controller_names: list[str]
     animation_morph_names: list[str]
@@ -86,6 +87,7 @@ class Models:
         min_xyz: list[float],
         morph_controller_names: list[str],
         animation_morph_names: list[str],
+        skinning: Optional[skinning.Skinning],
         lod_data: Optional[LodData],
     ) -> None: ...
 

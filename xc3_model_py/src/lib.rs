@@ -184,6 +184,7 @@ mod xc3_model_py {
     use crate::map_py::MapPy;
     use crate::material::TextureUsage;
     use crate::shader_database::shader_database::ShaderDatabase;
+    use crate::skinning::skinning::Skinning;
     use crate::vertex::vertex::ModelBuffers;
     use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArrayDyn};
     use pyo3::types::PyBytes;
@@ -270,6 +271,7 @@ mod xc3_model_py {
         pub models: Py<PyList>,
         pub materials: Py<PyList>,
         pub samplers: Py<PyList>,
+        pub skinning: Option<Py<Skinning>>,
         pub morph_controller_names: Py<PyList>,
         pub animation_morph_names: Py<PyList>,
         pub max_xyz: [f32; 3],
@@ -288,12 +290,14 @@ mod xc3_model_py {
             min_xyz: [f32; 3],
             morph_controller_names: Py<PyList>,
             animation_morph_names: Py<PyList>,
+            skinning: Option<Py<Skinning>>,
             lod_data: Option<Py<LodData>>,
         ) -> Self {
             Self {
                 models,
                 materials,
                 samplers,
+                skinning,
                 lod_data,
                 morph_controller_names,
                 animation_morph_names,

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added field `outline_width` to `material.OutputAssignments`.
 * Added field `outline_width` to `shader_database.ShaderProgram`.
+* Added field `skinning` to `Models`.
+* Added types `Skinning`, `Bone`, `BoneBounds`, `BoneConstraint`, and `BoneConstraintType` to `skinning` module.
 
 ### Changed
 * Changed `shader_database.BufferDependency.index` to be an `int` or `None`.

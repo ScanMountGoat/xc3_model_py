@@ -1,10 +1,114 @@
 use pyo3::prelude::*;
 
+use crate::python_enum;
+
+python_enum!(
+    BoneConstraintType,
+    xc3_model::skinning::BoneConstraintType,
+    FixedOffset,
+    Distance
+);
+
 #[pymodule]
 pub mod skinning {
     use pyo3::{prelude::*, types::PyList};
 
     use crate::{map_py::MapPy, material::RenderPassType, uvec2s_pyarray};
+
+    #[pymodule_export]
+    use super::BoneConstraintType;
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::skinning::Skinning)]
+    pub struct Skinning {
+        bones: Py<PyList>,
+    }
+
+    #[pymethods]
+    impl Skinning {
+        #[new]
+        pub fn new(bones: Py<PyList>) -> Self {
+            Self { bones }
+        }
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::skinning::Bone)]
+    pub struct Bone {
+        name: String,
+        bounds: Option<Py<BoneBounds>>,
+        constraint: Option<Py<BoneConstraint>>,
+        no_camera_overlap: bool,
+    }
+
+    #[pymethods]
+    impl Bone {
+        #[new]
+        pub fn new(
+            name: String,
+            no_camera_overlap: bool,
+            bounds: Option<Py<BoneBounds>>,
+            constraint: Option<Py<BoneConstraint>>,
+        ) -> Self {
+            Self {
+                name,
+                bounds,
+                constraint,
+                no_camera_overlap,
+            }
+        }
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::skinning::BoneBounds)]
+    pub struct BoneBounds {
+        center: [f32; 3],
+        size: [f32; 3],
+        radius: f32,
+    }
+
+    #[pymethods]
+    impl BoneBounds {
+        #[new]
+        pub fn new(center: [f32; 3], size: [f32; 3], radius: f32) -> Self {
+            Self {
+                center,
+                size,
+                radius,
+            }
+        }
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::skinning::BoneConstraint)]
+    pub struct BoneConstraint {
+        fixed_offset: [f32; 3],
+        max_distance: f32,
+        constraint_type: BoneConstraintType,
+        parent_index: Option<usize>,
+    }
+
+    #[pymethods]
+    impl BoneConstraint {
+        #[new]
+        pub fn new(
+            fixed_offset: [f32; 3],
+            max_distance: f32,
+            constraint_type: BoneConstraintType,
+            parent_index: Option<usize>,
+        ) -> Self {
+            Self {
+                fixed_offset,
+                max_distance,
+                constraint_type,
+                parent_index,
+            }
+        }
+    }
 
     #[pyclass]
     #[derive(Debug, Clone)]

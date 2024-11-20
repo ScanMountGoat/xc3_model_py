@@ -1,7 +1,55 @@
 from typing import Optional, ClassVar, Tuple
 import numpy
+from xc3_model_py.material import RenderPassType
 
-from xc3_model_py import RenderPassType
+class Skinning:
+    bones: list[Bone]
+
+    def __init__(self, bones: list[Bone]) -> None: ...
+
+class Bone:
+    name: str
+    bounds: Optional[BoneBounds]
+    constraint: Optional[BoneConstraint]
+    no_camera_overlap: bool
+
+    def __init__(
+        self,
+        name: str,
+        no_camera_overlap: bool,
+        bounds: Optional[BoneBounds],
+        constraint: Optional[BoneConstraint],
+    ) -> None: ...
+
+class BoneBounds:
+    center: list[float]
+    size: list[float]
+    radius: float
+
+    def __init__(
+        self,
+        center: list[float],
+        size: list[float],
+        radius: float,
+    ) -> None: ...
+
+class BoneConstraint:
+    fixed_offset: list[float]
+    max_distance: float
+    constraint_type: BoneConstraintType
+    parent_index: Optional[int]
+
+    def __init__(
+        self,
+        fixed_offset: list[float],
+        max_distance: float,
+        constraint_type: BoneConstraintType,
+        parent_index: Optional[int],
+    ) -> None: ...
+
+class BoneConstraintType:
+    FixedOffset: ClassVar[BoneConstraintType]
+    Distance: ClassVar[BoneConstraintType]
 
 class Weights:
     weight_buffers: list[SkinWeights]
