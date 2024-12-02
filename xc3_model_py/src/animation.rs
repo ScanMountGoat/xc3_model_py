@@ -32,6 +32,7 @@ pub mod animation {
         pub frames_per_second: f32,
         pub frame_count: u32,
         pub tracks: Vec<Track>,
+        pub root_translation: Option<PyObject>,
     }
 
     #[pymethods]
@@ -47,7 +48,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<PyObject> {
-            let animation = animation_rs(self);
+            let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.skinning_transforms(&skeleton, frame);
             Ok(transforms_pyarray(py, &transforms))
@@ -59,7 +60,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<PyObject> {
-            let animation = animation_rs(self);
+            let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.model_space_transforms(&skeleton, frame);
             Ok(transforms_pyarray(py, &transforms))
@@ -71,7 +72,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<PyObject> {
-            let animation = animation_rs(self);
+            let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.local_space_transforms(&skeleton, frame);
             Ok(transforms_pyarray(py, &transforms))
@@ -151,8 +152,11 @@ pub mod animation {
         xc3_model::animation::murmur3(name.as_bytes())
     }
 
-    pub fn animation_rs(animation: &Animation) -> xc3_model::animation::Animation {
-        xc3_model::animation::Animation {
+    pub fn animation_rs(
+        py: Python,
+        animation: &Animation,
+    ) -> PyResult<xc3_model::animation::Animation> {
+        Ok(xc3_model::animation::Animation {
             name: animation.name.clone(),
             space_mode: animation.space_mode.into(),
             play_mode: animation.play_mode.into(),
@@ -161,11 +165,19 @@ pub mod animation {
             frame_count: animation.frame_count,
             tracks: animation.tracks.iter().map(|t| t.0.clone()).collect(),
             morph_tracks: None, // TODO: morph animations?
-        }
+            root_translation: animation
+                .root_translation
+                .as_ref()
+                .map(|t| t.map_py(py))
+                .transpose()?,
+        })
     }
 
-    pub fn animation_py(animation: xc3_model::animation::Animation) -> Animation {
-        Animation {
+    pub fn animation_py(
+        py: Python,
+        animation: xc3_model::animation::Animation,
+    ) -> PyResult<Animation> {
+        Ok(Animation {
             name: animation.name.clone(),
             space_mode: animation.space_mode.into(),
             play_mode: animation.play_mode.into(),
@@ -173,6 +185,7 @@ pub mod animation {
             frames_per_second: animation.frames_per_second,
             frame_count: animation.frame_count,
             tracks: animation.tracks.into_iter().map(Track).collect(),
-        }
+            root_translation: animation.root_translation.map_py(py)?,
+        })
     }
 }

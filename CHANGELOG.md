@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+### Added
+* Added field `root_translation` to `animation.Animation` for additional translation of the root bone.
+
+### Changed
+* Changed animation loading methods like `animation.Animation.model_space_transforms` to include root bone translation if present.
+
+### Removed
+* Removed `shader_database.ModelPrograms` and `shader_database.MapPrograms` as they are no longer used.
+* Removed `map` and `model` methods from `shader_database.ShaderDatabase` to match database changes. Access the shader from the material instead.
+
 ## 0.11.0 - 2024-11-27
 ### Added
 * Added field `outline_width` to `material.OutputAssignments`.

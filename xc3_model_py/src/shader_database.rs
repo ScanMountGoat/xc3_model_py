@@ -39,30 +39,6 @@ pub mod shader_database {
                     .map_err(py_exception)?,
             ))
         }
-
-        pub fn model(&self, py: Python, name: &str) -> PyResult<Option<ModelPrograms>> {
-            self.0.model(name).map(|m| m.map_py(py)).transpose()
-        }
-
-        pub fn map(&self, py: Python, name: &str) -> PyResult<Option<MapPrograms>> {
-            self.0.map(name).map(|m| m.map_py(py)).transpose()
-        }
-    }
-
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::ModelPrograms)]
-    pub struct ModelPrograms {
-        pub programs: Py<PyList>,
-    }
-
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::MapPrograms)]
-    pub struct MapPrograms {
-        pub map_models: Py<PyList>,
-        pub prop_models: Py<PyList>,
-        pub env_models: Py<PyList>,
     }
 
     #[pyclass(get_all, set_all)]

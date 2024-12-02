@@ -3,16 +3,6 @@ from typing import ClassVar, Optional, Tuple
 class ShaderDatabase:
     @staticmethod
     def from_file(path: str) -> ShaderDatabase: ...
-    def model(self, name: str) -> Optional[ModelPrograms]: ...
-    def map(self, name: str) -> Optional[MapPrograms]: ...
-
-class ModelPrograms:
-    programs: list[ShaderProgram]
-
-class MapPrograms:
-    map_models: list[ModelPrograms]
-    prop_models: list[ModelPrograms]
-    env_models: list[ModelPrograms]
 
 class ShaderProgram:
     output_dependencies: dict[str, list[OutputDependencies]]

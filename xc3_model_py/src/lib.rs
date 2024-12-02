@@ -943,14 +943,14 @@ mod xc3_model_py {
 
     #[pyfunction]
     fn load_animations(
-        _py: Python,
+        py: Python,
         anim_path: &str,
     ) -> PyResult<Vec<crate::animation::animation::Animation>> {
         let animations = xc3_model::load_animations(anim_path).map_err(py_exception)?;
-        Ok(animations
+        animations
             .into_iter()
-            .map(crate::animation::animation::animation_py)
-            .collect())
+            .map(|a| crate::animation::animation::animation_py(py, a))
+            .collect()
     }
 
     #[pyfunction]

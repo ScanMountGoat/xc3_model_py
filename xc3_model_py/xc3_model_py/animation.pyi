@@ -11,6 +11,7 @@ class Animation:
     frames_per_second: float
     frame_count: int
     tracks: list[Track]
+    root_translation: Optional[numpy.ndarray]
 
     def current_frame(self, current_time_seconds: float) -> float: ...
     def skinning_transforms(
