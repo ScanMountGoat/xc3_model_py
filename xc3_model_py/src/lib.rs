@@ -841,7 +841,10 @@ mod xc3_model_py {
             mxmd: &Mxmd,
             msrd: &Msrd,
         ) -> PyResult<(Mxmd, Msrd)> {
-            let (mxmd, msrd) = self.map_py(py)?.to_mxmd_model(&mxmd.0, &msrd.0);
+            let (mxmd, msrd) = self
+                .map_py(py)?
+                .to_mxmd_model(&mxmd.0, &msrd.0)
+                .map_err(py_exception)?;
             Ok((Mxmd(mxmd), Msrd(msrd)))
         }
         // TODO: support texture edits as well?
