@@ -116,6 +116,7 @@ class ColorWriteMode:
     Unk1: ClassVar[ColorWriteMode]
     Unk2: ClassVar[ColorWriteMode]
     Unk3: ClassVar[ColorWriteMode]
+    Unk5: ClassVar[ColorWriteMode]
     Unk6: ClassVar[ColorWriteMode]
     Unk9: ClassVar[ColorWriteMode]
     Unk10: ClassVar[ColorWriteMode]

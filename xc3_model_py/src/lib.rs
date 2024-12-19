@@ -5,6 +5,7 @@ use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 
 mod animation;
+mod collision;
 mod map_py;
 mod material;
 mod monolib;
@@ -199,6 +200,9 @@ mod xc3_model_py {
 
     #[pymodule_export]
     use animation::animation;
+
+    #[pymodule_export]
+    use collision::collision;
 
     #[pymodule_export]
     use material::material;
@@ -945,15 +949,18 @@ mod xc3_model_py {
     }
 
     #[pyfunction]
-    fn load_animations(
-        py: Python,
-        anim_path: &str,
-    ) -> PyResult<Vec<crate::animation::animation::Animation>> {
+    fn load_animations(py: Python, anim_path: &str) -> PyResult<Vec<animation::Animation>> {
         let animations = xc3_model::load_animations(anim_path).map_err(py_exception)?;
         animations
             .into_iter()
-            .map(|a| crate::animation::animation::animation_py(py, a))
+            .map(|a| animation::animation_py(py, a))
             .collect()
+    }
+
+    #[pyfunction]
+    fn load_collisions(py: Python, idcm_path: &str) -> PyResult<collision::CollisionMeshes> {
+        let collisions = xc3_model::load_collisions(idcm_path).map_err(py_exception)?;
+        collisions.map_py(py)
     }
 
     #[pyfunction]

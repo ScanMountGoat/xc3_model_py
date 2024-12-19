@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added field `root_translation` to `animation.Animation` for additional translation of the root bone.
+* Added variant `Unk` to `material.ColorWriteMode`.
+* Added variant `Unk21` to `TextureUsage`.
+* Added function `load_collisions` for loading collision data from `.wiidcm` or `.idcm` files.
+* Added `collision` module for collision mesh data.
 
 ### Changed
 * Changed animation loading methods like `animation.Animation.model_space_transforms` to include root bone translation if present.

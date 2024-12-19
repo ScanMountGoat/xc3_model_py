@@ -7,6 +7,7 @@ from . import monolib
 from . import shader_database
 from . import skinning
 from . import vertex
+from . import collision
 
 def load_model(
     wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]
@@ -18,6 +19,7 @@ def load_map(
     wismhd: str, shader_database: Optional[shader_database.ShaderDatabase]
 ) -> list[MapRoot]: ...
 def load_animations(anim_path: str) -> list[animation.Animation]: ...
+def load_collisions(idcm_path: str) -> collision.CollisionMeshes: ...
 def decode_images_png(
     images: list[ImageTexture], flip_vertical: bool
 ) -> list[bytes]: ...
@@ -205,6 +207,7 @@ class TextureUsage:
     Unk8: ClassVar[TextureUsage]
     Alp: ClassVar[TextureUsage]
     Unk: ClassVar[TextureUsage]
+    Unk21: ClassVar[TextureUsage]
     Alp2: ClassVar[TextureUsage]
     Col2: ClassVar[TextureUsage]
     Unk11: ClassVar[TextureUsage]
