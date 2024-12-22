@@ -91,9 +91,10 @@ fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
         .flatten()
         .copied()
         .collect::<Vec<u16>>()
-        .into_pyarray_bound(py)
+        .into_pyarray(py)
         .reshape((count, 2))
         .unwrap()
+        .into_any()
         .into()
 }
 
@@ -106,9 +107,10 @@ fn uvec4_pyarray(py: Python, values: &[[u8; 4]]) -> PyObject {
         .flatten()
         .copied()
         .collect::<Vec<u8>>()
-        .into_pyarray_bound(py)
+        .into_pyarray(py)
         .reshape((count, 4))
         .unwrap()
+        .into_any()
         .into()
 }
 
@@ -120,18 +122,20 @@ fn transforms_pyarray(py: Python, transforms: &[Mat4]) -> PyObject {
         .iter()
         .flat_map(|v| v.to_cols_array())
         .collect::<Vec<f32>>()
-        .into_pyarray_bound(py)
+        .into_pyarray(py)
         .reshape((transform_count, 4, 4))
         .unwrap()
+        .into_any()
         .into()
 }
 
 // TODO: test cases for conversions.
 fn mat4_to_pyarray(py: Python, transform: Mat4) -> PyObject {
-    PyArray::from_slice_bound(py, &transform.to_cols_array())
+    PyArray::from_slice(py, &transform.to_cols_array())
         .readwrite()
         .reshape((4, 4))
         .unwrap()
+        .into_any()
         .into()
 }
 
@@ -1012,7 +1016,7 @@ mod xc3_model_py {
                     .write_to(&mut writer, image_dds::image::ImageFormat::Png)
                     .unwrap();
 
-                Ok(PyBytes::new_bound(py, &writer.into_inner()).into())
+                Ok(PyBytes::new(py, &writer.into_inner()).into())
             })
             .collect()
     }
@@ -1051,7 +1055,7 @@ mod xc3_model_py {
 
         Ok(buffers
             .into_iter()
-            .map(|buffer| buffer.into_pyarray_bound(py).into())
+            .map(|buffer| buffer.into_pyarray(py).into_any().into())
             .collect())
     }
 

@@ -25,10 +25,10 @@ pub mod monolib {
         }
 
         fn global_textures(&self, py: Python) -> PyResult<Py<PyDict>> {
-            let dict = PyDict::new_bound(py);
+            let dict = PyDict::new(py);
             for (k, v) in self.0.textures.iter() {
                 let v: Option<ImageTexture> = v.as_ref().map(|v| v.map_py(py)).transpose()?;
-                dict.set_item(k.to_string(), v.into_py(py))?;
+                dict.set_item(k.to_string(), v.into_pyobject(py)?)?;
             }
             Ok(dict.into())
         }

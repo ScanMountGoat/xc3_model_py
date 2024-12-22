@@ -163,10 +163,10 @@ pub mod shader_database {
 
     impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies> {
         fn map_py(&self, py: Python) -> PyResult<Py<PyDict>> {
-            let dict = PyDict::new_bound(py);
+            let dict = PyDict::new(py);
             for (k, v) in self.iter() {
                 let v: OutputDependencies = v.map_py(py)?;
-                dict.set_item(k.to_string(), v.into_py(py))?;
+                dict.set_item(k.to_string(), v.into_pyobject(py)?)?;
             }
             Ok(dict.into())
         }

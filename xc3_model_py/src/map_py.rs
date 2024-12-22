@@ -78,7 +78,7 @@ macro_rules! map_py_pyobject_ndarray_impl {
         $(
             impl MapPy<PyObject> for Vec<$t> {
                 fn map_py(&self, py: Python) -> PyResult<PyObject> {
-                    Ok(self.to_pyarray_bound(py).into())
+                    Ok(self.to_pyarray(py).into_any().into())
                 }
             }
 
@@ -113,7 +113,7 @@ impl MapPy<Vec<String>> for Py<PyList> {
 
 impl MapPy<Py<PyList>> for Vec<String> {
     fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-        Ok(PyList::new_bound(py, self).into())
+        PyList::new(py, self).map(Into::into)
     }
 }
 
@@ -178,9 +178,10 @@ where
         .iter()
         .flat_map(|v| (*v).into())
         .collect::<Vec<f32>>()
-        .into_pyarray_bound(py)
+        .into_pyarray(py)
         .reshape((count, N))
         .unwrap()
+        .into_any()
         .into())
 }
 
@@ -282,16 +283,16 @@ macro_rules! map_py_wrapper_impl {
         // Map from Vec<T> to Python lists
         impl MapPy<Py<pyo3::types::PyList>> for Vec<$rs> {
             fn map_py(&self, py: Python) -> PyResult<Py<pyo3::types::PyList>> {
-                Ok(pyo3::types::PyList::new_bound(
+                pyo3::types::PyList::new(
                     py,
                     self.into_iter()
                         .map(|v| {
                             let v2: $py = v.map_py(py)?;
-                            Ok(v2.into_py(py))
+                            v2.into_pyobject(py)
                         })
                         .collect::<PyResult<Vec<_>>>()?,
                 )
-                .into())
+                .map(Into::into)
             }
         }
     };

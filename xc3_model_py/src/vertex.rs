@@ -250,16 +250,16 @@ pub mod vertex {
     // Map from Vec<T> to Python lists
     impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::ModelBuffers> {
         fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-            Ok(PyList::new_bound(
+            PyList::new(
                 py,
                 self.iter()
                     .map(|v| {
                         let v2: ModelBuffers = v.map_py(py)?;
-                        Ok(v2.into_py(py))
+                        v2.into_pyobject(py)
                     })
                     .collect::<PyResult<Vec<_>>>()?,
             )
-            .into())
+            .map(Into::into)
         }
     }
 
@@ -490,13 +490,13 @@ pub mod vertex {
     // Map from Vec<T> to Python lists
     impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::AttributeData> {
         fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-            Ok(PyList::new_bound(
+            PyList::new(
                 py,
                 self.iter()
-                    .map(|v| Ok(v.map_py(py)?.into_py(py)))
+                    .map(|v| Ok(v.map_py(py)?.into_pyobject(py)?))
                     .collect::<PyResult<Vec<_>>>()?,
             )
-            .into())
+            .map(Into::into)
         }
     }
 }

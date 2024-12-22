@@ -72,16 +72,16 @@ pub fn map_py_derive(input: TokenStream) -> TokenStream {
         // Map from Vec<T> to Python lists
         impl crate::MapPy<Py<PyList>> for Vec<#map_type> {
             fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-                Ok(PyList::new_bound(
+                PyList::new(
                     py,
                     self.into_iter()
                         .map(|v| {
                             let v2: #name = v.map_py(py)?;
-                            Ok(v2.into_py(py))
+                            v2.into_pyobject(py)
                         })
                         .collect::<PyResult<Vec<_>>>()?,
                 )
-                .into())
+                .map(Into::into)
             }
         }
 
