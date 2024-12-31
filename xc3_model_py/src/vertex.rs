@@ -130,8 +130,8 @@ pub mod vertex {
         }
     }
 
-    #[pyclass]
-    #[derive(Debug, Clone)]
+    #[pyclass(eq, eq_int)]
+    #[derive(Debug, PartialEq, Eq, Clone)]
     pub enum AttributeType {
         Position,
         SkinWeights2,
