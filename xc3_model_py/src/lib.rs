@@ -1,6 +1,6 @@
 use crate::map_py::MapPy;
 use glam::Mat4;
-use numpy::{IntoPyArray, PyArray, PyArrayMethods};
+use numpy::{IntoPyArray, PyArray, PyArray3, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 
@@ -131,6 +131,7 @@ fn transforms_pyarray(py: Python, transforms: &[Mat4]) -> PyObject {
 
 // TODO: test cases for conversions.
 fn mat4_to_pyarray(py: Python, transform: Mat4) -> PyObject {
+    // TODO: Should this be transposed since numpy is row-major?
     PyArray::from_slice(py, &transform.to_cols_array())
         .readwrite()
         .reshape((4, 4))
@@ -145,8 +146,16 @@ fn pyarray_to_mat4(py: Python, transform: &PyObject) -> PyResult<Mat4> {
 }
 
 fn pyarray_to_mat4s(py: Python, values: &PyObject) -> PyResult<Vec<Mat4>> {
-    let transforms: Vec<[[f32; 4]; 4]> = values.extract(py)?;
-    Ok(transforms.iter().map(Mat4::from_cols_array_2d).collect())
+    let array = values.downcast_bound::<PyArray3<f32>>(py)?;
+    let array = array.readonly();
+    let array = array.as_array();
+    Ok(array
+        .into_shape_with_order((array.shape()[0], 16))
+        .unwrap()
+        .rows()
+        .into_iter()
+        .map(|r| Mat4::from_cols_slice(r.as_slice().unwrap()))
+        .collect())
 }
 
 python_enum!(ViewDimension, xc3_model::ViewDimension, D2, D3, Cube);

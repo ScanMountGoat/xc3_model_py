@@ -11,6 +11,7 @@ python_enum!(
 
 #[pymodule]
 pub mod skinning {
+    use numpy::PyArray2;
     use pyo3::{prelude::*, types::PyList};
 
     use crate::{map_py::MapPy, material::RenderPassType, uvec2s_pyarray};
@@ -175,9 +176,9 @@ pub mod skinning {
     #[map(xc3_model::skinning::SkinWeights)]
     pub struct SkinWeights {
         // N x 4 numpy.ndarray
-        pub bone_indices: PyObject,
+        pub bone_indices: Py<PyArray2<u8>>,
         // N x 4 numpy.ndarray
-        pub weights: PyObject,
+        pub weights: Py<PyArray2<f32>>,
         /// The name list for the indices in [bone_indices](#structfield.bone_indices).
         pub bone_names: Py<PyList>,
     }
@@ -185,7 +186,11 @@ pub mod skinning {
     #[pymethods]
     impl SkinWeights {
         #[new]
-        pub fn new(bone_indices: PyObject, weights: PyObject, bone_names: Py<PyList>) -> Self {
+        pub fn new(
+            bone_indices: Py<PyArray2<u8>>,
+            weights: Py<PyArray2<f32>>,
+            bone_names: Py<PyList>,
+        ) -> Self {
             Self {
                 bone_indices,
                 weights,

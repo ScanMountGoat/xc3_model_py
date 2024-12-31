@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 pub mod collision {
+    use numpy::{PyArray1, PyArray2};
     use pyo3::{prelude::*, types::PyList};
 
     use crate::map_py::MapPy;
@@ -10,7 +11,7 @@ pub mod collision {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::collision::CollisionMeshes)]
     pub struct CollisionMeshes {
-        pub vertices: PyObject,
+        pub vertices: Py<PyArray2<f32>>,
         pub meshes: Py<PyList>,
     }
 
@@ -20,6 +21,6 @@ pub mod collision {
     pub struct CollisionMesh {
         pub name: String,
         pub instances: PyObject,
-        pub indices: PyObject,
+        pub indices: Py<PyArray1<u32>>,
     }
 }

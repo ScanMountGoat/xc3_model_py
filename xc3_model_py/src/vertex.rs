@@ -16,6 +16,7 @@ pub mod vertex {
     use super::*;
 
     use crate::{map_py::MapPy, skinning::skinning::Weights, uvec2s_pyarray, uvec4_pyarray};
+    use numpy::{PyArray1, PyArray2};
 
     #[pymodule_export]
     use super::PrimitiveType;
@@ -80,14 +81,14 @@ pub mod vertex {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::IndexBuffer)]
     pub struct IndexBuffer {
-        pub indices: PyObject,
+        pub indices: Py<PyArray1<u16>>,
         pub primitive_type: PrimitiveType,
     }
 
     #[pymethods]
     impl IndexBuffer {
         #[new]
-        fn new(indices: PyObject, primitive_type: PrimitiveType) -> Self {
+        fn new(indices: Py<PyArray1<u16>>, primitive_type: PrimitiveType) -> Self {
             Self {
                 indices,
                 primitive_type,
@@ -177,12 +178,12 @@ pub mod vertex {
     pub struct MorphTarget {
         pub morph_controller_index: usize,
         // N x 3 numpy.ndarray
-        pub position_deltas: PyObject,
+        pub position_deltas: Py<PyArray2<f32>>,
         // N x 4 numpy.ndarray
-        pub normals: PyObject,
+        pub normals: Py<PyArray2<f32>>,
         // N x 4 numpy.ndarray
-        pub tangents: PyObject,
-        pub vertex_indices: PyObject,
+        pub tangents: Py<PyArray2<f32>>,
+        pub vertex_indices: Py<PyArray1<u32>>,
     }
 
     #[pymethods]
@@ -190,10 +191,10 @@ pub mod vertex {
         #[new]
         fn new(
             morph_controller_index: usize,
-            position_deltas: PyObject,
-            normals: PyObject,
-            tangents: PyObject,
-            vertex_indices: PyObject,
+            position_deltas: Py<PyArray2<f32>>,
+            normals: Py<PyArray2<f32>>,
+            tangents: Py<PyArray2<f32>>,
+            vertex_indices: Py<PyArray1<u32>>,
         ) -> Self {
             Self {
                 morph_controller_index,
@@ -493,7 +494,7 @@ pub mod vertex {
             PyList::new(
                 py,
                 self.iter()
-                    .map(|v| Ok(v.map_py(py)?.into_pyobject(py)?))
+                    .map(|v| v.map_py(py)?.into_pyobject(py))
                     .collect::<PyResult<Vec<_>>>()?,
             )
             .map(Into::into)
