@@ -1,5 +1,4 @@
 use crate::map_py::MapPy;
-use glam::Mat4;
 use numpy::{IntoPyArray, PyArray3, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
