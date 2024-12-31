@@ -1,12 +1,10 @@
 use glam::{Mat4, Vec2, Vec3, Vec4};
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, ToPyArray};
+use numpy::{IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, ToPyArray};
 use pyo3::{prelude::*, types::PyList};
 use smol_str::SmolStr;
 pub use xc3_model_py_derive::MapPy;
 
-use crate::{
-    mat4_to_pyarray, pyarray_to_mat4, pyarray_to_mat4s, transforms_pyarray, uvec4_pyarray,
-};
+use crate::uvec4_pyarray;
 
 // Define a mapping between types.
 // This allows for deriving the Python <-> Rust conversion.
@@ -247,6 +245,36 @@ impl MapPy<Vec<[u8; 4]>> for Py<PyArray2<u8>> {
     }
 }
 
+impl MapPy<Py<PyArray2<u16>>> for Vec<[u16; 2]> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<u16>>> {
+        // This flatten will be optimized in Release mode.
+        // This avoids needing unsafe code.
+        let count = self.len();
+        Ok(self
+            .iter()
+            .flatten()
+            .copied()
+            .collect::<Vec<u16>>()
+            .into_pyarray(py)
+            .reshape((count, 2))
+            .unwrap()
+            .into())
+    }
+}
+
+impl MapPy<Vec<[u16; 2]>> for Py<PyArray2<u16>> {
+    fn map_py(&self, py: Python) -> PyResult<Vec<[u16; 2]>> {
+        let array = self.as_any().downcast_bound::<PyArray2<u16>>(py)?;
+        Ok(array
+            .readonly()
+            .as_array()
+            .rows()
+            .into_iter()
+            .map(|r| r.as_slice().unwrap().try_into().unwrap())
+            .collect())
+    }
+}
+
 fn vectors_pyarray<const N: usize, T>(py: Python, values: &[T]) -> PyResult<PyObject>
 where
     T: Into<[f32; N]> + Copy,
@@ -299,27 +327,57 @@ fn pyarray_vec4s(py: Python, values: &PyObject) -> PyResult<Vec<Vec4>> {
         .collect())
 }
 
-impl MapPy<PyObject> for Mat4 {
-    fn map_py(&self, py: Python) -> PyResult<PyObject> {
-        Ok(mat4_to_pyarray(py, *self))
+impl MapPy<Py<PyArray2<f32>>> for Mat4 {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<f32>>> {
+        // TODO: Should this be transposed since numpy is row-major?
+        Ok(self
+            .to_cols_array()
+            .to_pyarray(py)
+            .readwrite()
+            .reshape((4, 4))
+            .unwrap()
+            .into())
     }
 }
 
-impl MapPy<Mat4> for PyObject {
+impl MapPy<Mat4> for Py<PyArray2<f32>> {
     fn map_py(&self, py: Python) -> PyResult<Mat4> {
-        pyarray_to_mat4(py, self)
+        let array = self.as_any().downcast_bound::<PyArray2<f32>>(py)?;
+        Ok(Mat4::from_cols_slice(
+            array.readonly().as_array().as_slice().unwrap(),
+        ))
     }
 }
 
-impl MapPy<PyObject> for Vec<Mat4> {
-    fn map_py(&self, py: Python) -> PyResult<PyObject> {
-        Ok(transforms_pyarray(py, self))
+impl MapPy<Py<PyArray3<f32>>> for Vec<Mat4> {
+    fn map_py(&self, py: Python) -> PyResult<Py<PyArray3<f32>>> {
+        // This flatten will be optimized in Release mode.
+        // This avoids needing unsafe code.
+        // TODO: transpose?
+        let count = self.len();
+        Ok(self
+            .iter()
+            .flat_map(|v| v.to_cols_array())
+            .collect::<Vec<f32>>()
+            .into_pyarray(py)
+            .reshape((count, 4, 4))
+            .unwrap()
+            .into())
     }
 }
 
-impl MapPy<Vec<Mat4>> for PyObject {
+impl MapPy<Vec<Mat4>> for Py<PyArray3<f32>> {
     fn map_py(&self, py: Python) -> PyResult<Vec<Mat4>> {
-        pyarray_to_mat4s(py, self)
+        let array = self.as_any().downcast_bound::<PyArray3<f32>>(py)?;
+        let array = array.readonly();
+        let array = array.as_array();
+        Ok(array
+            .into_shape_with_order((array.shape()[0], 16))
+            .unwrap()
+            .rows()
+            .into_iter()
+            .map(|r| Mat4::from_cols_slice(r.as_slice().unwrap()))
+            .collect())
     }
 }
 

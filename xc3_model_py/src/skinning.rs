@@ -14,7 +14,7 @@ pub mod skinning {
     use numpy::PyArray2;
     use pyo3::{prelude::*, types::PyList};
 
-    use crate::{map_py::MapPy, material::RenderPassType, uvec2s_pyarray};
+    use crate::{map_py::MapPy, material::RenderPassType};
 
     #[pymodule_export]
     use super::BoneConstraintType;
@@ -198,7 +198,11 @@ pub mod skinning {
             }
         }
 
-        pub fn to_influences(&self, py: Python, weight_indices: PyObject) -> PyResult<Py<PyList>> {
+        pub fn to_influences(
+            &self,
+            py: Python,
+            weight_indices: Py<PyArray2<u16>>,
+        ) -> PyResult<Py<PyList>> {
             let weight_indices: Vec<_> = weight_indices.extract(py)?;
             let influences = self.map_py(py)?.to_influences(&weight_indices);
             influences.map_py(py)
@@ -209,7 +213,7 @@ pub mod skinning {
             py: Python,
             influences: Vec<PyRef<Influence>>,
             vertex_count: usize,
-        ) -> PyResult<PyObject> {
+        ) -> PyResult<Py<PyArray2<u16>>> {
             let influences = influences
                 .iter()
                 .map(|i| i.map_py(py))
@@ -217,7 +221,7 @@ pub mod skinning {
             let mut skin_weights = self.map_py(py)?;
             let weight_indices = skin_weights.add_influences(&influences, vertex_count);
             *self = skin_weights.map_py(py)?;
-            Ok(uvec2s_pyarray(py, &weight_indices))
+            weight_indices.map_py(py)
         }
     }
 

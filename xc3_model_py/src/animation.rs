@@ -8,10 +8,12 @@ python_enum!(BlendMode, xc3_model::animation::BlendMode, Blend, Add);
 
 #[pymodule]
 pub mod animation {
+    use numpy::PyArray2;
+    use numpy::PyArray3;
     use pyo3::prelude::*;
     use xc3_model::animation::BoneIndex;
 
-    use crate::{map_py::MapPy, mat4_to_pyarray, transforms_pyarray, xc3_model_py::Skeleton};
+    use crate::{map_py::MapPy, xc3_model_py::Skeleton};
 
     #[pymodule_export]
     use super::SpaceMode;
@@ -32,7 +34,7 @@ pub mod animation {
         pub frames_per_second: f32,
         pub frame_count: u32,
         pub tracks: Vec<Track>,
-        pub root_translation: Option<PyObject>,
+        pub root_translation: Option<Py<PyArray2<f32>>>,
     }
 
     #[pymethods]
@@ -47,11 +49,11 @@ pub mod animation {
             py: Python,
             skeleton: Skeleton,
             frame: f32,
-        ) -> PyResult<PyObject> {
+        ) -> PyResult<Py<PyArray3<f32>>> {
             let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.skinning_transforms(&skeleton, frame);
-            Ok(transforms_pyarray(py, &transforms))
+            transforms.map_py(py)
         }
 
         pub fn model_space_transforms(
@@ -59,11 +61,11 @@ pub mod animation {
             py: Python,
             skeleton: Skeleton,
             frame: f32,
-        ) -> PyResult<PyObject> {
+        ) -> PyResult<Py<PyArray3<f32>>> {
             let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.model_space_transforms(&skeleton, frame);
-            Ok(transforms_pyarray(py, &transforms))
+            transforms.map_py(py)
         }
 
         pub fn local_space_transforms(
@@ -71,11 +73,11 @@ pub mod animation {
             py: Python,
             skeleton: Skeleton,
             frame: f32,
-        ) -> PyResult<PyObject> {
+        ) -> PyResult<Py<PyArray3<f32>>> {
             let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.local_space_transforms(&skeleton, frame);
-            Ok(transforms_pyarray(py, &transforms))
+            transforms.map_py(py)
         }
     }
 
@@ -109,10 +111,10 @@ pub mod animation {
             py: Python,
             frame: f32,
             frame_count: u32,
-        ) -> Option<PyObject> {
+        ) -> Option<Py<PyArray2<f32>>> {
             self.0
                 .sample_transform(frame, frame_count)
-                .map(|t| mat4_to_pyarray(py, t))
+                .map(|t| t.map_py(py).unwrap())
         }
 
         // Workaround for representing Rust enums in Python.

@@ -141,6 +141,7 @@ python_enum!(
 pub mod material {
     use crate::shader_database::{shader_database::ShaderProgram, LayerBlendMode};
     use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
+    use numpy::PyArray1;
     use pyo3::prelude::*;
     use pyo3::types::PyList;
 
@@ -180,7 +181,7 @@ pub mod material {
         pub color: [f32; 4],
         pub textures: Py<PyList>,
         pub alpha_test: Option<TextureAlphaTest>,
-        pub work_values: PyObject,
+        pub work_values: Py<PyArray1<f32>>,
         pub shader_vars: Vec<(u16, u16)>,
         pub work_callbacks: Py<PyList>,
         pub alpha_test_ref: [u8; 4],
@@ -207,7 +208,7 @@ pub mod material {
             state_flags: StateFlags,
             color: [f32; 4],
             textures: Py<PyList>,
-            work_values: PyObject,
+            work_values: Py<PyArray1<f32>>,
             shader_vars: Vec<(u16, u16)>,
             work_callbacks: Py<PyList>,
             alpha_test_ref: [u8; 4],

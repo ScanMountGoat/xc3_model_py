@@ -1,6 +1,6 @@
 use crate::map_py::MapPy;
 use glam::Mat4;
-use numpy::{IntoPyArray, PyArray, PyArray3, PyArrayMethods};
+use numpy::{IntoPyArray, PyArray3, PyArrayMethods};
 use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 
@@ -17,7 +17,7 @@ mod vertex;
 // We don't define these conversions on the xc3_model types themselves.
 // This flexibility allows more efficient and idiomatic bindings.
 // Py<PyList> creates a pure Python list for allowing mutating of elements.
-// PyObject supports numpy.ndarray for performance.
+// Py<PyArray> supports numpy.ndarray for performance.
 // Vec<u8> uses Python's bytes object for performance.
 
 create_exception!(xc3_model_py, Xc3ModelError, PyException);
@@ -114,49 +114,7 @@ fn uvec4_pyarray(py: Python, values: &[[u8; 4]]) -> PyObject {
         .into()
 }
 
-fn transforms_pyarray(py: Python, transforms: &[Mat4]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let transform_count = transforms.len();
-    transforms
-        .iter()
-        .flat_map(|v| v.to_cols_array())
-        .collect::<Vec<f32>>()
-        .into_pyarray(py)
-        .reshape((transform_count, 4, 4))
-        .unwrap()
-        .into_any()
-        .into()
-}
-
 // TODO: test cases for conversions.
-fn mat4_to_pyarray(py: Python, transform: Mat4) -> PyObject {
-    // TODO: Should this be transposed since numpy is row-major?
-    PyArray::from_slice(py, &transform.to_cols_array())
-        .readwrite()
-        .reshape((4, 4))
-        .unwrap()
-        .into_any()
-        .into()
-}
-
-fn pyarray_to_mat4(py: Python, transform: &PyObject) -> PyResult<Mat4> {
-    let cols: [[f32; 4]; 4] = transform.extract(py)?;
-    Ok(Mat4::from_cols_array_2d(&cols))
-}
-
-fn pyarray_to_mat4s(py: Python, values: &PyObject) -> PyResult<Vec<Mat4>> {
-    let array = values.downcast_bound::<PyArray3<f32>>(py)?;
-    let array = array.readonly();
-    let array = array.as_array();
-    Ok(array
-        .into_shape_with_order((array.shape()[0], 16))
-        .unwrap()
-        .rows()
-        .into_iter()
-        .map(|r| Mat4::from_cols_slice(r.as_slice().unwrap()))
-        .collect())
-}
 
 python_enum!(ViewDimension, xc3_model::ViewDimension, D2, D3, Cube);
 
@@ -200,7 +158,7 @@ mod xc3_model_py {
     use crate::shader_database::shader_database::ShaderDatabase;
     use crate::skinning::skinning::Skinning;
     use crate::vertex::vertex::ModelBuffers;
-    use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArrayDyn};
+    use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArrayDyn};
     use pyo3::types::PyBytes;
     use pyo3::types::PyList;
     use xc3_lib::dds::DdsExt;
@@ -330,7 +288,7 @@ mod xc3_model_py {
     pub struct Model {
         pub meshes: Py<PyList>,
         // N x 4 x 4 numpy.ndarray
-        pub instances: PyObject,
+        pub instances: Py<PyArray3<f32>>,
         pub model_buffers_index: usize,
         pub max_xyz: [f32; 3],
         pub min_xyz: [f32; 3],
@@ -342,7 +300,7 @@ mod xc3_model_py {
         #[new]
         pub fn new(
             meshes: Py<PyList>,
-            instances: PyObject,
+            instances: Py<PyArray3<f32>>,
             model_buffers_index: usize,
             max_xyz: [f32; 3],
             min_xyz: [f32; 3],
@@ -469,9 +427,9 @@ mod xc3_model_py {
             Self { bones }
         }
 
-        pub fn model_space_transforms(&self, py: Python) -> PyResult<PyObject> {
+        pub fn model_space_transforms(&self, py: Python) -> PyResult<Py<PyArray3<f32>>> {
             let transforms = self.map_py(py)?.model_space_transforms();
-            Ok(transforms_pyarray(py, &transforms))
+            transforms.map_py(py)
         }
     }
 
@@ -480,14 +438,14 @@ mod xc3_model_py {
     #[map(xc3_model::Bone)]
     pub struct Bone {
         pub name: String,
-        pub transform: PyObject,
+        pub transform: Py<PyArray2<f32>>,
         pub parent_index: Option<usize>,
     }
 
     #[pymethods]
     impl Bone {
         #[new]
-        fn new(name: String, transform: PyObject, parent_index: Option<usize>) -> Self {
+        fn new(name: String, transform: Py<PyArray2<f32>>, parent_index: Option<usize>) -> Self {
             Self {
                 name,
                 transform,
@@ -563,7 +521,7 @@ mod xc3_model_py {
         pub view_dimension: ViewDimension,
         pub image_format: ImageFormat,
         pub mipmaps: bool,
-        pub data: PyObject,
+        pub data: Py<PyArray1<f32>>,
         pub name: Option<String>,
         pub usage: Option<TextureUsage>,
     }
@@ -578,7 +536,7 @@ mod xc3_model_py {
             view_dimension: ViewDimension,
             image_format: ImageFormat,
             mipmaps: bool,
-            data: PyObject,
+            data: Py<PyArray1<f32>>,
             name: Option<String>,
             usage: Option<TextureUsage>,
         ) -> Self {
@@ -1034,7 +992,7 @@ mod xc3_model_py {
     fn decode_images_rgbaf32(
         py: Python,
         image_textures: Vec<PyRef<ImageTexture>>,
-    ) -> PyResult<Vec<PyObject>> {
+    ) -> PyResult<Vec<Py<PyArray1<f32>>>> {
         let textures: Vec<&ImageTexture> = image_textures.iter().map(|i| i.deref()).collect();
         let buffers = textures
             .par_iter()
@@ -1064,7 +1022,7 @@ mod xc3_model_py {
 
         Ok(buffers
             .into_iter()
-            .map(|buffer| buffer.into_pyarray(py).into_any().into())
+            .map(|buffer| buffer.into_pyarray(py).into())
             .collect())
     }
 
