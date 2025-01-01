@@ -15,8 +15,8 @@ python_enum!(
 pub mod vertex {
     use super::*;
 
-    use crate::{map_py::MapPy, skinning::skinning::Weights, uvec2s_pyarray, uvec4_pyarray};
-    use numpy::{PyArray1, PyArray2};
+    use crate::{map_py::MapPy, skinning::skinning::Weights};
+    use numpy::{PyArray1, PyArray2, PyUntypedArray};
 
     #[pymodule_export]
     use super::PrimitiveType;
@@ -116,13 +116,13 @@ pub mod vertex {
     pub struct AttributeData {
         pub attribute_type: AttributeType,
         // numpy.ndarray with vertex count many rows
-        pub data: PyObject,
+        pub data: Py<PyUntypedArray>,
     }
 
     #[pymethods]
     impl AttributeData {
         #[new]
-        fn new(attribute_type: AttributeType, data: PyObject) -> Self {
+        fn new(attribute_type: AttributeType, data: Py<PyUntypedArray>) -> Self {
             Self {
                 attribute_type,
                 data,
@@ -291,15 +291,15 @@ pub mod vertex {
                 }),
                 xc3_model::vertex::AttributeData::BoneIndices2(values) => Ok(AttributeData {
                     attribute_type: AttributeType::BoneIndices2,
-                    data: uvec4_pyarray(py, values),
+                    data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::WeightIndex(values) => Ok(AttributeData {
                     attribute_type: AttributeType::WeightIndex,
-                    data: uvec2s_pyarray(py, values),
+                    data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::WeightIndex2(values) => Ok(AttributeData {
                     attribute_type: AttributeType::WeightIndex2,
-                    data: uvec2s_pyarray(py, values),
+                    data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::TexCoord0(values) => Ok(AttributeData {
                     attribute_type: AttributeType::TexCoord0,
@@ -347,7 +347,7 @@ pub mod vertex {
                 }),
                 xc3_model::vertex::AttributeData::Unk16(values) => Ok(AttributeData {
                     attribute_type: AttributeType::Unk16,
-                    data: uvec2s_pyarray(py, values),
+                    data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::VertexColor(values) => Ok(AttributeData {
                     attribute_type: AttributeType::VertexColor,
@@ -423,7 +423,7 @@ pub mod vertex {
                 }),
                 xc3_model::vertex::AttributeData::BoneIndices(values) => Ok(AttributeData {
                     attribute_type: AttributeType::BoneIndices,
-                    data: uvec4_pyarray(py, values),
+                    data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::Flow(values) => Ok(AttributeData {
                     attribute_type: AttributeType::Flow,
@@ -440,8 +440,8 @@ pub mod vertex {
                 AttributeType::Position => Ok(AttrRs::Position(self.data.map_py(py)?)),
                 AttributeType::SkinWeights2 => Ok(AttrRs::SkinWeights2(self.data.map_py(py)?)),
                 AttributeType::BoneIndices2 => Ok(AttrRs::BoneIndices2(self.data.map_py(py)?)),
-                AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(self.data.extract(py)?)),
-                AttributeType::WeightIndex2 => Ok(AttrRs::WeightIndex2(self.data.extract(py)?)),
+                AttributeType::WeightIndex => Ok(AttrRs::WeightIndex(self.data.map_py(py)?)),
+                AttributeType::WeightIndex2 => Ok(AttrRs::WeightIndex2(self.data.map_py(py)?)),
                 AttributeType::TexCoord0 => Ok(AttrRs::TexCoord0(self.data.map_py(py)?)),
                 AttributeType::TexCoord1 => Ok(AttrRs::TexCoord1(self.data.map_py(py)?)),
                 AttributeType::TexCoord2 => Ok(AttrRs::TexCoord2(self.data.map_py(py)?)),
@@ -453,7 +453,7 @@ pub mod vertex {
                 AttributeType::TexCoord8 => Ok(AttrRs::TexCoord8(self.data.map_py(py)?)),
                 AttributeType::Blend => Ok(AttrRs::Blend(self.data.map_py(py)?)),
                 AttributeType::Unk15 => Ok(AttrRs::Unk15(self.data.map_py(py)?)),
-                AttributeType::Unk16 => Ok(AttrRs::Unk16(self.data.extract(py)?)),
+                AttributeType::Unk16 => Ok(AttrRs::Unk16(self.data.map_py(py)?)),
                 AttributeType::VertexColor => Ok(AttrRs::VertexColor(self.data.map_py(py)?)),
                 AttributeType::Unk18 => Ok(AttrRs::Unk18(self.data.map_py(py)?)),
                 AttributeType::Unk24 => Ok(AttrRs::Unk24(self.data.map_py(py)?)),

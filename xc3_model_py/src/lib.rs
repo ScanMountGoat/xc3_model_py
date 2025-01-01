@@ -1,5 +1,5 @@
 use crate::map_py::MapPy;
-use numpy::{IntoPyArray, PyArray3, PyArrayMethods};
+use numpy::PyArray3;
 use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 
@@ -79,38 +79,6 @@ impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
     fn map_py(&self, _py: Python) -> PyResult<u32> {
         Ok((*self).into())
     }
-}
-
-fn uvec2s_pyarray(py: Python, values: &[[u16; 2]]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let count = values.len();
-    values
-        .iter()
-        .flatten()
-        .copied()
-        .collect::<Vec<u16>>()
-        .into_pyarray(py)
-        .reshape((count, 2))
-        .unwrap()
-        .into_any()
-        .into()
-}
-
-fn uvec4_pyarray(py: Python, values: &[[u8; 4]]) -> PyObject {
-    // This flatten will be optimized in Release mode.
-    // This avoids needing unsafe code.
-    let count = values.len();
-    values
-        .iter()
-        .flatten()
-        .copied()
-        .collect::<Vec<u8>>()
-        .into_pyarray(py)
-        .reshape((count, 4))
-        .unwrap()
-        .into_any()
-        .into()
 }
 
 // TODO: test cases for conversions.
