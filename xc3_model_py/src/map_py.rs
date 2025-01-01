@@ -72,6 +72,7 @@ map_py_into_impl!(Vec3, [f32; 3]);
 macro_rules! map_py_pyobject_ndarray_impl {
     ($($t:ty),*) => {
         $(
+            // 1D arrays
             impl MapPy<Py<PyArray1<$t>>> for Vec<$t> {
                 fn map_py(&self, py: Python) -> PyResult<Py<PyArray1<$t>>> {
                     Ok(self.to_pyarray(py).into())
@@ -85,6 +86,7 @@ macro_rules! map_py_pyobject_ndarray_impl {
                 }
             }
 
+            // 1D untyped arrays
             impl MapPy<Py<PyUntypedArray>> for Vec<$t> {
                 fn map_py(&self, py: Python) -> PyResult<Py<PyUntypedArray>> {
                     let arr: Py<PyArray1<$t>> = self.map_py(py)?;
@@ -98,56 +100,57 @@ macro_rules! map_py_pyobject_ndarray_impl {
                     arr.as_unbound().map_py(py)
                 }
             }
+
+            // 2D arrays
+            impl<const N: usize> MapPy<Py<PyArray2<$t>>> for Vec<[$t; N]> {
+                fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<$t>>> {
+                    // This flatten will be optimized in Release mode.
+                    // This avoids needing unsafe code.
+                    let count = self.len();
+                    Ok(self
+                        .iter()
+                        .flatten()
+                        .copied()
+                        .collect::<Vec<$t>>()
+                        .into_pyarray(py)
+                        .reshape((count, N))
+                        .unwrap()
+                        .into())
+                }
+            }
+
+            impl<const N: usize> MapPy<Vec<[$t; N]>> for Py<PyArray2<$t>> {
+                fn map_py(&self, py: Python) -> PyResult<Vec<[$t; N]>> {
+                    let array = self.as_any().downcast_bound::<PyArray2<$t>>(py)?;
+                    Ok(array
+                        .readonly()
+                        .as_array()
+                        .rows()
+                        .into_iter()
+                        .map(|r| r.as_slice().unwrap().try_into().unwrap())
+                        .collect())
+                }
+            }
+
+            // 2D untyped arrrays
+            impl<const N: usize> MapPy<Py<PyUntypedArray>> for Vec<[$t; N]> {
+                fn map_py(&self, py: Python) -> PyResult<Py<PyUntypedArray>> {
+                    let arr: Py<PyArray2<$t>> = self.map_py(py)?;
+                    Ok(arr.bind(py).as_untyped().clone().unbind())
+                }
+            }
+
+            impl<const N: usize> MapPy<Vec<[$t; N]>> for Py<PyUntypedArray> {
+                fn map_py(&self, py: Python) -> PyResult<Vec<[$t; N]>> {
+                    let arr = self.bind(py).downcast::<PyArray2<$t>>()?;
+                    arr.as_unbound().map_py(py)
+                }
+            }
         )*
     }
 }
 
-map_py_pyobject_ndarray_impl!(u16, u32, f32);
-
-// TODO: Share code with other primitive arrays?
-impl MapPy<Py<PyArray2<u8>>> for Vec<[u8; 4]> {
-    fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<u8>>> {
-        // This flatten will be optimized in Release mode.
-        // This avoids needing unsafe code.
-        let count = self.len();
-        Ok(self
-            .iter()
-            .flatten()
-            .copied()
-            .collect::<Vec<u8>>()
-            .into_pyarray(py)
-            .reshape((count, 4))
-            .unwrap()
-            .into())
-    }
-}
-
-impl MapPy<Vec<[u8; 4]>> for Py<PyArray2<u8>> {
-    fn map_py(&self, py: Python) -> PyResult<Vec<[u8; 4]>> {
-        let array = self.as_any().downcast_bound::<PyArray2<u8>>(py)?;
-        Ok(array
-            .readonly()
-            .as_array()
-            .rows()
-            .into_iter()
-            .map(|r| r.as_slice().unwrap().try_into().unwrap())
-            .collect())
-    }
-}
-
-impl MapPy<Py<PyUntypedArray>> for Vec<[u8; 4]> {
-    fn map_py(&self, py: Python) -> PyResult<Py<PyUntypedArray>> {
-        let arr: Py<PyArray2<u8>> = self.map_py(py)?;
-        Ok(arr.bind(py).as_untyped().clone().unbind())
-    }
-}
-
-impl MapPy<Vec<[u8; 4]>> for Py<PyUntypedArray> {
-    fn map_py(&self, py: Python) -> PyResult<Vec<[u8; 4]>> {
-        let arr = self.bind(py).downcast::<PyArray2<u8>>()?;
-        arr.as_unbound().map_py(py)
-    }
-}
+map_py_pyobject_ndarray_impl!(u8, u16, u32, f32);
 
 impl<T, U> MapPy<Option<U>> for Option<T>
 where
@@ -160,7 +163,7 @@ where
 
 // TODO: how to implement for Py<T>?
 
-// TODO: Derive for each type to avoid overlapping definitions with numpy?
+// TODO: Blanket impl without overlap?
 impl MapPy<Vec<String>> for Py<PyList> {
     fn map_py(&self, py: Python) -> PyResult<Vec<String>> {
         self.extract(py)
@@ -224,50 +227,6 @@ macro_rules! map_py_vecn_ndarray_impl {
 map_py_vecn_ndarray_impl!(Vec2, 2);
 map_py_vecn_ndarray_impl!(Vec3, 3);
 map_py_vecn_ndarray_impl!(Vec4, 4);
-
-impl MapPy<Py<PyArray2<u16>>> for Vec<[u16; 2]> {
-    fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<u16>>> {
-        // This flatten will be optimized in Release mode.
-        // This avoids needing unsafe code.
-        let count = self.len();
-        Ok(self
-            .iter()
-            .flatten()
-            .copied()
-            .collect::<Vec<u16>>()
-            .into_pyarray(py)
-            .reshape((count, 2))
-            .unwrap()
-            .into())
-    }
-}
-
-impl MapPy<Vec<[u16; 2]>> for Py<PyArray2<u16>> {
-    fn map_py(&self, py: Python) -> PyResult<Vec<[u16; 2]>> {
-        let array = self.as_any().downcast_bound::<PyArray2<u16>>(py)?;
-        Ok(array
-            .readonly()
-            .as_array()
-            .rows()
-            .into_iter()
-            .map(|r| r.as_slice().unwrap().try_into().unwrap())
-            .collect())
-    }
-}
-
-impl MapPy<Py<PyUntypedArray>> for Vec<[u16; 2]> {
-    fn map_py(&self, py: Python) -> PyResult<Py<PyUntypedArray>> {
-        let arr: Py<PyArray2<u16>> = self.map_py(py)?;
-        Ok(arr.bind(py).as_untyped().clone().unbind())
-    }
-}
-
-impl MapPy<Vec<[u16; 2]>> for Py<PyUntypedArray> {
-    fn map_py(&self, py: Python) -> PyResult<Vec<[u16; 2]>> {
-        let arr = self.bind(py).downcast::<PyArray2<u16>>()?;
-        arr.as_unbound().map_py(py)
-    }
-}
 
 impl MapPy<Py<PyArray2<f32>>> for Mat4 {
     fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<f32>>> {
@@ -336,7 +295,6 @@ impl MapPy<String> for SmolStr {
     }
 }
 
-// TODO: const generics?
 impl<T, U, const N: usize> MapPy<[U; N]> for [T; N]
 where
     T: MapPy<U>,
