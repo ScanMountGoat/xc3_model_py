@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec2, Vec3, Vec4};
+use glam::{Mat4, Quat, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyUntypedArray, ToPyArray};
 use pyo3::{prelude::*, types::PyList};
 use smol_str::SmolStr;
@@ -227,6 +227,7 @@ macro_rules! map_py_vecn_ndarray_impl {
 map_py_vecn_ndarray_impl!(Vec2, 2);
 map_py_vecn_ndarray_impl!(Vec3, 3);
 map_py_vecn_ndarray_impl!(Vec4, 4);
+map_py_vecn_ndarray_impl!(Quat, 4);
 
 impl MapPy<Py<PyArray2<f32>>> for Mat4 {
     fn map_py(&self, py: Python) -> PyResult<Py<PyArray2<f32>>> {

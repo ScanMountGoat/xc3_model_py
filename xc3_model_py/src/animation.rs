@@ -11,6 +11,7 @@ pub mod animation {
     use numpy::PyArray2;
     use numpy::PyArray3;
     use pyo3::prelude::*;
+    use pyo3::types::PyDict;
     use xc3_model::animation::BoneIndex;
 
     use crate::{map_py::MapPy, xc3_model_py::Skeleton};
@@ -78,6 +79,13 @@ pub mod animation {
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.local_space_transforms(&skeleton, frame);
             transforms.map_py(py)
+        }
+
+        pub fn fcurves(&self, py: Python, skeleton: Skeleton) -> PyResult<FCurves> {
+            let animation = animation_rs(py, self)?;
+            let skeleton = skeleton.map_py(py)?;
+            let fcurves = animation.fcurves(&skeleton);
+            fcurves_py(py, &fcurves)
         }
     }
 
@@ -149,6 +157,14 @@ pub mod animation {
         pub w_coeffs: (f32, f32, f32, f32),
     }
 
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct FCurves {
+        pub translation: Py<PyDict>,
+        pub rotation: Py<PyDict>,
+        pub scale: Py<PyDict>,
+    }
+
     #[pyfunction]
     fn murmur3(name: &str) -> u32 {
         xc3_model::animation::murmur3(name.as_bytes())
@@ -188,6 +204,32 @@ pub mod animation {
             frame_count: animation.frame_count,
             tracks: animation.tracks.into_iter().map(Track).collect(),
             root_translation: animation.root_translation.map_py(py)?,
+        })
+    }
+
+    pub fn fcurves_py(py: Python, fcurves: &xc3_model::animation::FCurves) -> PyResult<FCurves> {
+        let translation = PyDict::new(py);
+        for (k, v) in &fcurves.translation {
+            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            translation.set_item(k.to_string(), v.into_pyobject(py)?)?;
+        }
+
+        let rotation = PyDict::new(py);
+        for (k, v) in &fcurves.rotation {
+            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            rotation.set_item(k.to_string(), v.into_pyobject(py)?)?;
+        }
+
+        let scale = PyDict::new(py);
+        for (k, v) in &fcurves.scale {
+            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            scale.set_item(k.to_string(), v.into_pyobject(py)?)?;
+        }
+
+        Ok(FCurves {
+            translation: translation.into(),
+            rotation: rotation.into(),
+            scale: scale.into(),
         })
     }
 }

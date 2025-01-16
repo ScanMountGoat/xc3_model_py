@@ -23,6 +23,7 @@ class Animation:
     def local_space_transforms(
         self, skeleton: Skeleton, frame: float
     ) -> numpy.ndarray: ...
+    def fcurves(self, skeleton: Skeleton) -> FCurves: ...
 
 class Track:
     def sample_translation(
@@ -56,5 +57,10 @@ class PlayMode:
 class BlendMode:
     Blend: ClassVar[BlendMode]
     Add: ClassVar[BlendMode]
+
+class FCurves:
+    translation: dict[str, numpy.ndarray]
+    rotation: dict[str, numpy.ndarray]
+    scale: dict[str, numpy.ndarray]
 
 def murmur3(name: str) -> int: ...
