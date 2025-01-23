@@ -81,10 +81,15 @@ pub mod animation {
             transforms.map_py(py)
         }
 
-        pub fn fcurves(&self, py: Python, skeleton: Skeleton) -> PyResult<FCurves> {
+        pub fn fcurves(
+            &self,
+            py: Python,
+            skeleton: Skeleton,
+            use_blender_coordinates: bool,
+        ) -> PyResult<FCurves> {
             let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
-            let fcurves = animation.fcurves(&skeleton);
+            let fcurves = animation.fcurves(&skeleton, use_blender_coordinates);
             fcurves_py(py, &fcurves)
         }
     }
