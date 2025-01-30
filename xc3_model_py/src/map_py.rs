@@ -68,6 +68,18 @@ macro_rules! map_py_into_impl {
 
 map_py_into_impl!(Vec3, [f32; 3]);
 
+impl MapPy<Quat> for [f32; 4] {
+    fn map_py(&self, _py: Python) -> PyResult<Quat> {
+        Ok(Quat::from_array(*self))
+    }
+}
+
+impl MapPy<[f32; 4]> for Quat {
+    fn map_py(&self, _py: Python) -> PyResult<[f32; 4]> {
+        Ok(self.to_array())
+    }
+}
+
 #[macro_export]
 macro_rules! map_py_pyobject_ndarray_impl {
     ($($t:ty),*) => {

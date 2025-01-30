@@ -396,7 +396,8 @@ mod xc3_model_py {
 
         pub fn model_space_transforms(&self, py: Python) -> PyResult<Py<PyArray3<f32>>> {
             let transforms = self.map_py(py)?.model_space_transforms();
-            transforms.map_py(py)
+            let matrices: Vec<_> = transforms.into_iter().map(|t| t.to_matrix()).collect();
+            matrices.map_py(py)
         }
     }
 
@@ -405,14 +406,14 @@ mod xc3_model_py {
     #[map(xc3_model::Bone)]
     pub struct Bone {
         pub name: String,
-        pub transform: Py<PyArray2<f32>>,
+        pub transform: Py<Transform>,
         pub parent_index: Option<usize>,
     }
 
     #[pymethods]
     impl Bone {
         #[new]
-        fn new(name: String, transform: Py<PyArray2<f32>>, parent_index: Option<usize>) -> Self {
+        fn new(name: String, transform: Py<Transform>, parent_index: Option<usize>) -> Self {
             Self {
                 name,
                 transform,
@@ -848,6 +849,27 @@ mod xc3_model_py {
                 Ok(path.to_string_lossy().to_string())
             })
             .collect()
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::Transform)]
+    pub struct Transform {
+        pub translation: [f32; 3],
+        pub rotation: [f32; 4],
+        pub scale: [f32; 3],
+    }
+
+    #[pymethods]
+    impl Transform {
+        #[new]
+        pub fn new(translation: [f32; 3], rotation: [f32; 4], scale: [f32; 3]) -> Self {
+            Self {
+                translation,
+                rotation,
+                scale,
+            }
+        }
     }
 
     #[pyfunction]

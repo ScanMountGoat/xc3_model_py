@@ -66,7 +66,8 @@ pub mod animation {
             let animation = animation_rs(py, self)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.model_space_transforms(&skeleton, frame);
-            transforms.map_py(py)
+            let matrices: Vec<_> = transforms.into_iter().map(|t| t.to_matrix()).collect();
+            matrices.map_py(py)
         }
 
         pub fn local_space_transforms(
@@ -124,7 +125,7 @@ pub mod animation {
             py: Python,
             frame: f32,
             frame_count: u32,
-        ) -> Option<Py<PyArray2<f32>>> {
+        ) -> Option<Py<crate::xc3_model_py::Transform>> {
             self.0
                 .sample_transform(frame, frame_count)
                 .map(|t| t.map_py(py).unwrap())

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added `animation.Animation.fcurves` and `animation.FCurves` for computing fcurves compatible with Blender.
+* Added `Transform` type for decomposed translation, rotation, scale (TRS) transforms.
+
+### Changed
+* Changed `animation.Track.sample_transform` to return `Transform`.
+* Changed the type of `Bone.transform` to `Transform`.
 
 ## 0.12.0 - 2025-01-15
 ### Added

@@ -161,11 +161,11 @@ class Skeleton:
 
 class Bone:
     name: str
-    transform: numpy.ndarray
+    transform: Transform
     parent_index: Optional[int]
 
     def __init__(
-        self, name: str, transform: numpy.ndarray, parent_index: Optional[int]
+        self, name: str, transform: Transform, parent_index: Optional[int]
     ) -> None: ...
 
 class ImageTexture:
@@ -347,3 +347,12 @@ class Msrd:
     @staticmethod
     def from_file(path: str) -> Msrd: ...
     def save(self, path: str): ...
+
+class Transform:
+    translation: list[float]
+    rotation: list[float]
+    scale: list[float]
+
+    def __init__(
+        self, translation: list[float], rotation: list[float], scale: list[float]
+    ) -> None: ...
