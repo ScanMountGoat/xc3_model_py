@@ -22,13 +22,15 @@ pub mod vertex {
     use super::PrimitiveType;
 
     #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::vertex::ModelBuffers)]
     pub struct ModelBuffers {
         pub vertex_buffers: Py<PyList>,
         pub outline_buffers: Py<PyList>,
         pub index_buffers: Py<PyList>,
+        pub unk_buffers: Py<PyList>,
+        pub unk_data: Option<Py<UnkDataBuffer>>,
         pub weights: Option<Py<Weights>>,
-        // TODO: add missing fields and derive conversions
     }
 
     #[pymethods]
@@ -38,12 +40,16 @@ pub mod vertex {
             vertex_buffers: Py<PyList>,
             outline_buffers: Py<PyList>,
             index_buffers: Py<PyList>,
+            unk_buffers: Py<PyList>,
+            unk_data: Option<Py<UnkDataBuffer>>,
             weights: Option<Py<Weights>>,
         ) -> Self {
             Self {
                 vertex_buffers,
                 outline_buffers,
                 index_buffers,
+                unk_buffers,
+                unk_data,
                 weights,
             }
         }
@@ -206,75 +212,47 @@ pub mod vertex {
         }
     }
 
-    impl MapPy<xc3_model::vertex::ModelBuffers> for ModelBuffers {
-        fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::ModelBuffers> {
-            Ok(xc3_model::vertex::ModelBuffers {
-                vertex_buffers: self.vertex_buffers.map_py(py)?,
-                outline_buffers: self.outline_buffers.map_py(py)?,
-                index_buffers: self.index_buffers.map_py(py)?,
-                weights: self
-                    .weights
-                    .as_ref()
-                    .map(|w| w.extract::<Weights>(py)?.map_py(py))
-                    .transpose()?,
-                // TODO: Fill in all fields
-                unk_buffers: Vec::new(),
-                unk_data: None,
-            })
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::vertex::UnkBuffer)]
+    pub struct UnkBuffer {
+        pub unk2: u16,
+        pub attributes: Py<PyList>,
+    }
+
+    #[pymethods]
+    impl UnkBuffer {
+        #[new]
+        fn new(unk2: u16, attributes: Py<PyList>) -> Self {
+            Self { unk2, attributes }
         }
     }
 
-    impl MapPy<ModelBuffers> for xc3_model::vertex::ModelBuffers {
-        fn map_py(&self, py: Python) -> PyResult<ModelBuffers> {
-            Ok(ModelBuffers {
-                vertex_buffers: self.vertex_buffers.map_py(py)?,
-                outline_buffers: self.outline_buffers.map_py(py)?,
-                index_buffers: self.index_buffers.map_py(py)?,
-                weights: match self.weights.as_ref() {
-                    Some(w) => Some(Py::new(py, w.map_py(py)?)?),
-                    None => None,
-                },
-            })
-        }
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::vertex::UnkDataBuffer)]
+    pub struct UnkDataBuffer {
+        pub attribute1: Py<PyArray2<u32>>,
+        pub attribute2: Py<PyArray1<u32>>,
+        pub uniform_data: Vec<u8>,
+        pub unk: [f32; 6],
     }
 
-    // Map from Python lists to Vec<T>
-    impl crate::MapPy<Vec<xc3_model::vertex::ModelBuffers>> for Py<PyList> {
-        fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::vertex::ModelBuffers>> {
-            self.extract::<'_, '_, Vec<ModelBuffers>>(py)?
-                .iter()
-                .map(|v| v.map_py(py))
-                .collect::<Result<Vec<_>, _>>()
-        }
-    }
-
-    // Map from Vec<T> to Python lists
-    impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::ModelBuffers> {
-        fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
-            PyList::new(
-                py,
-                self.iter()
-                    .map(|v| {
-                        let v2: ModelBuffers = v.map_py(py)?;
-                        v2.into_pyobject(py)
-                    })
-                    .collect::<PyResult<Vec<_>>>()?,
-            )
-            .map(Into::into)
-        }
-    }
-
-    // Map to and from Py<T>
-    impl MapPy<Py<ModelBuffers>> for xc3_model::vertex::ModelBuffers {
-        fn map_py(&self, py: Python) -> PyResult<Py<ModelBuffers>> {
-            let value: ModelBuffers = self.map_py(py)?;
-            Py::new(py, value)
-        }
-    }
-
-    impl MapPy<xc3_model::vertex::ModelBuffers> for Py<ModelBuffers> {
-        fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::ModelBuffers> {
-            self.extract::<ModelBuffers>(py)?.map_py(py)
+    #[pymethods]
+    impl UnkDataBuffer {
+        #[new]
+        fn new(
+            attribute1: Py<PyArray2<u32>>,
+            attribute2: Py<PyArray1<u32>>,
+            uniform_data: Vec<u8>,
+            unk: [f32; 6],
+        ) -> Self {
+            Self {
+                attribute1,
+                attribute2,
+                uniform_data,
+                unk,
+            }
         }
     }
 

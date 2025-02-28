@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added `animation.Animation.fcurves` and `animation.FCurves` for computing fcurves compatible with Blender.
 * Added `Transform` type for decomposed translation, rotation, scale (TRS) transforms.
+* Added types `vertex.UnkBuffer` and `vertex.UnkDataBuffer`.
+* Added fields `unk_buffers` and `unk_data_buffer` to `vertex.ModelBuffers`.
 
 ### Changed
 * Changed `animation.Track.sample_transform` to return `Transform`.

@@ -7,6 +7,8 @@ class ModelBuffers:
     vertex_buffers: list[VertexBuffer]
     outline_buffers: list[OutlineBuffer]
     index_buffers: list[IndexBuffer]
+    unk_buffers: list[UnkBuffer]
+    unk_data: Optional[UnkDataBuffer]
     weights: Optional[Weights]
 
     def __init__(
@@ -14,6 +16,8 @@ class ModelBuffers:
         vertex_buffers: list[VertexBuffer],
         outline_buffers: list[OutlineBuffer],
         index_buffers: list[IndexBuffer],
+        unk_buffers: list[UnkBuffer],
+        unk_data: Optional[UnkDataBuffer],
         weights: Optional[Weights],
     ) -> None: ...
 
@@ -102,3 +106,23 @@ class PrimitiveType:
     QuadList: ClassVar[PrimitiveType]
     TriangleStrip: ClassVar[PrimitiveType]
     TriangleListAdjacency: ClassVar[PrimitiveType]
+
+class UnkBuffer:
+    unk2: int
+    attributes: list[AttributeData]
+
+    def __init__(self, unk2: int, attributes: list[AttributeData]) -> None: ...
+
+class UnkDataBuffer:
+    attribute1: numpy.ndarray
+    attribute2: numpy.ndarray
+    uniform_data: bytes
+    unk: list[float]
+
+    def __init__(
+        self,
+        attribute1: numpy.ndarray,
+        attribute2: numpy.ndarray,
+        uniform_data: bytes,
+        unk: list[float],
+    ) -> None: ...

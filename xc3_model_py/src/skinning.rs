@@ -277,4 +277,18 @@ pub mod skinning {
             })
         }
     }
+
+    // Map to and from Py<T>
+    impl MapPy<Py<Weights>> for xc3_model::skinning::Weights {
+        fn map_py(&self, py: Python) -> PyResult<Py<Weights>> {
+            let value: Weights = self.map_py(py)?;
+            Py::new(py, value)
+        }
+    }
+
+    impl MapPy<xc3_model::skinning::Weights> for Py<Weights> {
+        fn map_py(&self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
+            self.extract::<Weights>(py)?.map_py(py)
+        }
+    }
 }
