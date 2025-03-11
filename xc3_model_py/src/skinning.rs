@@ -135,7 +135,8 @@ pub mod skinning {
         }
 
         pub fn weight_buffer(&self, py: Python, flags2: u32) -> PyResult<Option<SkinWeights>> {
-            self.map_py(py)?
+            self.clone()
+                .map_py(py)?
                 .weight_buffer(flags2)
                 .map(|b| b.map_py(py))
                 .transpose()
@@ -161,9 +162,9 @@ pub mod skinning {
             py: Python,
             combined_weights: &SkinWeights,
         ) -> PyResult<()> {
-            let mut weights = self.map_py(py)?;
+            let mut weights = self.clone().map_py(py)?;
 
-            let combined_weights = combined_weights.map_py(py)?;
+            let combined_weights = combined_weights.clone().map_py(py)?;
             weights.update_weights(combined_weights);
 
             *self = weights.map_py(py)?;
@@ -204,7 +205,7 @@ pub mod skinning {
             weight_indices: Py<PyArray2<u16>>,
         ) -> PyResult<Py<PyList>> {
             let weight_indices: Vec<_> = weight_indices.extract(py)?;
-            let influences = self.map_py(py)?.to_influences(&weight_indices);
+            let influences = self.clone().map_py(py)?.to_influences(&weight_indices);
             influences.map_py(py)
         }
 
@@ -215,10 +216,13 @@ pub mod skinning {
             vertex_count: usize,
         ) -> PyResult<Py<PyArray2<u16>>> {
             let influences = influences
-                .iter()
-                .map(|i| i.map_py(py))
+                .into_iter()
+                .map(|i| {
+                    let i: &Influence = &i;
+                    i.clone().map_py(py)
+                })
                 .collect::<PyResult<Vec<_>>>()?;
-            let mut skin_weights = self.map_py(py)?;
+            let mut skin_weights = self.clone().map_py(py)?;
             let weight_indices = skin_weights.add_influences(&influences, vertex_count);
             *self = skin_weights.map_py(py)?;
             weight_indices.map_py(py)
@@ -261,7 +265,7 @@ pub mod skinning {
     }
 
     impl MapPy<Weights> for xc3_model::skinning::Weights {
-        fn map_py(&self, py: Python) -> PyResult<Weights> {
+        fn map_py(self, py: Python) -> PyResult<Weights> {
             Ok(Weights {
                 weight_buffers: self.weight_buffers.map_py(py)?,
                 weight_groups: self.weight_groups.clone(),
@@ -270,7 +274,7 @@ pub mod skinning {
     }
 
     impl MapPy<xc3_model::skinning::Weights> for Weights {
-        fn map_py(&self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
+        fn map_py(self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
             Ok(xc3_model::skinning::Weights {
                 weight_buffers: self.weight_buffers.map_py(py)?,
                 weight_groups: self.weight_groups.clone(),
@@ -280,14 +284,14 @@ pub mod skinning {
 
     // Map to and from Py<T>
     impl MapPy<Py<Weights>> for xc3_model::skinning::Weights {
-        fn map_py(&self, py: Python) -> PyResult<Py<Weights>> {
+        fn map_py(self, py: Python) -> PyResult<Py<Weights>> {
             let value: Weights = self.map_py(py)?;
             Py::new(py, value)
         }
     }
 
     impl MapPy<xc3_model::skinning::Weights> for Py<Weights> {
-        fn map_py(&self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
+        fn map_py(self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
             self.extract::<Weights>(py)?.map_py(py)
         }
     }

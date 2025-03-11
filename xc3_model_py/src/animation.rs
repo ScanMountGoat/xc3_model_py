@@ -192,7 +192,7 @@ pub mod animation {
             root_translation: animation
                 .root_translation
                 .as_ref()
-                .map(|t| t.map_py(py))
+                .map(|t| t.clone().map_py(py))
                 .transpose()?,
         })
     }
@@ -216,19 +216,19 @@ pub mod animation {
     pub fn fcurves_py(py: Python, fcurves: &xc3_model::animation::FCurves) -> PyResult<FCurves> {
         let translation = PyDict::new(py);
         for (k, v) in &fcurves.translation {
-            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            let v: Py<PyArray2<f32>> = v.clone().map_py(py)?;
             translation.set_item(k.to_string(), v.into_pyobject(py)?)?;
         }
 
         let rotation = PyDict::new(py);
         for (k, v) in &fcurves.rotation {
-            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            let v: Py<PyArray2<f32>> = v.clone().map_py(py)?;
             rotation.set_item(k.to_string(), v.into_pyobject(py)?)?;
         }
 
         let scale = PyDict::new(py);
         for (k, v) in &fcurves.scale {
-            let v: Py<PyArray2<f32>> = v.map_py(py)?;
+            let v: Py<PyArray2<f32>> = v.clone().map_py(py)?;
             scale.set_item(k.to_string(), v.into_pyobject(py)?)?;
         }
 

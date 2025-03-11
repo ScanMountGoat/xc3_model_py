@@ -48,14 +48,14 @@ macro_rules! python_enum {
         }
 
         impl $crate::map_py::MapPy<$rust_ty> for $py_ty {
-            fn map_py(&self, _py: Python) -> PyResult<$rust_ty> {
-                Ok((*self).into())
+            fn map_py(self, _py: Python) -> PyResult<$rust_ty> {
+                Ok(self.into())
             }
         }
 
         impl $crate::map_py::MapPy<$py_ty> for $rust_ty {
-            fn map_py(&self, _py: Python) -> PyResult<$py_ty> {
-                Ok((*self).into())
+            fn map_py(self, _py: Python) -> PyResult<$py_ty> {
+                Ok(self.into())
             }
         }
     };
@@ -70,14 +70,14 @@ fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
 
 // TODO: Create a proper type for this.
 impl MapPy<xc3_model::MeshRenderFlags2> for u32 {
-    fn map_py(&self, _py: Python) -> PyResult<xc3_model::MeshRenderFlags2> {
-        Ok((*self).try_into().unwrap())
+    fn map_py(self, _py: Python) -> PyResult<xc3_model::MeshRenderFlags2> {
+        Ok(self.try_into().unwrap())
     }
 }
 
 impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
-    fn map_py(&self, _py: Python) -> PyResult<u32> {
-        Ok((*self).into())
+    fn map_py(self, _py: Python) -> PyResult<u32> {
+        Ok(self.into())
     }
 }
 
@@ -395,7 +395,7 @@ mod xc3_model_py {
         }
 
         pub fn model_space_transforms(&self, py: Python) -> PyResult<Py<PyArray3<f32>>> {
-            let transforms = self.map_py(py)?.model_space_transforms();
+            let transforms = self.clone().map_py(py)?.model_space_transforms();
             let matrices: Vec<_> = transforms.into_iter().map(|t| t.to_matrix()).collect();
             matrices.map_py(py)
         }
@@ -785,6 +785,7 @@ mod xc3_model_py {
             msrd: &Msrd,
         ) -> PyResult<(Mxmd, Msrd)> {
             let (mxmd, msrd) = self
+                .clone()
                 .map_py(py)?
                 .to_mxmd_model(&mxmd.0, &msrd.0)
                 .map_err(py_exception)?;
@@ -824,7 +825,7 @@ mod xc3_model_py {
         ext: &str,
         flip_vertical: bool,
     ) -> PyResult<Vec<String>> {
-        let textures: Vec<xc3_model::ImageTexture> = image_textures.map_py(py)?;
+        let textures: Vec<xc3_model::ImageTexture> = image_textures.clone().map_py(py)?;
         textures
             .par_iter()
             .enumerate()

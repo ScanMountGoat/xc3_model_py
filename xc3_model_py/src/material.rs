@@ -275,7 +275,7 @@ pub mod material {
                 .collect();
 
             let assignments: xc3_model::material::OutputAssignments =
-                self.map_py(py)?.output_assignments(&image_textures);
+                self.clone().map_py(py)?.output_assignments(&image_textures);
             assignments.map_py(py)
         }
     }
@@ -415,7 +415,7 @@ pub mod material {
     #[pymethods]
     impl OutputAssignments {
         fn mat_id(&self, py: Python) -> PyResult<Option<u32>> {
-            let assignments: xc3_model::material::OutputAssignments = self.map_py(py)?;
+            let assignments: xc3_model::material::OutputAssignments = self.clone().map_py(py)?;
             Ok(assignments.mat_id())
         }
     }

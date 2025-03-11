@@ -257,7 +257,7 @@ pub mod vertex {
     }
 
     impl MapPy<AttributeData> for xc3_model::vertex::AttributeData {
-        fn map_py(&self, py: Python) -> PyResult<AttributeData> {
+        fn map_py(self, py: Python) -> PyResult<AttributeData> {
             match self {
                 xc3_model::vertex::AttributeData::Position(values) => Ok(AttributeData {
                     attribute_type: AttributeType::Position,
@@ -412,7 +412,7 @@ pub mod vertex {
     }
 
     impl MapPy<xc3_model::vertex::AttributeData> for AttributeData {
-        fn map_py(&self, py: Python) -> PyResult<xc3_model::vertex::AttributeData> {
+        fn map_py(self, py: Python) -> PyResult<xc3_model::vertex::AttributeData> {
             use xc3_model::vertex::AttributeData as AttrRs;
             match self.attribute_type {
                 AttributeType::Position => Ok(AttrRs::Position(self.data.map_py(py)?)),
@@ -458,9 +458,9 @@ pub mod vertex {
 
     // Map from Python lists to Vec<T>
     impl crate::MapPy<Vec<xc3_model::vertex::AttributeData>> for Py<PyList> {
-        fn map_py(&self, py: Python) -> PyResult<Vec<xc3_model::vertex::AttributeData>> {
+        fn map_py(self, py: Python) -> PyResult<Vec<xc3_model::vertex::AttributeData>> {
             self.extract::<'_, '_, Vec<AttributeData>>(py)?
-                .iter()
+                .into_iter()
                 .map(|v| v.map_py(py))
                 .collect::<Result<Vec<_>, _>>()
         }
@@ -468,10 +468,10 @@ pub mod vertex {
 
     // Map from Vec<T> to Python lists
     impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::AttributeData> {
-        fn map_py(&self, py: Python) -> PyResult<Py<PyList>> {
+        fn map_py(self, py: Python) -> PyResult<Py<PyList>> {
             PyList::new(
                 py,
-                self.iter()
+                self.into_iter()
                     .map(|v| v.map_py(py)?.into_pyobject(py))
                     .collect::<PyResult<Vec<_>>>()?,
             )

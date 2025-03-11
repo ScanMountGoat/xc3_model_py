@@ -98,14 +98,18 @@ pub mod shader_database {
     impl TexCoordParams {
         pub fn scale(&self, py: Python) -> PyResult<Option<BufferDependency>> {
             match &self.0 {
-                xc3_model::shader_database::TexCoordParams::Scale(b) => b.map_py(py).map(Some),
+                xc3_model::shader_database::TexCoordParams::Scale(b) => {
+                    b.clone().map_py(py).map(Some)
+                }
                 _ => Ok(None),
             }
         }
 
         pub fn matrix(&self, py: Python) -> PyResult<Option<[BufferDependency; 4]>> {
             match &self.0 {
-                xc3_model::shader_database::TexCoordParams::Matrix(m) => m.map_py(py).map(Some),
+                xc3_model::shader_database::TexCoordParams::Matrix(m) => {
+                    m.clone().map_py(py).map(Some)
+                }
                 _ => Ok(None),
             }
         }
@@ -141,30 +145,34 @@ pub mod shader_database {
 
         pub fn buffer(&self, py: Python) -> PyResult<Option<BufferDependency>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Buffer(b) => b.map_py(py).map(Some),
+                xc3_model::shader_database::Dependency::Buffer(b) => b.clone().map_py(py).map(Some),
                 _ => Ok(None),
             }
         }
 
         pub fn texture(&self, py: Python) -> PyResult<Option<TextureDependency>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Texture(t) => t.map_py(py).map(Some),
+                xc3_model::shader_database::Dependency::Texture(t) => {
+                    t.clone().map_py(py).map(Some)
+                }
                 _ => Ok(None),
             }
         }
 
         pub fn attribute(&self, py: Python) -> PyResult<Option<AttributeDependency>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Attribute(a) => a.map_py(py).map(Some),
+                xc3_model::shader_database::Dependency::Attribute(a) => {
+                    a.clone().map_py(py).map(Some)
+                }
                 _ => Ok(None),
             }
         }
     }
 
     impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies> {
-        fn map_py(&self, py: Python) -> PyResult<Py<PyDict>> {
+        fn map_py(self, py: Python) -> PyResult<Py<PyDict>> {
             let dict = PyDict::new(py);
-            for (k, v) in self.iter() {
+            for (k, v) in self.into_iter() {
                 let v: OutputDependencies = v.map_py(py)?;
                 dict.set_item(k.to_string(), v.into_pyobject(py)?)?;
             }
@@ -174,7 +182,7 @@ pub mod shader_database {
 
     impl MapPy<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> for Py<PyDict> {
         fn map_py(
-            &self,
+            self,
             py: Python,
         ) -> PyResult<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> {
             self.extract::<IndexMap<String, OutputDependencies>>(py)?
