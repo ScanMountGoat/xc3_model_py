@@ -233,7 +233,16 @@ class TextureUsage:
     Unk5: ClassVar[TextureUsage]
     Unk10: ClassVar[TextureUsage]
     VolTex: ClassVar[TextureUsage]
-    Unk1: ClassVar[TextureUsage]
+    Unk16: ClassVar[TextureUsage]
+    Unk22: ClassVar[TextureUsage]
+    Unk23: ClassVar[TextureUsage]
+    Unk24: ClassVar[TextureUsage]
+    Unk25: ClassVar[TextureUsage]
+    Unk26: ClassVar[TextureUsage]
+    Unk27: ClassVar[TextureUsage]
+    Unk28: ClassVar[TextureUsage]
+    Unk29: ClassVar[TextureUsage]
+    Unk30: ClassVar[TextureUsage]
 
 class ViewDimension:
     D2: ClassVar[ViewDimension]

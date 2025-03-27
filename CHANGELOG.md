@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+### Added
+* Added fields `material_color` and `ava_skin` to `material.MaterialParameters`.
+* Added additional enum variants to `TextureUsage`, `material.StencilMode`, and `material.StencilValue`.
+
 ## 0.13.0 - 2025-03-06
 ### Added
 * Added `animation.Animation.fcurves` and `animation.FCurves` for computing fcurves compatible with Blender.

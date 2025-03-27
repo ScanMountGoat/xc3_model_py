@@ -48,7 +48,8 @@ python_enum!(
     Unk41,
     Unk49,
     Unk97,
-    Unk105
+    Unk105,
+    Unk128
 );
 
 python_enum!(
@@ -59,7 +60,10 @@ python_enum!(
     Unk2,
     Unk6,
     Unk7,
-    Unk8
+    Unk8,
+    Unk9,
+    Unk12,
+    Unk13
 );
 
 python_enum!(
@@ -124,7 +128,16 @@ python_enum!(
     Unk5,
     Unk10,
     VolTex,
-    Unk16
+    Unk16,
+    Unk22,
+    Unk23,
+    Unk24,
+    Unk25,
+    Unk26,
+    Unk27,
+    Unk28,
+    Unk29,
+    Unk30
 );
 
 python_enum!(
@@ -317,23 +330,29 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::MaterialParameters)]
     pub struct MaterialParameters {
-        pub tex_matrix: Option<Vec<[f32; 8]>>,
+        pub material_color: [f32; 4],
+        pub tex_matrix: Option<Vec<[f32; 4]>>,
         pub work_float4: Option<Vec<[f32; 4]>>,
         pub work_color: Option<Vec<[f32; 4]>>,
+        pub ava_skin: Option<[f32; 4]>,
     }
 
     #[pymethods]
     impl MaterialParameters {
         #[new]
         fn new(
-            tex_matrix: Option<Vec<[f32; 8]>>,
+            material_color: [f32; 4],
+            tex_matrix: Option<Vec<[f32; 4]>>,
             work_float4: Option<Vec<[f32; 4]>>,
             work_color: Option<Vec<[f32; 4]>>,
+            ava_skin: Option<[f32; 4]>,
         ) -> Self {
             Self {
+                material_color,
                 tex_matrix,
                 work_float4,
                 work_color,
+                ava_skin,
             }
         }
     }

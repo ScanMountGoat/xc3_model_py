@@ -102,6 +102,7 @@ class StencilValue:
     Unk49: ClassVar[StencilValue]
     Unk97: ClassVar[StencilValue]
     Unk105: ClassVar[StencilValue]
+    Unk128: ClassVar[StencilValue]
 
 class StencilMode:
     Unk0: ClassVar[StencilMode]
@@ -110,6 +111,9 @@ class StencilMode:
     Unk6: ClassVar[StencilMode]
     Unk7: ClassVar[StencilMode]
     Unk8: ClassVar[StencilMode]
+    Unk9: ClassVar[StencilMode]
+    Unk12: ClassVar[StencilMode]
+    Unk13: ClassVar[StencilMode]
 
 class ColorWriteMode:
     Unk0: ClassVar[ColorWriteMode]
@@ -138,15 +142,19 @@ class TextureAlphaTest:
     ) -> None: ...
 
 class MaterialParameters:
+    material_color: list[float]
     tex_matrix: Optional[list[float]]
     work_float4: Optional[list[float]]
     work_color: Optional[list[float]]
+    ava_skin: Optional[list[float]]
 
     def __init__(
         self,
+        material_color: list[float],
         tex_matrix: Optional[list[float]],
         work_float4: Optional[list[float]],
         work_color: Optional[list[float]],
+        ava_skin: Optional[list[float]],
     ) -> None: ...
 
 class Texture:
