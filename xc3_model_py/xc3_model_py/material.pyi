@@ -14,7 +14,7 @@ class Material:
     work_values: list[float]
     shader_vars: list[Tuple[int, int]]
     work_callbacks: list[WorkCallback]
-    alpha_test_ref: list[int]
+    alpha_test_ref: float
     m_unks1_1: int
     m_unks1_2: int
     m_unks1_3: int
@@ -24,7 +24,7 @@ class Material:
     pass_type: RenderPassType
     parameters: MaterialParameters
     m_unks2_2: int
-    m_unks3_1: int
+    gbuffer_flags: int
     fur_params: Optional[FurShellParams]
 
     def __init__(
@@ -38,7 +38,7 @@ class Material:
         work_values: list[float],
         shader_vars: list[Tuple[int, int]],
         work_callbacks: list[Tuple[int, int]],
-        alpha_test_ref: list[int],
+        alpha_test_ref: float,
         m_unks1_1: int,
         m_unks1_2: int,
         m_unks1_3: int,
@@ -47,7 +47,7 @@ class Material:
         pass_type: RenderPassType,
         parameters: MaterialParameters,
         m_unks2_2: int,
-        m_unks3_1: int,
+        gbuffer_flags: int,
         alpha_test: Optional[TextureAlphaTest],
         shader: Optional[ShaderProgram],
         fur_params: Optional[FurShellParams],
@@ -134,11 +134,11 @@ class DepthFunc:
 
 class TextureAlphaTest:
     texture_index: int
+    sampler_index: int
     channel_index: int
-    ref_value: float
 
     def __init__(
-        self, texture_index: int, channel_index: int, ref_value: float
+        self, texture_index: int, sampler_index: int, channel_index: int
     ) -> None: ...
 
 class MaterialParameters:

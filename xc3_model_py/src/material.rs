@@ -197,7 +197,7 @@ pub mod material {
         pub work_values: Py<PyArray1<f32>>,
         pub shader_vars: Vec<(u16, u16)>,
         pub work_callbacks: Py<PyList>,
-        pub alpha_test_ref: [u8; 4],
+        pub alpha_test_ref: f32,
         pub m_unks1_1: u32,
         pub m_unks1_2: u32,
         pub m_unks1_3: u32,
@@ -207,7 +207,7 @@ pub mod material {
         pub pass_type: RenderPassType,
         pub parameters: MaterialParameters,
         pub m_unks2_2: u16,
-        pub m_unks3_1: u16,
+        pub gbuffer_flags: u16,
         pub fur_params: Option<FurShellParams>,
     }
 
@@ -224,7 +224,7 @@ pub mod material {
             work_values: Py<PyArray1<f32>>,
             shader_vars: Vec<(u16, u16)>,
             work_callbacks: Py<PyList>,
-            alpha_test_ref: [u8; 4],
+            alpha_test_ref: f32,
             m_unks1_1: u32,
             m_unks1_2: u32,
             m_unks1_3: u32,
@@ -233,7 +233,7 @@ pub mod material {
             pass_type: RenderPassType,
             parameters: MaterialParameters,
             m_unks2_2: u16,
-            m_unks3_1: u16,
+            gbuffer_flags: u16,
             alpha_test: Option<TextureAlphaTest>,
             shader: Option<ShaderProgram>,
             fur_params: Option<FurShellParams>,
@@ -259,7 +259,7 @@ pub mod material {
                 pass_type,
                 parameters,
                 m_unks2_2,
-                m_unks3_1,
+                gbuffer_flags,
                 fur_params,
             }
         }
@@ -312,15 +312,17 @@ pub mod material {
     #[map(xc3_model::material::TextureAlphaTest)]
     pub struct TextureAlphaTest {
         pub texture_index: usize,
+        pub sampler_index: usize,
         pub channel_index: usize,
     }
 
     #[pymethods]
     impl TextureAlphaTest {
         #[new]
-        fn new(texture_index: usize, channel_index: usize) -> Self {
+        fn new(texture_index: usize, sampler_index: usize, channel_index: usize) -> Self {
             Self {
                 texture_index,
+                sampler_index,
                 channel_index,
             }
         }

@@ -6,8 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## unreleased
 ### Added
+* Added support for wimdo models from Xenoblade Chronicles X Definitive Edition.
 * Added fields `material_color` and `ava_skin` to `material.MaterialParameters`.
 * Added additional enum variants to `TextureUsage`, `material.StencilMode`, and `material.StencilValue`.
+* Added field `sampler_index` to `material.TextureAlphaTest`.
+
+### Changed
+* Changed field `material.Material.alpha_test_ref` to type `float`.
+* Renamed field `material.Material.m_unks3_1` to `gbuffer_flags`.
 
 ## 0.13.0 - 2025-03-06
 ### Added
