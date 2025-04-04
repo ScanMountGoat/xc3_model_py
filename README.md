@@ -1,5 +1,5 @@
 # xc3_model_py [![PyPI](https://img.shields.io/pypi/v/xc3_model_py)](https://pypi.org/project/xc3_model_py/)
-Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade 1 DE, Xenoblade 2, and Xenoblade 3.
+Python bindings to [xc3_model](https://github.com/ScanMountGoat/xc3_lib) for high level and efficient data access to model files for Xenoblade Chronicles X, Xenoblade Chronicles 1 Definitive Edition, Xenoblade Chronicles 2, Xenoblade Chronicles 3, and Xenoblade Chronicles X Definitive Edition.
 
 ## Installation
 The package can be installed for Python version 3.9, 3.10, 3.11, or 3.12 using pip on newer versions of Windows, Linux, or MacOS. The prebuilt wheels (.whl files) are included only for situations where pip might not be available such as for plugin development for applications. The wheels are zip archives and can be extracted to obtain the compiled .pyd or .so file. xc3_model_py requires the `numpy` package for transforms and vertex data.
@@ -8,7 +8,7 @@ Installing: `pip install xc3_model_py`
 Updating: `pip install xc3_model_py --upgrade`
 
 ## Introduction
-Parsing and processing happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All characters, models, and maps are converted to the same scene hierarchy representation. This avoids needing to add any special handling for maps vs characters. Pregenerated shader databases are available from [xc3_lib](https://github.com/ScanMountGoat/xc3_lib/releases). For more advanced usage, see [xenoblade_blender](https://github.com/ScanMountGoat/xenoblade_blender).
+Parsing and conversion to Python happens in optimized Rust code when calling `xc3_model_py.load_map` or `xc3_model_py.load_model`. All files revisions are converted to the same types on import like `xc3_model_py.ModelRoot` or `xc3_model_py.MapRoot`. This avoids needing to add any special handling for different file versions or different games. Pregenerated shader databases compatible with a specific release are linked in [releases](https://github.com/ScanMountGoat/xc3_model_py/releases). For more advanced usage, see [xenoblade_blender](https://github.com/ScanMountGoat/xenoblade_blender).
 
 ```python
 import xc3_model_py
