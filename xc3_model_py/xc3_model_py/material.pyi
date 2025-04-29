@@ -1,7 +1,7 @@
 from typing import Optional, ClassVar, Tuple
 
 from xc3_model_py.xc3_model_py import ImageTexture
-from xc3_model_py.shader_database import LayerBlendMode, ShaderProgram
+from xc3_model_py.shader_database import Operation, ShaderProgram
 
 class Material:
     name: str
@@ -146,6 +146,13 @@ class MaterialParameters:
     tex_matrix: Optional[list[float]]
     work_float4: Optional[list[float]]
     work_color: Optional[list[float]]
+    alpha_info: Optional[list[float]]
+    dp_rat: Optional[list[float]]
+    projection_tex_matrix: Optional[list[float]]
+    material_ambient: Optional[list[float]]
+    material_specular: Optional[list[float]]
+    dt_work: Optional[list[float]]
+    mdl_param: Optional[list[float]]
     ava_skin: Optional[list[float]]
 
     def __init__(
@@ -187,30 +194,23 @@ class FurShellParams:
 
 class OutputAssignments:
     assignments: list[OutputAssignment]
-    outline_width: Optional[ChannelAssignment]
+    outline_width: Optional[AssignmentValue]
 
     def mat_id(self) -> Optional[int]: ...
 
 class OutputAssignment:
-    x: Optional[ChannelAssignment]
-    y: Optional[ChannelAssignment]
-    z: Optional[ChannelAssignment]
-    w: Optional[ChannelAssignment]
-    x_layers: list[LayerChannelAssignment]
-    y_layers: list[LayerChannelAssignment]
-    z_layers: list[LayerChannelAssignment]
-    w_layers: list[LayerChannelAssignment]
+    x: Assignment
+    y: Assignment
+    z: Assignment
+    w: Assignment
 
-class LayerChannelAssignment:
-    value: Optional[ChannelAssignment]
-    weight: Optional[ChannelAssignment]
-    blend_mode: LayerBlendMode
-    is_fresnel: bool
+class Assignment:
+    pass
 
-class ChannelAssignment:
+class AssignmentValue:
     def texture(self) -> Optional[TextureAssignment]: ...
-    def value(self) -> Optional[float]: ...
-    def attribute(self) -> Optional[ChannelAssignmentAttribute]: ...
+    def float(self) -> Optional[float]: ...
+    def attribute(self) -> Optional[AssignmentValueAttribute]: ...
 
 class TextureAssignment:
     name: str
@@ -220,6 +220,6 @@ class TextureAssignment:
         Tuple[Tuple[float, float, float, float], Tuple[float, float, float, float]]
     ]
 
-class ChannelAssignmentAttribute:
+class AssignmentValueAttribute:
     name: str
-    channel_index: int
+    channel: Optional[str]

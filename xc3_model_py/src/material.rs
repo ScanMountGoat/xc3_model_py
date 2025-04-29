@@ -6,8 +6,13 @@ map_py_into_impl!(xc3_model::material::MaterialFlags, u32);
 map_py_into_impl!(xc3_model::material::MaterialRenderFlags, u32);
 
 map_py_wrapper_impl!(
-    xc3_model::material::ChannelAssignment,
-    material::ChannelAssignment
+    xc3_model::material::assignments::Assignment,
+    material::Assignment
+);
+
+map_py_wrapper_impl!(
+    xc3_model::material::assignments::AssignmentValue,
+    material::AssignmentValue
 );
 
 python_enum!(
@@ -152,7 +157,7 @@ python_enum!(
 
 #[pymodule]
 pub mod material {
-    use crate::shader_database::{shader_database::ShaderProgram, LayerBlendMode};
+    use crate::shader_database::shader_database::ShaderProgram;
     use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
     use numpy::PyArray1;
     use pyo3::prelude::*;
@@ -287,7 +292,7 @@ pub mod material {
                 })
                 .collect();
 
-            let assignments: xc3_model::material::OutputAssignments =
+            let assignments: xc3_model::material::assignments::OutputAssignments =
                 self.clone().map_py(py)?.output_assignments(&image_textures);
             assignments.map_py(py)
         }
@@ -336,6 +341,13 @@ pub mod material {
         pub tex_matrix: Option<Vec<[f32; 4]>>,
         pub work_float4: Option<Vec<[f32; 4]>>,
         pub work_color: Option<Vec<[f32; 4]>>,
+        pub alpha_info: Option<Vec<[f32; 4]>>,
+        pub dp_rat: Option<Vec<[f32; 4]>>,
+        pub projection_tex_matrix: Option<Vec<[f32; 4]>>,
+        pub material_ambient: Option<Vec<[f32; 4]>>,
+        pub material_specular: Option<Vec<[f32; 4]>>,
+        pub dt_work: Option<Vec<[f32; 4]>>,
+        pub mdl_param: Option<Vec<[f32; 4]>>,
         pub ava_skin: Option<[f32; 4]>,
     }
 
@@ -347,6 +359,13 @@ pub mod material {
             tex_matrix: Option<Vec<[f32; 4]>>,
             work_float4: Option<Vec<[f32; 4]>>,
             work_color: Option<Vec<[f32; 4]>>,
+            alpha_info: Option<Vec<[f32; 4]>>,
+            dp_rat: Option<Vec<[f32; 4]>>,
+            projection_tex_matrix: Option<Vec<[f32; 4]>>,
+            material_ambient: Option<Vec<[f32; 4]>>,
+            material_specular: Option<Vec<[f32; 4]>>,
+            dt_work: Option<Vec<[f32; 4]>>,
+            mdl_param: Option<Vec<[f32; 4]>>,
             ava_skin: Option<[f32; 4]>,
         ) -> Self {
             Self {
@@ -354,6 +373,13 @@ pub mod material {
                 tex_matrix,
                 work_float4,
                 work_color,
+                alpha_info,
+                dp_rat,
+                projection_tex_matrix,
+                material_ambient,
+                material_specular,
+                dt_work,
+                mdl_param,
                 ava_skin,
             }
         }
@@ -427,95 +453,90 @@ pub mod material {
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::OutputAssignments)]
+    #[map(xc3_model::material::assignments::OutputAssignments)]
     pub struct OutputAssignments {
         pub assignments: [OutputAssignment; 6],
-        pub outline_width: Option<ChannelAssignment>,
+        pub outline_width: Option<AssignmentValue>,
+        pub normal_intensity: Option<Assignment>,
     }
 
     #[pymethods]
     impl OutputAssignments {
         fn mat_id(&self, py: Python) -> PyResult<Option<u32>> {
-            let assignments: xc3_model::material::OutputAssignments = self.clone().map_py(py)?;
+            let assignments: xc3_model::material::assignments::OutputAssignments =
+                self.clone().map_py(py)?;
             Ok(assignments.mat_id())
         }
     }
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::OutputAssignment)]
+    #[map(xc3_model::material::assignments::OutputAssignment)]
     pub struct OutputAssignment {
-        pub x: Option<ChannelAssignment>,
-        pub y: Option<ChannelAssignment>,
-        pub z: Option<ChannelAssignment>,
-        pub w: Option<ChannelAssignment>,
-        pub x_layers: Py<PyList>,
-        pub y_layers: Py<PyList>,
-        pub z_layers: Py<PyList>,
-        pub w_layers: Py<PyList>,
-    }
-
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::LayerChannelAssignment)]
-    pub struct LayerChannelAssignment {
-        pub value: Option<ChannelAssignment>,
-        pub weight: Option<ChannelAssignment>,
-        pub blend_mode: LayerBlendMode,
-        pub is_fresnel: bool,
+        pub x: Assignment,
+        pub y: Assignment,
+        pub z: Assignment,
+        pub w: Assignment,
     }
 
     #[pyclass]
     #[derive(Debug, Clone)]
-    pub struct ChannelAssignment(pub xc3_model::material::ChannelAssignment);
+    pub struct Assignment(pub xc3_model::material::assignments::Assignment);
+
+    #[pyclass]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentValue(pub xc3_model::material::assignments::AssignmentValue);
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone)]
     pub struct TextureAssignment {
         pub name: String,
-        pub channels: String,
+        pub channel: Option<char>,
         pub texcoord_name: Option<String>,
         pub texcoord_transforms: Option<((f32, f32, f32, f32), (f32, f32, f32, f32))>,
     }
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone)]
-    pub struct ChannelAssignmentAttribute {
+    pub struct AssignmentValueAttribute {
         pub name: String,
-        pub channel_index: usize,
+        pub channel: Option<char>,
     }
 
     #[pymethods]
-    impl ChannelAssignment {
+    impl AssignmentValue {
         // Workaround for representing Rust enums in Python.
         pub fn texture(&self) -> Option<TextureAssignment> {
             match &self.0 {
-                xc3_model::material::ChannelAssignment::Texture(t) => Some(TextureAssignment {
-                    name: t.name.to_string(),
-                    channels: t.channels.to_string(),
-                    texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
-                    texcoord_transforms: t.texcoord_transforms.map(|(u, v)| (u.into(), v.into())),
-                }),
+                xc3_model::material::assignments::AssignmentValue::Texture(t) => {
+                    Some(TextureAssignment {
+                        name: t.name.to_string(),
+                        channel: t.channel,
+                        texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
+                        texcoord_transforms: t
+                            .texcoord_transforms
+                            .map(|(u, v)| (u.map(|f| f.0).into(), v.map(|f| f.0).into())),
+                    })
+                }
                 _ => None,
             }
         }
 
-        pub fn value(&self) -> Option<f32> {
+        pub fn float(&self) -> Option<f32> {
             match self.0 {
-                xc3_model::material::ChannelAssignment::Value(f) => Some(f),
+                xc3_model::material::assignments::AssignmentValue::Float(f) => Some(f.0),
                 _ => None,
             }
         }
 
-        pub fn attribute(&self) -> Option<ChannelAssignmentAttribute> {
+        pub fn attribute(&self) -> Option<AssignmentValueAttribute> {
             match self.0.clone() {
-                xc3_model::material::ChannelAssignment::Attribute {
-                    name,
-                    channel_index,
-                } => Some(ChannelAssignmentAttribute {
-                    name: name.to_string(),
-                    channel_index,
-                }),
+                xc3_model::material::assignments::AssignmentValue::Attribute { name, channel } => {
+                    Some(AssignmentValueAttribute {
+                        name: name.to_string(),
+                        channel,
+                    })
+                }
                 _ => None,
             }
         }

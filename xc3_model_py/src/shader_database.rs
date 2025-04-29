@@ -2,13 +2,26 @@ use crate::python_enum;
 use pyo3::prelude::*;
 
 python_enum!(
-    LayerBlendMode,
-    xc3_model::shader_database::LayerBlendMode,
+    Operation,
+    xc3_model::shader_database::Operation,
     Mix,
-    MixRatio,
+    Mul,
+    Div,
     Add,
+    Sub,
+    Fma,
+    MulRatio,
     AddNormal,
-    Overlay
+    Overlay,
+    Overlay2,
+    OverlayRatio,
+    Power,
+    Min,
+    Max,
+    Clamp,
+    Abs,
+    Fresnel,
+    Unk
 );
 
 #[pymodule]
@@ -24,7 +37,7 @@ pub mod shader_database {
     use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception};
 
     #[pymodule_export]
-    use super::LayerBlendMode;
+    use super::Operation;
 
     #[pyclass]
     #[derive(Debug, Clone)]
@@ -47,15 +60,12 @@ pub mod shader_database {
     pub struct ShaderProgram {
         pub output_dependencies: Py<PyDict>,
         pub outline_width: Option<Dependency>,
+        pub normal_intensity: Option<OutputExpr>,
     }
 
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::OutputDependencies)]
-    pub struct OutputDependencies {
-        pub dependencies: Py<PyList>,
-        pub layers: Py<PyList>,
-    }
+    #[pyclass]
+    #[derive(Debug, Clone)]
+    pub struct OutputExpr(xc3_model::shader_database::OutputExpr);
 
     #[pyclass]
     #[derive(Debug, Clone)]
@@ -123,16 +133,6 @@ pub mod shader_database {
         pub channel: Option<char>,
     }
 
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::TextureLayer)]
-    pub struct TextureLayer {
-        pub value: Dependency,
-        pub ratio: Option<Py<Dependency>>,
-        pub blend_mode: LayerBlendMode,
-        pub is_fresnel: bool,
-    }
-
     // Workaround for representing Rust enums in Python.
     #[pymethods]
     impl Dependency {
@@ -169,23 +169,23 @@ pub mod shader_database {
         }
     }
 
-    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies> {
+    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputExpr> {
         fn map_py(self, py: Python) -> PyResult<Py<PyDict>> {
             let dict = PyDict::new(py);
             for (k, v) in self.into_iter() {
-                let v: OutputDependencies = v.map_py(py)?;
+                let v: OutputExpr = v.map_py(py)?;
                 dict.set_item(k.to_string(), v.into_pyobject(py)?)?;
             }
             Ok(dict.into())
         }
     }
 
-    impl MapPy<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> for Py<PyDict> {
+    impl MapPy<IndexMap<SmolStr, xc3_model::shader_database::OutputExpr>> for Py<PyDict> {
         fn map_py(
             self,
             py: Python,
-        ) -> PyResult<IndexMap<SmolStr, xc3_model::shader_database::OutputDependencies>> {
-            self.extract::<IndexMap<String, OutputDependencies>>(py)?
+        ) -> PyResult<IndexMap<SmolStr, xc3_model::shader_database::OutputExpr>> {
+            self.extract::<IndexMap<String, OutputExpr>>(py)?
                 .into_iter()
                 .map(|(k, v)| Ok((k.into(), v.map_py(py)?)))
                 .collect()
@@ -194,4 +194,5 @@ pub mod shader_database {
 
     map_py_wrapper_impl!(xc3_model::shader_database::TexCoordParams, TexCoordParams);
     map_py_wrapper_impl!(xc3_model::shader_database::Dependency, Dependency);
+    map_py_wrapper_impl!(xc3_model::shader_database::OutputExpr, OutputExpr);
 }

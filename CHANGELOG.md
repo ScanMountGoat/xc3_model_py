@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+### Added
+* Added many additional fields to `material.MaterialParameters`.
+
+### Changed
+* Renamed `material.ChannelAssignment` and associated types to `material.AssignmentValue`.
+* Combined `shader_database.OutputDependencies` and `shader_database.TextureLayer` into `shader_database.OutputExpr`.
+* Renamed `shader_database.BlendMode` to `shader_database.Operation` with many additional variants.
+* Renamed method `material.AssignmentValue.value` to `material.AssignmentValue.float`.
+* Changed field `shader_database.AssignmentValueAttribute.channel_index` to `shader_database.AssignmentValueAttribute.channel`.
+
 ## 0.14.0 - 2025-03-04
 ### Added
 * Added support for wimdo models from Xenoblade Chronicles X Definitive Edition.

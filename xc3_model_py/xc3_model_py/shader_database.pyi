@@ -5,12 +5,12 @@ class ShaderDatabase:
     def from_file(path: str) -> ShaderDatabase: ...
 
 class ShaderProgram:
-    output_dependencies: dict[str, list[OutputDependencies]]
+    output_dependencies: dict[str, OutputExpr]
     outline_width: Optional[Dependency]
+    normal_intensity: Optional[OutputExpr]
 
-class OutputDependencies:
-    dependencies: list[Dependency]
-    layers: list[TextureLayer]
+class OutputExpr:
+    pass
 
 class Dependency:
     def constant(self) -> Optional[float]: ...
@@ -46,15 +46,22 @@ class AttributeDependency:
     name: str
     channel: Optional[str]
 
-class TextureLayer:
-    value: Dependency
-    ratio: Optional[Dependency]
-    blend_mode: LayerBlendMode
-    is_fresnel: bool
-
-class LayerBlendMode:
-    Mix: ClassVar[LayerBlendMode]
-    MixRatio: ClassVar[LayerBlendMode]
-    Add: ClassVar[LayerBlendMode]
-    AddNormal: ClassVar[LayerBlendMode]
-    Overlay: ClassVar[LayerBlendMode]
+class Operation:
+    Mix: ClassVar[Operation]
+    Mul: ClassVar[Operation]
+    Div: ClassVar[Operation]
+    Add: ClassVar[Operation]
+    Sub: ClassVar[Operation]
+    Fma: ClassVar[Operation]
+    MulRatio: ClassVar[Operation]
+    AddNormal: ClassVar[Operation]
+    Overlay: ClassVar[Operation]
+    Overlay2: ClassVar[Operation]
+    OverlayRatio: ClassVar[Operation]
+    Power: ClassVar[Operation]
+    Min: ClassVar[Operation]
+    Max: ClassVar[Operation]
+    Clamp: ClassVar[Operation]
+    Abs: ClassVar[Operation]
+    Fresnel: ClassVar[Operation]
+    Unk: ClassVar[Operation]
