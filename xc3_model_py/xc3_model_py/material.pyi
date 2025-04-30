@@ -205,12 +205,17 @@ class OutputAssignment:
     w: Assignment
 
 class Assignment:
-    pass
+    def func(self) -> Optional[AssignmentFunc]: ...
+    def value(self) -> Optional[AssignmentValue]: ...
 
 class AssignmentValue:
     def texture(self) -> Optional[TextureAssignment]: ...
     def float(self) -> Optional[float]: ...
     def attribute(self) -> Optional[AssignmentValueAttribute]: ...
+
+class AssignmentFunc:
+    op: Operation
+    args: list[Assignment]
 
 class TextureAssignment:
     name: str

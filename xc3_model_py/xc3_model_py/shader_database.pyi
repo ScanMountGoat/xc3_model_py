@@ -10,7 +10,12 @@ class ShaderProgram:
     normal_intensity: Optional[OutputExpr]
 
 class OutputExpr:
-    pass
+    def func(self) -> Optional[OutputExprFunc]: ...
+    def value(self) -> Optional[Dependency]: ...
+
+class OutputExprFunc:
+    op: Operation
+    args: list[OutputExpr]
 
 class Dependency:
     def constant(self) -> Optional[float]: ...

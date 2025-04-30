@@ -158,6 +158,7 @@ python_enum!(
 #[pymodule]
 pub mod material {
     use crate::shader_database::shader_database::ShaderProgram;
+    use crate::shader_database::Operation;
     use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
     use numpy::PyArray1;
     use pyo3::prelude::*;
@@ -489,6 +490,13 @@ pub mod material {
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone)]
+    pub struct AssignmentFunc {
+        pub op: Operation,
+        pub args: Vec<Assignment>,
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
     pub struct TextureAssignment {
         pub name: String,
         pub channel: Option<char>,
@@ -504,8 +512,31 @@ pub mod material {
     }
 
     #[pymethods]
+    impl Assignment {
+        pub fn func(&self) -> Option<AssignmentFunc> {
+            match &self.0 {
+                xc3_model::material::assignments::Assignment::Func { op, args } => {
+                    Some(AssignmentFunc {
+                        op: (*op).into(),
+                        args: args.iter().map(|a| Assignment(a.clone())).collect(),
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        pub fn value(&self) -> Option<AssignmentValue> {
+            match &self.0 {
+                xc3_model::material::assignments::Assignment::Value(v) => {
+                    Some(AssignmentValue(v.clone()?))
+                }
+                _ => None,
+            }
+        }
+    }
+
+    #[pymethods]
     impl AssignmentValue {
-        // Workaround for representing Rust enums in Python.
         pub fn texture(&self) -> Option<TextureAssignment> {
             match &self.0 {
                 xc3_model::material::assignments::AssignmentValue::Texture(t) => {

@@ -67,6 +67,13 @@ pub mod shader_database {
     #[derive(Debug, Clone)]
     pub struct OutputExpr(xc3_model::shader_database::OutputExpr);
 
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct OutputExprFunc {
+        pub op: Operation,
+        pub args: Vec<OutputExpr>,
+    }
+
     #[pyclass]
     #[derive(Debug, Clone)]
     pub struct Dependency(xc3_model::shader_database::Dependency);
@@ -133,7 +140,26 @@ pub mod shader_database {
         pub channel: Option<char>,
     }
 
-    // Workaround for representing Rust enums in Python.
+    #[pymethods]
+    impl OutputExpr {
+        pub fn value(&self) -> Option<Dependency> {
+            match &self.0 {
+                xc3_model::shader_database::OutputExpr::Value(v) => Some(Dependency(v.clone())),
+                _ => None,
+            }
+        }
+
+        pub fn func(&self) -> Option<OutputExprFunc> {
+            match &self.0 {
+                xc3_model::shader_database::OutputExpr::Func { op, args } => Some(OutputExprFunc {
+                    op: (*op).into(),
+                    args: args.iter().map(|a| OutputExpr(a.clone())).collect(),
+                }),
+                _ => None,
+            }
+        }
+    }
+
     #[pymethods]
     impl Dependency {
         pub fn constant(&self) -> Option<f32> {
