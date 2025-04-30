@@ -456,9 +456,10 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignments)]
     pub struct OutputAssignments {
-        pub assignments: [OutputAssignment; 6],
+        pub output_assignments: [OutputAssignment; 6],
         pub outline_width: Option<AssignmentValue>,
-        pub normal_intensity: Option<Assignment>,
+        pub normal_intensity: Option<usize>,
+        pub assignments: Py<PyList>,
     }
 
     #[pymethods]
@@ -474,10 +475,10 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignment)]
     pub struct OutputAssignment {
-        pub x: Assignment,
-        pub y: Assignment,
-        pub z: Assignment,
-        pub w: Assignment,
+        pub x: usize,
+        pub y: usize,
+        pub z: usize,
+        pub w: usize,
     }
 
     #[pyclass]
@@ -492,7 +493,7 @@ pub mod material {
     #[derive(Debug, Clone)]
     pub struct AssignmentFunc {
         pub op: Operation,
-        pub args: Vec<Assignment>,
+        pub args: Vec<usize>,
     }
 
     #[pyclass(get_all, set_all)]
@@ -518,7 +519,7 @@ pub mod material {
                 xc3_model::material::assignments::Assignment::Func { op, args } => {
                     Some(AssignmentFunc {
                         op: (*op).into(),
-                        args: args.iter().map(|a| Assignment(a.clone())).collect(),
+                        args: args.clone(),
                     })
                 }
                 _ => None,

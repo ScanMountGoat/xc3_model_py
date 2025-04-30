@@ -193,16 +193,17 @@ class FurShellParams:
     ) -> None: ...
 
 class OutputAssignments:
-    assignments: list[OutputAssignment]
+    output_assignments: list[OutputAssignment]
     outline_width: Optional[AssignmentValue]
+    assignments: list[Assignment]
 
     def mat_id(self) -> Optional[int]: ...
 
 class OutputAssignment:
-    x: Assignment
-    y: Assignment
-    z: Assignment
-    w: Assignment
+    x: int
+    y: int
+    z: int
+    w: int
 
 class Assignment:
     def func(self) -> Optional[AssignmentFunc]: ...
@@ -215,7 +216,7 @@ class AssignmentValue:
 
 class AssignmentFunc:
     op: Operation
-    args: list[Assignment]
+    args: list[int]
 
 class TextureAssignment:
     name: str
