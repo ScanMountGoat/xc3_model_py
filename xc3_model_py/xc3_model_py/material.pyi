@@ -195,6 +195,7 @@ class FurShellParams:
 class OutputAssignments:
     output_assignments: list[OutputAssignment]
     outline_width: Optional[AssignmentValue]
+    normal_intensity: Optional[int]
     assignments: list[Assignment]
 
     def mat_id(self) -> Optional[int]: ...
