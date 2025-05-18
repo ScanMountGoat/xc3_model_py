@@ -125,7 +125,7 @@ mod xc3_model_py {
     use crate::shader_database::shader_database::ShaderDatabase;
     use crate::skinning::skinning::Skinning;
     use crate::vertex::vertex::ModelBuffers;
-    use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArrayDyn};
+    use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArrayDyn};
     use pyo3::types::PyBytes;
     use pyo3::types::PyList;
     use xc3_lib::dds::DdsExt;
