@@ -46,7 +46,8 @@ map_py_impl!(
     Vec<f32>,
     Vec<(u16, u16)>,
     Vec<[f32; 4]>,
-    Vec<[f32; 8]>
+    Vec<[f32; 8]>,
+    Vec<usize>
 );
 
 #[macro_export]

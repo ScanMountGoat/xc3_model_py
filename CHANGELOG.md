@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added many additional fields to `material.MaterialParameters`.
+* Added additional variants to `shader_database.Operation` and split vector operations into separate operations for XYZ channels.
 
 ### Changed
 * Renamed `material.ChannelAssignment` and associated types to `material.AssignmentValue`.
@@ -14,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `shader_database.BlendMode` to `shader_database.Operation` with many additional variants.
 * Renamed method `material.AssignmentValue.value` to `material.AssignmentValue.float`.
 * Changed field `shader_database.AssignmentValueAttribute.channel_index` to `shader_database.AssignmentValueAttribute.channel`.
+* Changed field `shader_database.TextureDependency.texcoords` to be assignment indices.
+* Replaced fields `texcoord_name` and `texcoord_transforms` fields on `material.TextureAssignment` with `material.texcoords`.
+* Changed indices for `shader_database.OutputAssignment` to be `None` if nothing is assigned.
+* Changed fields `output_dependencies` and `normal_intensity` for `shader_database.ShaderProgram` to index into the `exprs` field.
+
+### Removed
+* Removed types `shader_database.TexCoord` and `shader_database.TexCoordParams`.
 
 ## 0.14.0 - 2025-03-04
 ### Added

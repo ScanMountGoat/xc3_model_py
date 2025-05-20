@@ -5,9 +5,10 @@ class ShaderDatabase:
     def from_file(path: str) -> ShaderDatabase: ...
 
 class ShaderProgram:
-    output_dependencies: dict[str, OutputExpr]
+    output_dependencies: dict[str, int]
     outline_width: Optional[Dependency]
-    normal_intensity: Optional[OutputExpr]
+    normal_intensity: Optional[int]
+    exprs: list[OutputExpr]
 
 class OutputExpr:
     def func(self) -> Optional[OutputExprFunc]: ...
@@ -15,7 +16,7 @@ class OutputExpr:
 
 class OutputExprFunc:
     op: Operation
-    args: list[OutputExpr]
+    args: list[int]
 
 class Dependency:
     def constant(self) -> Optional[float]: ...
@@ -32,20 +33,7 @@ class BufferDependency:
 class TextureDependency:
     name: str
     channel: Optional[str]
-    texcoords: list[TexCoord]
-
-class TexCoord:
-    name: str
-    channel: Optional[str]
-    params: Optional[TexCoordParams]
-
-class TexCoordParams:
-    def scale(self) -> Optional[BufferDependency]: ...
-    def matrix(
-        self,
-    ) -> Optional[
-        Tuple[BufferDependency, BufferDependency, BufferDependency, BufferDependency]
-    ]: ...
+    texcoords: list[int]
 
 class AttributeDependency:
     name: str
@@ -59,7 +47,8 @@ class Operation:
     Sub: ClassVar[Operation]
     Fma: ClassVar[Operation]
     MulRatio: ClassVar[Operation]
-    AddNormal: ClassVar[Operation]
+    AddNormalX: ClassVar[Operation]
+    AddNormalY: ClassVar[Operation]
     Overlay: ClassVar[Operation]
     Overlay2: ClassVar[Operation]
     OverlayRatio: ClassVar[Operation]
@@ -69,4 +58,11 @@ class Operation:
     Clamp: ClassVar[Operation]
     Abs: ClassVar[Operation]
     Fresnel: ClassVar[Operation]
+    Sqrt: ClassVar[Operation]
+    TexMatrix: ClassVar[Operation]
+    TexParallaxX: ClassVar[Operation]
+    TexParallaxY: ClassVar[Operation]
+    ReflectX: ClassVar[Operation]
+    ReflectY: ClassVar[Operation]
+    ReflectZ: ClassVar[Operation]
     Unk: ClassVar[Operation]

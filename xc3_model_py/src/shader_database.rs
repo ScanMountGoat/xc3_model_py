@@ -11,7 +11,8 @@ python_enum!(
     Sub,
     Fma,
     MulRatio,
-    AddNormal,
+    AddNormalX,
+    AddNormalY,
     Overlay,
     Overlay2,
     OverlayRatio,
@@ -21,6 +22,13 @@ python_enum!(
     Clamp,
     Abs,
     Fresnel,
+    Sqrt,
+    TexMatrix,
+    TexParallaxX,
+    TexParallaxY,
+    ReflectX,
+    ReflectY,
+    ReflectZ,
     Unk
 );
 
@@ -60,7 +68,8 @@ pub mod shader_database {
     pub struct ShaderProgram {
         pub output_dependencies: Py<PyDict>,
         pub outline_width: Option<Dependency>,
-        pub normal_intensity: Option<OutputExpr>,
+        pub normal_intensity: Option<usize>,
+        pub exprs: Py<PyList>,
     }
 
     #[pyclass]
@@ -71,7 +80,7 @@ pub mod shader_database {
     #[derive(Debug, Clone)]
     pub struct OutputExprFunc {
         pub op: Operation,
-        pub args: Vec<OutputExpr>,
+        pub args: Vec<usize>,
     }
 
     #[pyclass]
@@ -94,42 +103,7 @@ pub mod shader_database {
     pub struct TextureDependency {
         pub name: String,
         pub channel: Option<char>,
-        pub texcoords: Py<PyList>,
-    }
-
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::TexCoord)]
-    pub struct TexCoord {
-        pub name: String,
-        pub channel: Option<char>,
-        pub params: Option<Py<TexCoordParams>>,
-    }
-
-    #[pyclass]
-    #[derive(Debug, Clone)]
-    pub struct TexCoordParams(xc3_model::shader_database::TexCoordParams);
-
-    // Workaround for representing Rust enums in Python.
-    #[pymethods]
-    impl TexCoordParams {
-        pub fn scale(&self, py: Python) -> PyResult<Option<BufferDependency>> {
-            match &self.0 {
-                xc3_model::shader_database::TexCoordParams::Scale(b) => {
-                    b.clone().map_py(py).map(Some)
-                }
-                _ => Ok(None),
-            }
-        }
-
-        pub fn matrix(&self, py: Python) -> PyResult<Option<[BufferDependency; 4]>> {
-            match &self.0 {
-                xc3_model::shader_database::TexCoordParams::Matrix(m) => {
-                    m.clone().map_py(py).map(Some)
-                }
-                _ => Ok(None),
-            }
-        }
+        pub texcoords: Vec<usize>,
     }
 
     #[pyclass(get_all, set_all)]
@@ -153,7 +127,7 @@ pub mod shader_database {
             match &self.0 {
                 xc3_model::shader_database::OutputExpr::Func { op, args } => Some(OutputExprFunc {
                     op: (*op).into(),
-                    args: args.iter().map(|a| OutputExpr(a.clone())).collect(),
+                    args: args.clone(),
                 }),
                 _ => None,
             }
@@ -195,30 +169,25 @@ pub mod shader_database {
         }
     }
 
-    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, xc3_model::shader_database::OutputExpr> {
+    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, usize> {
         fn map_py(self, py: Python) -> PyResult<Py<PyDict>> {
             let dict = PyDict::new(py);
             for (k, v) in self.into_iter() {
-                let v: OutputExpr = v.map_py(py)?;
-                dict.set_item(k.to_string(), v.into_pyobject(py)?)?;
+                dict.set_item(k.to_string(), v)?;
             }
             Ok(dict.into())
         }
     }
 
-    impl MapPy<IndexMap<SmolStr, xc3_model::shader_database::OutputExpr>> for Py<PyDict> {
-        fn map_py(
-            self,
-            py: Python,
-        ) -> PyResult<IndexMap<SmolStr, xc3_model::shader_database::OutputExpr>> {
-            self.extract::<IndexMap<String, OutputExpr>>(py)?
+    impl MapPy<IndexMap<SmolStr, usize>> for Py<PyDict> {
+        fn map_py(self, py: Python) -> PyResult<IndexMap<SmolStr, usize>> {
+            self.extract::<IndexMap<String, usize>>(py)?
                 .into_iter()
-                .map(|(k, v)| Ok((k.into(), v.map_py(py)?)))
+                .map(|(k, v)| Ok((k.into(), v)))
                 .collect()
         }
     }
 
-    map_py_wrapper_impl!(xc3_model::shader_database::TexCoordParams, TexCoordParams);
     map_py_wrapper_impl!(xc3_model::shader_database::Dependency, Dependency);
     map_py_wrapper_impl!(xc3_model::shader_database::OutputExpr, OutputExpr);
 }

@@ -201,10 +201,10 @@ class OutputAssignments:
     def mat_id(self) -> Optional[int]: ...
 
 class OutputAssignment:
-    x: int
-    y: int
-    z: int
-    w: int
+    x: Optional[int]
+    y: Optional[int]
+    z: Optional[int]
+    w: Optional[int]
 
 class Assignment:
     def func(self) -> Optional[AssignmentFunc]: ...
@@ -222,10 +222,7 @@ class AssignmentFunc:
 class TextureAssignment:
     name: str
     channel: Optional[str]
-    texcoord_name: Optional[str]
-    texcoord_transforms: Optional[
-        Tuple[Tuple[float, float, float, float], Tuple[float, float, float, float]]
-    ]
+    texcoords: list[int]
 
 class AssignmentValueAttribute:
     name: str

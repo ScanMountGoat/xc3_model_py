@@ -475,10 +475,10 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignment)]
     pub struct OutputAssignment {
-        pub x: usize,
-        pub y: usize,
-        pub z: usize,
-        pub w: usize,
+        pub x: Option<usize>,
+        pub y: Option<usize>,
+        pub z: Option<usize>,
+        pub w: Option<usize>,
     }
 
     #[pyclass]
@@ -501,8 +501,7 @@ pub mod material {
     pub struct TextureAssignment {
         pub name: String,
         pub channel: Option<char>,
-        pub texcoord_name: Option<String>,
-        pub texcoord_transforms: Option<((f32, f32, f32, f32), (f32, f32, f32, f32))>,
+        pub texcoords: Vec<usize>,
     }
 
     #[pyclass(get_all, set_all)]
@@ -544,10 +543,7 @@ pub mod material {
                     Some(TextureAssignment {
                         name: t.name.to_string(),
                         channel: t.channel,
-                        texcoord_name: t.texcoord_name.as_ref().map(|s| s.to_string()),
-                        texcoord_transforms: t
-                            .texcoord_transforms
-                            .map(|(u, v)| (u.map(|f| f.0).into(), v.map(|f| f.0).into())),
+                        texcoords: t.texcoords.clone(),
                     })
                 }
                 _ => None,
