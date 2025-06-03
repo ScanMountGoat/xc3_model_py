@@ -40,6 +40,7 @@ class AttributeDependency:
     channel: Optional[str]
 
 class Operation:
+    Unk: ClassVar[Operation]
     Mix: ClassVar[Operation]
     Mul: ClassVar[Operation]
     Div: ClassVar[Operation]
@@ -65,4 +66,14 @@ class Operation:
     ReflectX: ClassVar[Operation]
     ReflectY: ClassVar[Operation]
     ReflectZ: ClassVar[Operation]
-    Unk: ClassVar[Operation]
+    Floor: ClassVar[Operation]
+    Select: ClassVar[Operation]
+    Equal: ClassVar[Operation]
+    NotEqual: ClassVar[Operation]
+    Less: ClassVar[Operation]
+    Greater: ClassVar[Operation]
+    LessEqual: ClassVar[Operation]
+    GreaterEqual: ClassVar[Operation]
+    Dot4: ClassVar[Operation]
+    NormalMapX: ClassVar[Operation]
+    NormalMapY: ClassVar[Operation]

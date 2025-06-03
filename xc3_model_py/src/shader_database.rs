@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 python_enum!(
     Operation,
     xc3_model::shader_database::Operation,
+    Unk,
     Mix,
     Mul,
     Div,
@@ -29,7 +30,17 @@ python_enum!(
     ReflectX,
     ReflectY,
     ReflectZ,
-    Unk
+    Floor,
+    Select,
+    Equal,
+    NotEqual,
+    Less,
+    Greater,
+    LessEqual,
+    GreaterEqual,
+    Dot4,
+    NormalMapX,
+    NormalMapY
 );
 
 #[pymodule]
