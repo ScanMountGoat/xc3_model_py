@@ -40,7 +40,8 @@ python_enum!(
     GreaterEqual,
     Dot4,
     NormalMapX,
-    NormalMapY
+    NormalMapY,
+    NormalMapZ
 );
 
 #[pymodule]

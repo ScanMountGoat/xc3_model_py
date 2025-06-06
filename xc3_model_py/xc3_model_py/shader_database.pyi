@@ -77,3 +77,4 @@ class Operation:
     Dot4: ClassVar[Operation]
     NormalMapX: ClassVar[Operation]
     NormalMapY: ClassVar[Operation]
+    NormalMapZ: ClassVar[Operation]
