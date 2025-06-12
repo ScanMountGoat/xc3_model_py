@@ -15,6 +15,16 @@ map_py_wrapper_impl!(
     material::AssignmentValue
 );
 
+map_py_wrapper_impl!(
+    xc3_model::material::assignments::AssignmentXyz,
+    material::AssignmentXyz
+);
+
+map_py_wrapper_impl!(
+    xc3_model::material::assignments::AssignmentValueXyz,
+    material::AssignmentValueXyz
+);
+
 python_enum!(
     BlendMode,
     xc3_model::material::BlendMode,
@@ -153,6 +163,16 @@ python_enum!(
     Unk6,
     Unk7,
     Unk9
+);
+
+python_enum!(
+    ChannelXyz,
+    xc3_model::material::assignments::ChannelXyz,
+    Xyz,
+    X,
+    Y,
+    Z,
+    W
 );
 
 #[pymodule]
@@ -481,6 +501,24 @@ pub mod material {
         pub w: Option<usize>,
     }
 
+    #[pymethods]
+    impl OutputAssignment {
+        fn merge_xyz(
+            &self,
+            py: Python,
+            assignments: Py<PyList>,
+        ) -> PyResult<Option<OutputAssignmentXyz>> {
+            let output_assignment: xc3_model::material::assignments::OutputAssignment =
+                self.clone().map_py(py)?;
+            let assignments: Vec<xc3_model::material::assignments::Assignment> =
+                assignments.map_py(py)?;
+            output_assignment
+                .merge_xyz(&assignments)
+                .map(|o| o.map_py(py))
+                .transpose()
+        }
+    }
+
     #[pyclass]
     #[derive(Debug, Clone)]
     pub struct Assignment(pub xc3_model::material::assignments::Assignment);
@@ -565,6 +603,109 @@ pub mod material {
                         channel,
                     })
                 }
+                _ => None,
+            }
+        }
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::assignments::OutputAssignmentXyz)]
+    pub struct OutputAssignmentXyz {
+        pub assignment: usize,
+        pub assignments: Py<PyList>,
+    }
+
+    #[pyclass]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentXyz(pub xc3_model::material::assignments::AssignmentXyz);
+
+    #[pyclass]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentValueXyz(pub xc3_model::material::assignments::AssignmentValueXyz);
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentFuncXyz {
+        pub op: Operation,
+        pub args: Vec<usize>,
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct TextureAssignmentXyz {
+        pub name: String,
+        pub channel: Option<ChannelXyz>,
+        pub texcoords: Vec<usize>,
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentValueAttributeXyz {
+        pub name: String,
+        pub channel: Option<ChannelXyz>,
+    }
+
+    #[pymodule_export]
+    use super::ChannelXyz;
+
+    #[pymethods]
+    impl AssignmentXyz {
+        pub fn func(&self) -> Option<AssignmentFuncXyz> {
+            match &self.0 {
+                xc3_model::material::assignments::AssignmentXyz::Func { op, args } => {
+                    Some(AssignmentFuncXyz {
+                        op: (*op).into(),
+                        args: args.clone(),
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        pub fn value(&self) -> Option<AssignmentValueXyz> {
+            match &self.0 {
+                xc3_model::material::assignments::AssignmentXyz::Value(v) => {
+                    Some(AssignmentValueXyz(v.clone()?))
+                }
+                _ => None,
+            }
+        }
+    }
+
+    #[pymethods]
+    impl AssignmentValueXyz {
+        pub fn texture(&self) -> Option<TextureAssignmentXyz> {
+            match &self.0 {
+                xc3_model::material::assignments::AssignmentValueXyz::Texture(t) => {
+                    Some(TextureAssignmentXyz {
+                        name: t.name.to_string(),
+                        channel: t.channel.map(Into::into),
+                        texcoords: t.texcoords.clone(),
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        pub fn float(&self) -> Option<(f32, f32, f32)> {
+            match self.0 {
+                xc3_model::material::assignments::AssignmentValueXyz::Float(f) => {
+                    Some((f[0].0, f[1].0, f[2].0))
+                }
+                _ => None,
+            }
+        }
+
+        pub fn attribute(&self) -> Option<AssignmentValueAttributeXyz> {
+            match self.0.clone() {
+                xc3_model::material::assignments::AssignmentValueXyz::Attribute {
+                    name,
+                    channel,
+                } => Some(AssignmentValueAttributeXyz {
+                    name: name.to_string(),
+                    channel: channel.map(Into::into),
+                }),
                 _ => None,
             }
         }

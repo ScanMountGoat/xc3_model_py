@@ -206,6 +206,10 @@ class OutputAssignment:
     z: Optional[int]
     w: Optional[int]
 
+    def merge_xyz(
+        self, assignments: list[Assignment]
+    ) -> Optional[OutputAssignmentXyz]: ...
+
 class Assignment:
     def func(self) -> Optional[AssignmentFunc]: ...
     def value(self) -> Optional[AssignmentValue]: ...
@@ -227,3 +231,36 @@ class TextureAssignment:
 class AssignmentValueAttribute:
     name: str
     channel: Optional[str]
+
+class OutputAssignmentXyz:
+    assignment: int
+    assignments: list[AssignmentXyz]
+
+class AssignmentXyz:
+    def func(self) -> Optional[AssignmentFuncXyz]: ...
+    def value(self) -> Optional[AssignmentValueXyz]: ...
+
+class AssignmentValueXyz:
+    def texture(self) -> Optional[TextureAssignmentXyz]: ...
+    def float(self) -> Optional[float]: ...
+    def attribute(self) -> Optional[AssignmentValueAttribute]: ...
+
+class AssignmentFuncXyz:
+    op: Operation
+    args: list[int]
+
+class TextureAssignmentXyz:
+    name: str
+    channel: Optional[ChannelXyz]
+    texcoords: list[int]
+
+class AssignmentValueAttributeXyz:
+    name: str
+    channel: Optional[ChannelXyz]
+
+class ChannelXyz:
+    Xyz: ClassVar[ChannelXyz]
+    X: ClassVar[ChannelXyz]
+    Y: ClassVar[ChannelXyz]
+    Z: ClassVar[ChannelXyz]
+    W: ClassVar[ChannelXyz]
