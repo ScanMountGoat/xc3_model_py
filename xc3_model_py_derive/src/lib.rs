@@ -80,12 +80,6 @@ pub fn map_py_derive(input: TokenStream) -> TokenStream {
                 Py::new(py, value)
             }
         }
-
-        impl crate::MapPy<#map_type> for Py<#name> {
-            fn map_py(self, py: Python) -> PyResult<#map_type> {
-                self.extract::<#name>(py)?.map_py(py)
-            }
-        }
     }
     .into()
 }

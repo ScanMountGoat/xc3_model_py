@@ -289,10 +289,4 @@ pub mod skinning {
             Py::new(py, value)
         }
     }
-
-    impl MapPy<xc3_model::skinning::Weights> for Py<Weights> {
-        fn map_py(self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
-            self.extract::<Weights>(py)?.map_py(py)
-        }
-    }
 }

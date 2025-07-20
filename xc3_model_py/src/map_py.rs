@@ -1,6 +1,6 @@
 use glam::{Mat4, Quat, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyUntypedArray, ToPyArray};
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{prelude::*, types::PyList, PyClass};
 use smol_str::SmolStr;
 pub use xc3_model_py_derive::MapPy;
 
@@ -179,6 +179,15 @@ where
 }
 
 // TODO: how to implement for Py<T>?
+
+impl<T, U> MapPy<U> for Py<T>
+where
+    T: MapPy<U> + PyClass + Clone,
+{
+    fn map_py(self, py: Python) -> PyResult<U> {
+        self.extract::<T>(py)?.map_py(py)
+    }
+}
 
 pub fn map_list<T, U>(list: Py<PyList>, py: Python) -> PyResult<Vec<U>>
 where
@@ -371,12 +380,6 @@ macro_rules! map_py_wrapper_impl {
             fn map_py(self, py: Python) -> PyResult<Py<$py>> {
                 let value: $py = self.map_py(py)?;
                 Py::new(py, value)
-            }
-        }
-
-        impl MapPy<$rs> for Py<$py> {
-            fn map_py(self, py: Python) -> PyResult<$rs> {
-                self.extract::<$py>(py)?.map_py(py)
             }
         }
 
