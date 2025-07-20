@@ -42,12 +42,7 @@ map_py_impl!(
     f32,
     f64,
     String,
-    Vec<u8>,
-    Vec<f32>,
-    Vec<(u16, u16)>,
-    Vec<[f32; 4]>,
-    Vec<[f32; 8]>,
-    Vec<usize>
+    (u16, u16)
 );
 
 #[macro_export]
@@ -174,7 +169,44 @@ where
     }
 }
 
+impl<T, U> MapPy<Vec<U>> for Vec<T>
+where
+    T: MapPy<U>,
+{
+    fn map_py(self, py: Python) -> PyResult<Vec<U>> {
+        self.into_iter().map(|v| v.map_py(py)).collect()
+    }
+}
+
 // TODO: how to implement for Py<T>?
+
+pub fn map_list<T, U>(list: Py<PyList>, py: Python) -> PyResult<Vec<U>>
+where
+    for<'a> Vec<T>: FromPyObject<'a>,
+    T: MapPy<U>,
+{
+    list.extract::<'_, '_, Vec<T>>(py)?.map_py(py)
+}
+
+pub fn map_vec<T, U>(value: Vec<T>, py: Python) -> PyResult<Py<PyList>>
+where
+    T: MapPy<U>,
+    for<'a> U: IntoPyObject<'a>,
+    for<'a> <U as IntoPyObject<'a>>::Output: IntoPyObject<'a>,
+    for<'a> <U as IntoPyObject<'a>>::Error: From<pyo3::PyErr>,
+{
+    PyList::new(
+        py,
+        value
+            .into_iter()
+            .map(|v| {
+                let v2: U = v.map_py(py)?;
+                v2.into_pyobject(py).map_err(Into::into)
+            })
+            .collect::<PyResult<Vec<_>>>()?,
+    )
+    .map(Into::into)
+}
 
 // TODO: Blanket impl without overlap?
 impl MapPy<Vec<String>> for Py<PyList> {
