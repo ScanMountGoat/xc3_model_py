@@ -15,7 +15,7 @@ python_enum!(
 pub mod vertex {
     use super::*;
 
-    use crate::{map_py::MapPy, skinning::skinning::Weights};
+    use crate::{map_py::MapPy, skinning::skinning::Weights, TypedList};
     use numpy::{PyArray1, PyArray2, PyUntypedArray};
 
     #[pymodule_export]
@@ -25,10 +25,10 @@ pub mod vertex {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::ModelBuffers)]
     pub struct ModelBuffers {
-        pub vertex_buffers: Py<PyList>,
-        pub outline_buffers: Py<PyList>,
-        pub index_buffers: Py<PyList>,
-        pub unk_buffers: Py<PyList>,
+        pub vertex_buffers: TypedList<VertexBuffer>,
+        pub outline_buffers: TypedList<OutlineBuffer>,
+        pub index_buffers: TypedList<IndexBuffer>,
+        pub unk_buffers: TypedList<UnkBuffer>,
         pub unk_data: Option<Py<UnkDataBuffer>>,
         pub weights: Option<Py<Weights>>,
     }
@@ -37,10 +37,10 @@ pub mod vertex {
     impl ModelBuffers {
         #[new]
         pub fn new(
-            vertex_buffers: Py<PyList>,
-            outline_buffers: Py<PyList>,
-            index_buffers: Py<PyList>,
-            unk_buffers: Py<PyList>,
+            vertex_buffers: TypedList<VertexBuffer>,
+            outline_buffers: TypedList<OutlineBuffer>,
+            index_buffers: TypedList<IndexBuffer>,
+            unk_buffers: TypedList<UnkBuffer>,
             unk_data: Option<Py<UnkDataBuffer>>,
             weights: Option<Py<Weights>>,
         ) -> Self {
@@ -59,9 +59,9 @@ pub mod vertex {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::VertexBuffer)]
     pub struct VertexBuffer {
-        pub attributes: Py<PyList>,
-        pub morph_blend_target: Py<PyList>,
-        pub morph_targets: Py<PyList>,
+        pub attributes: TypedList<AttributeData>,
+        pub morph_blend_target: TypedList<AttributeData>,
+        pub morph_targets: TypedList<MorphTarget>,
         pub outline_buffer_index: Option<usize>,
     }
 
@@ -69,9 +69,9 @@ pub mod vertex {
     impl VertexBuffer {
         #[new]
         fn new(
-            attributes: Py<PyList>,
-            morph_blend_target: Py<PyList>,
-            morph_targets: Py<PyList>,
+            attributes: TypedList<AttributeData>,
+            morph_blend_target: TypedList<AttributeData>,
+            morph_targets: TypedList<MorphTarget>,
             outline_buffer_index: Option<usize>,
         ) -> Self {
             Self {
@@ -106,13 +106,13 @@ pub mod vertex {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::OutlineBuffer)]
     pub struct OutlineBuffer {
-        pub attributes: Py<PyList>,
+        pub attributes: TypedList<AttributeData>,
     }
 
     #[pymethods]
     impl OutlineBuffer {
         #[new]
-        fn new(attributes: Py<PyList>) -> Self {
+        fn new(attributes: TypedList<AttributeData>) -> Self {
             Self { attributes }
         }
     }
@@ -217,13 +217,13 @@ pub mod vertex {
     #[map(xc3_model::vertex::UnkBuffer)]
     pub struct UnkBuffer {
         pub unk2: u16,
-        pub attributes: Py<PyList>,
+        pub attributes: TypedList<AttributeData>,
     }
 
     #[pymethods]
     impl UnkBuffer {
         #[new]
-        fn new(unk2: u16, attributes: Py<PyList>) -> Self {
+        fn new(unk2: u16, attributes: TypedList<AttributeData>) -> Self {
             Self { unk2, attributes }
         }
     }

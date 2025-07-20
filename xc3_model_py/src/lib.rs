@@ -1,6 +1,8 @@
+use std::marker::PhantomData;
+
 use crate::map_py::MapPy;
 use numpy::PyArray3;
-use pyo3::{create_exception, exceptions::PyException, prelude::*};
+use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
 use rayon::prelude::*;
 
 mod animation;
@@ -81,6 +83,32 @@ impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
     }
 }
 
+/// An untyped Python list assumed to have elements of a single type.
+#[derive(Debug, Clone)]
+pub struct TypedList<T> {
+    pub list: Py<PyList>,
+    _phantom: PhantomData<T>,
+}
+
+impl<'py, T> IntoPyObject<'py> for TypedList<T> {
+    type Target = PyList;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        Ok(self.list.into_bound(py))
+    }
+}
+
+impl<'py, T> FromPyObject<'py> for TypedList<T> {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            list: ob.extract()?,
+            _phantom: PhantomData,
+        })
+    }
+}
+
 // TODO: test cases for conversions.
 
 python_enum!(ViewDimension, xc3_model::ViewDimension, D2, D3, Cube);
@@ -127,7 +155,6 @@ mod xc3_model_py {
     use crate::vertex::vertex::ModelBuffers;
     use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArrayDyn};
     use pyo3::types::PyBytes;
-    use pyo3::types::PyList;
     use xc3_lib::dds::DdsExt;
 
     #[pymodule_init]
@@ -178,7 +205,7 @@ mod xc3_model_py {
     pub struct ModelRoot {
         pub models: Py<Models>,
         pub buffers: Py<ModelBuffers>,
-        pub image_textures: Py<PyList>,
+        pub image_textures: TypedList<ImageTexture>,
         pub skeleton: Option<Py<Skeleton>>,
     }
 
@@ -186,22 +213,22 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::MapRoot)]
     pub struct MapRoot {
-        pub groups: Py<PyList>,
-        pub image_textures: Py<PyList>,
+        pub groups: TypedList<ModelGroup>,
+        pub image_textures: TypedList<ImageTexture>,
     }
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::ModelGroup)]
     pub struct ModelGroup {
-        pub models: Py<PyList>,
-        pub buffers: Py<PyList>,
+        pub models: TypedList<Models>,
+        pub buffers: TypedList<ModelBuffers>,
     }
 
     #[pymethods]
     impl ModelGroup {
         #[new]
-        pub fn new(models: Py<PyList>, buffers: Py<PyList>) -> Self {
+        pub fn new(models: TypedList<Models>, buffers: TypedList<ModelBuffers>) -> Self {
             Self { models, buffers }
         }
     }
@@ -210,12 +237,12 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Models)]
     pub struct Models {
-        pub models: Py<PyList>,
-        pub materials: Py<PyList>,
-        pub samplers: Py<PyList>,
+        pub models: TypedList<Model>,
+        pub materials: TypedList<crate::material::material::Material>,
+        pub samplers: TypedList<Sampler>,
         pub skinning: Option<Py<Skinning>>,
-        pub morph_controller_names: Py<PyList>,
-        pub animation_morph_names: Py<PyList>,
+        pub morph_controller_names: TypedList<String>,
+        pub animation_morph_names: TypedList<String>,
         pub max_xyz: [f32; 3],
         pub min_xyz: [f32; 3],
         pub lod_data: Option<Py<LodData>>,
@@ -225,13 +252,13 @@ mod xc3_model_py {
     impl Models {
         #[new]
         pub fn new(
-            models: Py<PyList>,
-            materials: Py<PyList>,
-            samplers: Py<PyList>,
+            models: TypedList<Model>,
+            materials: TypedList<crate::material::material::Material>,
+            samplers: TypedList<Sampler>,
             max_xyz: [f32; 3],
             min_xyz: [f32; 3],
-            morph_controller_names: Py<PyList>,
-            animation_morph_names: Py<PyList>,
+            morph_controller_names: TypedList<String>,
+            animation_morph_names: TypedList<String>,
             skinning: Option<Py<Skinning>>,
             lod_data: Option<Py<LodData>>,
         ) -> Self {
@@ -253,7 +280,7 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Model)]
     pub struct Model {
-        pub meshes: Py<PyList>,
+        pub meshes: TypedList<Mesh>,
         // N x 4 x 4 numpy.ndarray
         pub instances: Py<PyArray3<f32>>,
         pub model_buffers_index: usize,
@@ -266,7 +293,7 @@ mod xc3_model_py {
     impl Model {
         #[new]
         pub fn new(
-            meshes: Py<PyList>,
+            meshes: TypedList<Mesh>,
             instances: Py<PyArray3<f32>>,
             model_buffers_index: usize,
             max_xyz: [f32; 3],
@@ -331,14 +358,14 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::LodData)]
     pub struct LodData {
-        pub items: Py<PyList>,
-        pub groups: Py<PyList>,
+        pub items: TypedList<LodItem>,
+        pub groups: TypedList<LodGroup>,
     }
 
     #[pymethods]
     impl LodData {
         #[new]
-        pub fn new(items: Py<PyList>, groups: Py<PyList>) -> Self {
+        pub fn new(items: TypedList<LodItem>, groups: TypedList<LodGroup>) -> Self {
             Self { items, groups }
         }
     }
@@ -383,14 +410,14 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Skeleton)]
     pub struct Skeleton {
-        pub bones: Py<PyList>,
+        pub bones: TypedList<Bone>,
     }
 
     #[pymethods]
     impl Skeleton {
         // TODO: generate this with some sort of macro?
         #[new]
-        fn new(bones: Py<PyList>) -> Self {
+        fn new(bones: TypedList<Bone>) -> Self {
             Self { bones }
         }
 
@@ -756,7 +783,7 @@ mod xc3_model_py {
         pub fn new(
             models: Py<Models>,
             buffers: Py<ModelBuffers>,
-            image_textures: Py<PyList>,
+            image_textures: TypedList<ImageTexture>,
             skeleton: Option<Py<Skeleton>>,
         ) -> Self {
             Self {
@@ -797,7 +824,7 @@ mod xc3_model_py {
     #[pymethods]
     impl MapRoot {
         #[new]
-        pub fn new(groups: Py<PyList>, image_textures: Py<PyList>) -> Self {
+        pub fn new(groups: TypedList<ModelGroup>, image_textures: TypedList<ImageTexture>) -> Self {
             Self {
                 groups,
                 image_textures,
@@ -819,7 +846,7 @@ mod xc3_model_py {
 
     fn save_images_rgba8(
         py: Python,
-        image_textures: &Py<PyList>,
+        image_textures: &TypedList<ImageTexture>,
         folder: &str,
         prefix: &str,
         ext: &str,
@@ -900,7 +927,7 @@ mod xc3_model_py {
         py: Python,
         wismhd_path: &str,
         shader_database: Option<&ShaderDatabase>,
-    ) -> PyResult<Py<PyList>> {
+    ) -> PyResult<TypedList<MapRoot>> {
         let database = shader_database.map(|database| &database.0);
         // Prevent Python from locking up while Rust processes map data in parallel.
         let roots = py.allow_threads(move || {

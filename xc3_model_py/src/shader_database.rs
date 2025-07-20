@@ -48,13 +48,10 @@ python_enum!(
 pub mod shader_database {
 
     use indexmap::IndexMap;
-    use pyo3::{
-        prelude::*,
-        types::{PyDict, PyList},
-    };
+    use pyo3::{prelude::*, types::PyDict};
     use smol_str::SmolStr;
 
-    use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception};
+    use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception, TypedList};
 
     #[pymodule_export]
     use super::Operation;
@@ -81,7 +78,7 @@ pub mod shader_database {
         pub output_dependencies: Py<PyDict>,
         pub outline_width: Option<Dependency>,
         pub normal_intensity: Option<usize>,
-        pub exprs: Py<PyList>,
+        pub exprs: TypedList<OutputExpr>,
     }
 
     #[pyclass]

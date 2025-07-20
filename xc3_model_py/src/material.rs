@@ -179,6 +179,7 @@ python_enum!(
 pub mod material {
     use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::Operation;
+    use crate::TypedList;
     use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
     use numpy::PyArray1;
     use pyo3::prelude::*;
@@ -218,11 +219,11 @@ pub mod material {
         pub render_flags: u32,
         pub state_flags: StateFlags,
         pub color: [f32; 4],
-        pub textures: Py<PyList>,
+        pub textures: TypedList<Texture>,
         pub alpha_test: Option<TextureAlphaTest>,
         pub work_values: Py<PyArray1<f32>>,
         pub shader_vars: Vec<(u16, u16)>,
-        pub work_callbacks: Py<PyList>,
+        pub work_callbacks: TypedList<WorkCallback>,
         pub alpha_test_ref: f32,
         pub m_unks1_1: u32,
         pub m_unks1_2: u32,
@@ -246,10 +247,10 @@ pub mod material {
             render_flags: u32,
             state_flags: StateFlags,
             color: [f32; 4],
-            textures: Py<PyList>,
+            textures: TypedList<Texture>,
             work_values: Py<PyArray1<f32>>,
             shader_vars: Vec<(u16, u16)>,
-            work_callbacks: Py<PyList>,
+            work_callbacks: TypedList<WorkCallback>,
             alpha_test_ref: f32,
             m_unks1_1: u32,
             m_unks1_2: u32,
@@ -479,7 +480,7 @@ pub mod material {
         pub output_assignments: [OutputAssignment; 6],
         pub outline_width: Option<AssignmentValue>,
         pub normal_intensity: Option<usize>,
-        pub assignments: Py<PyList>,
+        pub assignments: TypedList<Assignment>,
     }
 
     #[pymethods]
@@ -613,7 +614,7 @@ pub mod material {
     #[map(xc3_model::material::assignments::OutputAssignmentXyz)]
     pub struct OutputAssignmentXyz {
         pub assignment: usize,
-        pub assignments: Py<PyList>,
+        pub assignments: TypedList<AssignmentXyz>,
     }
 
     #[pyclass]

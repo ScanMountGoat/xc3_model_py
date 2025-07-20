@@ -12,9 +12,9 @@ python_enum!(
 #[pymodule]
 pub mod skinning {
     use numpy::PyArray2;
-    use pyo3::{prelude::*, types::PyList};
+    use pyo3::prelude::*;
 
-    use crate::{map_py::MapPy, material::RenderPassType};
+    use crate::{map_py::MapPy, material::RenderPassType, TypedList};
 
     #[pymodule_export]
     use super::BoneConstraintType;
@@ -23,13 +23,13 @@ pub mod skinning {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::Skinning)]
     pub struct Skinning {
-        bones: Py<PyList>,
+        bones: TypedList<Bone>,
     }
 
     #[pymethods]
     impl Skinning {
         #[new]
-        pub fn new(bones: Py<PyList>) -> Self {
+        pub fn new(bones: TypedList<Bone>) -> Self {
             Self { bones }
         }
     }
@@ -115,7 +115,7 @@ pub mod skinning {
     #[derive(Debug, Clone)]
     pub struct Weights {
         #[pyo3(get, set)]
-        weight_buffers: Py<PyList>,
+        weight_buffers: TypedList<SkinWeights>,
         // TODO: how to handle this?
         weight_groups: xc3_model::skinning::WeightGroups,
     }
@@ -123,7 +123,7 @@ pub mod skinning {
     #[pymethods]
     impl Weights {
         #[new]
-        pub fn new(weight_buffers: Py<PyList>) -> Self {
+        pub fn new(weight_buffers: TypedList<SkinWeights>) -> Self {
             // TODO: rework xc3_model to make this easier to work with.
             Self {
                 weight_buffers,
@@ -181,7 +181,7 @@ pub mod skinning {
         // N x 4 numpy.ndarray
         pub weights: Py<PyArray2<f32>>,
         /// The name list for the indices in [bone_indices](#structfield.bone_indices).
-        pub bone_names: Py<PyList>,
+        pub bone_names: TypedList<String>,
     }
 
     #[pymethods]
@@ -190,7 +190,7 @@ pub mod skinning {
         pub fn new(
             bone_indices: Py<PyArray2<u8>>,
             weights: Py<PyArray2<f32>>,
-            bone_names: Py<PyList>,
+            bone_names: TypedList<String>,
         ) -> Self {
             Self {
                 bone_indices,
@@ -203,7 +203,7 @@ pub mod skinning {
             &self,
             py: Python,
             weight_indices: Py<PyArray2<u16>>,
-        ) -> PyResult<Py<PyList>> {
+        ) -> PyResult<TypedList<Influence>> {
             let weight_indices: Vec<_> = weight_indices.extract(py)?;
             let influences = self.clone().map_py(py)?.to_influences(&weight_indices);
             influences.map_py(py)
@@ -234,13 +234,13 @@ pub mod skinning {
     #[map(xc3_model::skinning::Influence)]
     pub struct Influence {
         pub bone_name: String,
-        pub weights: Py<PyList>,
+        pub weights: TypedList<VertexWeight>,
     }
 
     #[pymethods]
     impl Influence {
         #[new]
-        fn new(bone_name: String, weights: Py<PyList>) -> Self {
+        fn new(bone_name: String, weights: TypedList<VertexWeight>) -> Self {
             Self { bone_name, weights }
         }
     }

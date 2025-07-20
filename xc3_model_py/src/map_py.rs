@@ -1,14 +1,17 @@
+use std::marker::PhantomData;
+
 use glam::{Mat4, Quat, Vec2, Vec3, Vec4};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyUntypedArray, ToPyArray};
 use pyo3::{prelude::*, types::PyList, PyClass};
 use smol_str::SmolStr;
 pub use xc3_model_py_derive::MapPy;
 
+use crate::TypedList;
+
 // Define a mapping between types.
 // This allows for deriving the Python <-> Rust conversion.
 // The derive macro is mainly to automate mapping field names.
 pub trait MapPy<T> {
-    // TODO: take self by value to improve performance?
     fn map_py(self, py: Python) -> PyResult<T>;
 }
 
@@ -202,31 +205,44 @@ where
     T: MapPy<U>,
     for<'a> U: IntoPyObject<'a>,
     for<'a> <U as IntoPyObject<'a>>::Output: IntoPyObject<'a>,
-    for<'a> <U as IntoPyObject<'a>>::Error: From<pyo3::PyErr>,
+    for<'a> <U as IntoPyObject<'a>>::Error: std::fmt::Debug,
 {
     PyList::new(
         py,
         value
             .into_iter()
             .map(|v| {
-                let v2: U = v.map_py(py)?;
-                v2.into_pyobject(py).map_err(Into::into)
+                let u: U = v.map_py(py)?;
+                // TODO: avoid unwrap.
+                Ok(u.into_pyobject(py).unwrap())
             })
             .collect::<PyResult<Vec<_>>>()?,
     )
     .map(Into::into)
 }
 
-// TODO: Blanket impl without overlap?
-impl MapPy<Vec<String>> for Py<PyList> {
-    fn map_py(self, py: Python) -> PyResult<Vec<String>> {
-        self.extract(py)
+impl<T, U> MapPy<Vec<U>> for TypedList<T>
+where
+    T: MapPy<U>,
+    for<'a> Vec<T>: FromPyObject<'a>,
+{
+    fn map_py(self, py: Python) -> PyResult<Vec<U>> {
+        map_list::<T, U>(self.list, py)
     }
 }
 
-impl MapPy<Py<PyList>> for Vec<String> {
-    fn map_py(self, py: Python) -> PyResult<Py<PyList>> {
-        PyList::new(py, self).map(Into::into)
+impl<T, U> MapPy<TypedList<U>> for Vec<T>
+where
+    T: MapPy<U>,
+    for<'a> U: IntoPyObject<'a>,
+    for<'a> <U as IntoPyObject<'a>>::Output: IntoPyObject<'a>,
+    for<'a> <U as IntoPyObject<'a>>::Error: std::fmt::Debug,
+{
+    fn map_py(self, py: Python) -> PyResult<TypedList<U>> {
+        Ok(TypedList {
+            list: map_vec::<T, U>(self, py)?,
+            _phantom: PhantomData,
+        })
     }
 }
 
