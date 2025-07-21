@@ -30,6 +30,7 @@ class VertexBuffer:
     def __init__(
         self,
         attributes: list[AttributeData],
+        morph_blend_target: list[AttributeData],
         morph_targets: list[MorphTarget],
         outline_buffer_index: Optional[int],
     ) -> None: ...
