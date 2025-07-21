@@ -5,10 +5,11 @@ pub mod monolib {
     use pyo3::{prelude::*, types::PyDict};
 
     use crate::xc3_model_py::ImageTexture;
-    use map_py::{map_py_wrapper_impl, MapPy};
+    use map_py::MapPy;
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::monolib::ShaderTextures)]
     pub struct ShaderTextures(pub xc3_model::monolib::ShaderTextures);
 
     #[pymethods]
@@ -35,6 +36,4 @@ pub mod monolib {
             Ok(dict.into())
         }
     }
-
-    map_py_wrapper_impl!(xc3_model::monolib::ShaderTextures, ShaderTextures);
 }

@@ -48,7 +48,7 @@ python_enum!(
 pub mod shader_database {
 
     use crate::py_exception;
-    use map_py::{map_py_wrapper_impl, MapPy, TypedList};
+    use map_py::{MapPy, TypedList};
     use pyo3::{prelude::*, types::PyDict};
 
     #[pymodule_export]
@@ -80,7 +80,8 @@ pub mod shader_database {
     }
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::shader_database::OutputExpr)]
     pub struct OutputExpr(xc3_model::shader_database::OutputExpr);
 
     #[pyclass(get_all, set_all)]
@@ -91,7 +92,8 @@ pub mod shader_database {
     }
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::shader_database::Dependency)]
     pub struct Dependency(xc3_model::shader_database::Dependency);
 
     #[pyclass(get_all, set_all)]
@@ -175,7 +177,4 @@ pub mod shader_database {
             }
         }
     }
-
-    map_py_wrapper_impl!(xc3_model::shader_database::Dependency, Dependency);
-    map_py_wrapper_impl!(xc3_model::shader_database::OutputExpr, OutputExpr);
 }

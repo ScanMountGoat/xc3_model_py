@@ -1,27 +1,6 @@
 use pyo3::prelude::*;
 
 use crate::python_enum;
-use map_py::map_py_wrapper_impl;
-
-map_py_wrapper_impl!(
-    xc3_model::material::assignments::Assignment,
-    material::Assignment
-);
-
-map_py_wrapper_impl!(
-    xc3_model::material::assignments::AssignmentValue,
-    material::AssignmentValue
-);
-
-map_py_wrapper_impl!(
-    xc3_model::material::assignments::AssignmentXyz,
-    material::AssignmentXyz
-);
-
-map_py_wrapper_impl!(
-    xc3_model::material::assignments::AssignmentValueXyz,
-    material::AssignmentValueXyz
-);
 
 python_enum!(
     BlendMode,
@@ -520,11 +499,13 @@ pub mod material {
     }
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::assignments::Assignment)]
     pub struct Assignment(pub xc3_model::material::assignments::Assignment);
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::assignments::AssignmentValue)]
     pub struct AssignmentValue(pub xc3_model::material::assignments::AssignmentValue);
 
     #[pyclass(get_all, set_all)]
@@ -617,11 +598,13 @@ pub mod material {
     }
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::assignments::AssignmentXyz)]
     pub struct AssignmentXyz(pub xc3_model::material::assignments::AssignmentXyz);
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::assignments::AssignmentValueXyz)]
     pub struct AssignmentValueXyz(pub xc3_model::material::assignments::AssignmentValueXyz);
 
     #[pyclass(get_all, set_all)]
