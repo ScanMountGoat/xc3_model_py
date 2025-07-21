@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, types::PyList};
+use pyo3::prelude::*;
 
 use crate::python_enum;
 
@@ -15,7 +15,8 @@ python_enum!(
 pub mod vertex {
     use super::*;
 
-    use crate::{map_py::MapPy, skinning::skinning::Weights, TypedList};
+    use crate::skinning::skinning::Weights;
+    use map_py::{MapPy, TypedList};
     use numpy::{PyArray1, PyArray2, PyUntypedArray};
 
     #[pymodule_export]
@@ -29,7 +30,15 @@ pub mod vertex {
         pub outline_buffers: TypedList<OutlineBuffer>,
         pub index_buffers: TypedList<IndexBuffer>,
         pub unk_buffers: TypedList<UnkBuffer>,
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
         pub unk_data: Option<Py<UnkDataBuffer>>,
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
         pub weights: Option<Py<Weights>>,
     }
 
@@ -453,29 +462,6 @@ pub mod vertex {
                 AttributeType::BoneIndices => Ok(AttrRs::BoneIndices(self.data.map_py(py)?)),
                 AttributeType::Flow => Ok(AttrRs::Flow(self.data.map_py(py)?)),
             }
-        }
-    }
-
-    // Map from Python lists to Vec<T>
-    impl crate::MapPy<Vec<xc3_model::vertex::AttributeData>> for Py<PyList> {
-        fn map_py(self, py: Python) -> PyResult<Vec<xc3_model::vertex::AttributeData>> {
-            self.extract::<'_, '_, Vec<AttributeData>>(py)?
-                .into_iter()
-                .map(|v| v.map_py(py))
-                .collect::<Result<Vec<_>, _>>()
-        }
-    }
-
-    // Map from Vec<T> to Python lists
-    impl crate::MapPy<Py<PyList>> for Vec<xc3_model::vertex::AttributeData> {
-        fn map_py(self, py: Python) -> PyResult<Py<PyList>> {
-            PyList::new(
-                py,
-                self.into_iter()
-                    .map(|v| v.map_py(py)?.into_pyobject(py))
-                    .collect::<PyResult<Vec<_>>>()?,
-            )
-            .map(Into::into)
         }
     }
 }

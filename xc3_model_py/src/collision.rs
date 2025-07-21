@@ -5,7 +5,7 @@ pub mod collision {
     use numpy::{PyArray1, PyArray2, PyArray3};
     use pyo3::prelude::*;
 
-    use crate::{map_py::MapPy, TypedList};
+    use map_py::{MapPy, TypedList};
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]

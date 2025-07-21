@@ -1,13 +1,9 @@
-use std::marker::PhantomData;
-
-use crate::map_py::MapPy;
 use numpy::PyArray3;
-use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyList};
+use pyo3::{create_exception, exceptions::PyException, prelude::*};
 use rayon::prelude::*;
 
 mod animation;
 mod collision;
-mod map_py;
 mod material;
 mod monolib;
 mod shader_database;
@@ -49,13 +45,13 @@ macro_rules! python_enum {
             }
         }
 
-        impl $crate::map_py::MapPy<$rust_ty> for $py_ty {
+        impl ::map_py::MapPy<$rust_ty> for $py_ty {
             fn map_py(self, _py: Python) -> PyResult<$rust_ty> {
                 Ok(self.into())
             }
         }
 
-        impl $crate::map_py::MapPy<$py_ty> for $rust_ty {
+        impl ::map_py::MapPy<$py_ty> for $rust_ty {
             fn map_py(self, _py: Python) -> PyResult<$py_ty> {
                 Ok(self.into())
             }
@@ -68,45 +64,6 @@ macro_rules! python_enum {
 fn py_exception<E: Into<anyhow::Error>>(e: E) -> PyErr {
     // anyhow provides more detailed context for inner errors.
     PyErr::new::<Xc3ModelError, _>(format!("{:?}", anyhow::anyhow!(e)))
-}
-
-// TODO: Create a proper type for this.
-impl MapPy<xc3_model::MeshRenderFlags2> for u32 {
-    fn map_py(self, _py: Python) -> PyResult<xc3_model::MeshRenderFlags2> {
-        Ok(self.try_into().unwrap())
-    }
-}
-
-impl MapPy<u32> for xc3_model::MeshRenderFlags2 {
-    fn map_py(self, _py: Python) -> PyResult<u32> {
-        Ok(self.into())
-    }
-}
-
-/// An untyped Python list assumed to have elements of a single type.
-#[derive(Debug, Clone)]
-pub struct TypedList<T> {
-    pub list: Py<PyList>,
-    _phantom: PhantomData<T>,
-}
-
-impl<'py, T> IntoPyObject<'py> for TypedList<T> {
-    type Target = PyList;
-    type Output = Bound<'py, Self::Target>;
-    type Error = PyErr;
-
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        Ok(self.list.into_bound(py))
-    }
-}
-
-impl<'py, T> FromPyObject<'py> for TypedList<T> {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            list: ob.extract()?,
-            _phantom: PhantomData,
-        })
-    }
 }
 
 // TODO: test cases for conversions.
@@ -148,7 +105,6 @@ mod xc3_model_py {
     use std::io::Cursor;
     use std::{ops::Deref, path::Path};
 
-    use crate::map_py::MapPy;
     use crate::material::TextureUsage;
     use crate::shader_database::shader_database::ShaderDatabase;
     use crate::skinning::skinning::Skinning;
@@ -156,6 +112,8 @@ mod xc3_model_py {
     use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArrayDyn};
     use pyo3::types::PyBytes;
     use xc3_lib::dds::DdsExt;
+
+    use map_py::{MapPy, TypedList};
 
     #[pymodule_init]
     fn init(_m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -203,9 +161,15 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::ModelRoot)]
     pub struct ModelRoot {
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub models: Py<Models>,
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub buffers: Py<ModelBuffers>,
         pub image_textures: TypedList<ImageTexture>,
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
         pub skeleton: Option<Py<Skeleton>>,
     }
 
@@ -240,11 +204,19 @@ mod xc3_model_py {
         pub models: TypedList<Model>,
         pub materials: TypedList<crate::material::material::Material>,
         pub samplers: TypedList<Sampler>,
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
         pub skinning: Option<Py<Skinning>>,
         pub morph_controller_names: TypedList<String>,
         pub animation_morph_names: TypedList<String>,
         pub max_xyz: [f32; 3],
         pub min_xyz: [f32; 3],
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
         pub lod_data: Option<Py<LodData>>,
     }
 
@@ -322,6 +294,7 @@ mod xc3_model_py {
         pub ext_mesh_index: Option<usize>,
         pub lod_item_index: Option<usize>,
         pub flags1: u32,
+        #[map(from(map_py::helpers::into), into(map_py::helpers::try_into))]
         pub flags2: u32,
         pub base_mesh_index: Option<usize>,
     }
@@ -433,6 +406,7 @@ mod xc3_model_py {
     #[map(xc3_model::Bone)]
     pub struct Bone {
         pub name: String,
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub transform: Py<Transform>,
         pub parent_index: Option<usize>,
     }

@@ -47,11 +47,9 @@ python_enum!(
 #[pymodule]
 pub mod shader_database {
 
-    use indexmap::IndexMap;
+    use crate::py_exception;
+    use map_py::{map_py_wrapper_impl, MapPy, TypedList};
     use pyo3::{prelude::*, types::PyDict};
-    use smol_str::SmolStr;
-
-    use crate::{map_py::MapPy, map_py_wrapper_impl, py_exception, TypedList};
 
     #[pymodule_export]
     use super::Operation;
@@ -175,25 +173,6 @@ pub mod shader_database {
                 }
                 _ => Ok(None),
             }
-        }
-    }
-
-    impl MapPy<Py<PyDict>> for IndexMap<SmolStr, usize> {
-        fn map_py(self, py: Python) -> PyResult<Py<PyDict>> {
-            let dict = PyDict::new(py);
-            for (k, v) in self.into_iter() {
-                dict.set_item(k.to_string(), v)?;
-            }
-            Ok(dict.into())
-        }
-    }
-
-    impl MapPy<IndexMap<SmolStr, usize>> for Py<PyDict> {
-        fn map_py(self, py: Python) -> PyResult<IndexMap<SmolStr, usize>> {
-            self.extract::<IndexMap<String, usize>>(py)?
-                .into_iter()
-                .map(|(k, v)| Ok((k.into(), v)))
-                .collect()
         }
     }
 

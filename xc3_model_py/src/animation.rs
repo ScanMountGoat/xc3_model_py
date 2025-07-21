@@ -8,13 +8,13 @@ python_enum!(BlendMode, xc3_model::animation::BlendMode, Blend, Add);
 
 #[pymodule]
 pub mod animation {
+    use crate::xc3_model_py::Skeleton;
+    use map_py::MapPy;
     use numpy::PyArray2;
     use numpy::PyArray3;
     use pyo3::prelude::*;
     use pyo3::types::PyDict;
     use xc3_model::animation::BoneIndex;
-
-    use crate::{map_py::MapPy, xc3_model_py::Skeleton};
 
     #[pymodule_export]
     use super::SpaceMode;
@@ -126,9 +126,8 @@ pub mod animation {
             frame: f32,
             frame_count: u32,
         ) -> Option<Py<crate::xc3_model_py::Transform>> {
-            self.0
-                .sample_transform(frame, frame_count)
-                .map(|t| t.map_py(py).unwrap())
+            let transform = self.0.sample_transform(frame, frame_count);
+            map_py::helpers::into_option_py(transform, py).unwrap()
         }
 
         // Workaround for representing Rust enums in Python.

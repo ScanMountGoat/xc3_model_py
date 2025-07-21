@@ -1,9 +1,7 @@
 use pyo3::prelude::*;
 
-use crate::{map_py_into_impl, map_py_wrapper_impl, python_enum, MapPy};
-
-map_py_into_impl!(xc3_model::material::MaterialFlags, u32);
-map_py_into_impl!(xc3_model::material::MaterialRenderFlags, u32);
+use crate::python_enum;
+use map_py::map_py_wrapper_impl;
 
 map_py_wrapper_impl!(
     xc3_model::material::assignments::Assignment,
@@ -179,11 +177,10 @@ python_enum!(
 pub mod material {
     use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::Operation;
-    use crate::TypedList;
-    use crate::{map_py::MapPy, xc3_model_py::ImageTexture};
+    use crate::xc3_model_py::ImageTexture;
+    use map_py::{MapPy, TypedList};
     use numpy::PyArray1;
     use pyo3::prelude::*;
-    use pyo3::types::PyList;
 
     #[pymodule_export]
     use super::BlendMode;
@@ -215,7 +212,9 @@ pub mod material {
     pub struct Material {
         pub name: String,
         // TODO: how to handle flags?
+        #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
         pub flags: u32,
+        #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
         pub render_flags: u32,
         pub state_flags: StateFlags,
         pub color: [f32; 4],
@@ -507,7 +506,7 @@ pub mod material {
         fn merge_xyz(
             &self,
             py: Python,
-            assignments: Py<PyList>,
+            assignments: TypedList<Assignment>,
         ) -> PyResult<Option<OutputAssignmentXyz>> {
             let output_assignment: xc3_model::material::assignments::OutputAssignment =
                 self.clone().map_py(py)?;

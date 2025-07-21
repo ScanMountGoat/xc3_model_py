@@ -4,7 +4,8 @@ use pyo3::prelude::*;
 pub mod monolib {
     use pyo3::{prelude::*, types::PyDict};
 
-    use crate::{map_py::MapPy, map_py_wrapper_impl, xc3_model_py::ImageTexture};
+    use crate::xc3_model_py::ImageTexture;
+    use map_py::{map_py_wrapper_impl, MapPy};
 
     #[pyclass]
     #[derive(Debug, Clone)]

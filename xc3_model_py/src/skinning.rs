@@ -14,7 +14,8 @@ pub mod skinning {
     use numpy::PyArray2;
     use pyo3::prelude::*;
 
-    use crate::{map_py::MapPy, material::RenderPassType, TypedList};
+    use crate::material::RenderPassType;
+    use map_py::{MapPy, TypedList};
 
     #[pymodule_export]
     use super::BoneConstraintType;
@@ -39,8 +40,15 @@ pub mod skinning {
     #[map(xc3_model::skinning::Bone)]
     pub struct Bone {
         name: String,
+
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
         bounds: Option<Py<BoneBounds>>,
+
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
         constraint: Option<Py<BoneConstraint>>,
+
         no_camera_overlap: bool,
     }
 
@@ -112,11 +120,14 @@ pub mod skinning {
     }
 
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::skinning::Weights)]
     pub struct Weights {
         #[pyo3(get, set)]
+        #[map(from(MapPy::map_py), into(MapPy::map_py))]
         weight_buffers: TypedList<SkinWeights>,
         // TODO: how to handle this?
+        #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
         weight_groups: xc3_model::skinning::WeightGroups,
     }
 
@@ -261,32 +272,6 @@ pub mod skinning {
                 vertex_index,
                 weight,
             }
-        }
-    }
-
-    impl MapPy<Weights> for xc3_model::skinning::Weights {
-        fn map_py(self, py: Python) -> PyResult<Weights> {
-            Ok(Weights {
-                weight_buffers: self.weight_buffers.map_py(py)?,
-                weight_groups: self.weight_groups.clone(),
-            })
-        }
-    }
-
-    impl MapPy<xc3_model::skinning::Weights> for Weights {
-        fn map_py(self, py: Python) -> PyResult<xc3_model::skinning::Weights> {
-            Ok(xc3_model::skinning::Weights {
-                weight_buffers: self.weight_buffers.map_py(py)?,
-                weight_groups: self.weight_groups.clone(),
-            })
-        }
-    }
-
-    // Map to and from Py<T>
-    impl MapPy<Py<Weights>> for xc3_model::skinning::Weights {
-        fn map_py(self, py: Python) -> PyResult<Py<Weights>> {
-            let value: Weights = self.map_py(py)?;
-            Py::new(py, value)
         }
     }
 }
