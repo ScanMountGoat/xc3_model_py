@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added method `material.OutputAssignment.merge_xyz` and associated types for combining XYZ assignments if possible.
 
+### Changed
+* Changed numpy arrays to be row-major to properly match conventions.
+
 ## 0.15.0 - 2025-06-09
 ### Added
 * Added many additional fields to `material.MaterialParameters`.
