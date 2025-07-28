@@ -911,12 +911,9 @@ mod xc3_model_py {
     }
 
     #[pyfunction]
-    fn load_animations(py: Python, anim_path: &str) -> PyResult<Vec<animation::Animation>> {
+    fn load_animations(py: Python, anim_path: &str) -> PyResult<TypedList<animation::Animation>> {
         let animations = xc3_model::load_animations(anim_path).map_err(py_exception)?;
-        animations
-            .into_iter()
-            .map(|a| animation::animation_py(py, a))
-            .collect()
+        animations.map_py(py)
     }
 
     #[pyfunction]

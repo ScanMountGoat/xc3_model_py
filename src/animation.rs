@@ -10,6 +10,7 @@ python_enum!(BlendMode, xc3_model::animation::BlendMode, Blend, Add);
 pub mod animation {
     use crate::xc3_model_py::Skeleton;
     use map_py::MapPy;
+    use numpy::PyArray1;
     use numpy::PyArray2;
     use numpy::PyArray3;
     use pyo3::prelude::*;
@@ -26,7 +27,8 @@ pub mod animation {
     use super::BlendMode;
 
     #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::animation::Animation)]
     pub struct Animation {
         pub name: String,
         pub space_mode: SpaceMode,
@@ -35,6 +37,9 @@ pub mod animation {
         pub frames_per_second: f32,
         pub frame_count: u32,
         pub tracks: Vec<Track>,
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
+        pub morph_tracks: Option<Py<MorphTracks>>,
         pub root_translation: Option<Py<PyArray2<f32>>>,
     }
 
@@ -51,7 +56,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<Py<PyArray3<f32>>> {
-            let animation = animation_rs(py, self)?;
+            let animation: xc3_model::animation::Animation = self.clone().map_py(py)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.skinning_transforms(&skeleton, frame);
             transforms.map_py(py)
@@ -63,7 +68,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<Py<PyArray3<f32>>> {
-            let animation = animation_rs(py, self)?;
+            let animation: xc3_model::animation::Animation = self.clone().map_py(py)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.model_space_transforms(&skeleton, frame);
             let matrices: Vec<_> = transforms.into_iter().map(|t| t.to_matrix()).collect();
@@ -76,7 +81,7 @@ pub mod animation {
             skeleton: Skeleton,
             frame: f32,
         ) -> PyResult<Py<PyArray3<f32>>> {
-            let animation = animation_rs(py, self)?;
+            let animation: xc3_model::animation::Animation = self.clone().map_py(py)?;
             let skeleton = skeleton.map_py(py)?;
             let transforms = animation.local_space_transforms(&skeleton, frame);
             transforms.map_py(py)
@@ -88,7 +93,7 @@ pub mod animation {
             skeleton: Skeleton,
             use_blender_coordinates: bool,
         ) -> PyResult<FCurves> {
-            let animation = animation_rs(py, self)?;
+            let animation: xc3_model::animation::Animation = self.clone().map_py(py)?;
             let skeleton = skeleton.map_py(py)?;
             let fcurves = animation.fcurves(&skeleton, use_blender_coordinates);
             fcurves_py(py, &fcurves)
@@ -97,7 +102,8 @@ pub mod animation {
 
     // TODO: Expose implementation details?
     #[pyclass]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::animation::Track)]
     pub struct Track(xc3_model::animation::Track);
 
     #[pymethods]
@@ -154,6 +160,14 @@ pub mod animation {
     }
 
     #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::animation::MorphTracks)]
+    pub struct MorphTracks {
+        pub track_indices: Py<PyArray1<i16>>,
+        pub track_values: Py<PyArray1<f32>>,
+    }
+
+    #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone)]
     pub struct Keyframe {
         pub x_coeffs: (f32, f32, f32, f32),
@@ -173,43 +187,6 @@ pub mod animation {
     #[pyfunction]
     fn murmur3(name: &str) -> u32 {
         xc3_model::animation::murmur3(name.as_bytes())
-    }
-
-    pub fn animation_rs(
-        py: Python,
-        animation: &Animation,
-    ) -> PyResult<xc3_model::animation::Animation> {
-        Ok(xc3_model::animation::Animation {
-            name: animation.name.clone(),
-            space_mode: animation.space_mode.into(),
-            play_mode: animation.play_mode.into(),
-            blend_mode: animation.blend_mode.into(),
-            frames_per_second: animation.frames_per_second,
-            frame_count: animation.frame_count,
-            tracks: animation.tracks.iter().map(|t| t.0.clone()).collect(),
-            morph_tracks: None, // TODO: morph animations?
-            root_translation: animation
-                .root_translation
-                .as_ref()
-                .map(|t| t.clone().map_py(py))
-                .transpose()?,
-        })
-    }
-
-    pub fn animation_py(
-        py: Python,
-        animation: xc3_model::animation::Animation,
-    ) -> PyResult<Animation> {
-        Ok(Animation {
-            name: animation.name.clone(),
-            space_mode: animation.space_mode.into(),
-            play_mode: animation.play_mode.into(),
-            blend_mode: animation.blend_mode.into(),
-            frames_per_second: animation.frames_per_second,
-            frame_count: animation.frame_count,
-            tracks: animation.tracks.into_iter().map(Track).collect(),
-            root_translation: animation.root_translation.map_py(py)?,
-        })
     }
 
     pub fn fcurves_py(py: Python, fcurves: &xc3_model::animation::FCurves) -> PyResult<FCurves> {

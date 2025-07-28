@@ -11,6 +11,7 @@ class Animation:
     frames_per_second: float
     frame_count: int
     tracks: list[Track]
+    morph_tracks: Optional[MorphTracks]
     root_translation: Optional[numpy.ndarray]
 
     def current_frame(self, current_time_seconds: float) -> float: ...
@@ -39,6 +40,10 @@ class Track:
     def bone_index(self) -> Optional[int]: ...
     def bone_hash(self) -> Optional[int]: ...
     def bone_name(self) -> Optional[str]: ...
+
+class MorphTracks:
+    track_indices: numpy.ndarray
+    track_values: numpy.ndarray
 
 class KeyFrame:
     x_coeffs: Tuple[float, float, float, float]
