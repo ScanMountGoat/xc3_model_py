@@ -904,9 +904,8 @@ mod xc3_model_py {
     ) -> PyResult<TypedList<MapRoot>> {
         let database = shader_database.map(|database| &database.0);
         // Prevent Python from locking up while Rust processes map data in parallel.
-        let roots = py.allow_threads(move || {
-            xc3_model::load_map(wismhd_path, database).map_err(py_exception)
-        })?;
+        let roots =
+            py.detach(move || xc3_model::load_map(wismhd_path, database).map_err(py_exception))?;
         roots.map_py(py)
     }
 
@@ -1033,7 +1032,7 @@ mod xc3_model_py {
             .collect();
 
         // Prevent Python from locking up while Rust processes data in parallel.
-        py.allow_threads(move || {
+        py.detach(move || {
             surfaces
                 .into_par_iter()
                 .map(|(name, usage, image_format, mipmaps, surface)| {
@@ -1090,7 +1089,7 @@ mod xc3_model_py {
             .collect::<PyResult<Vec<_>>>()?;
 
         // Prevent Python from locking up while Rust processes data in parallel.
-        py.allow_threads(move || {
+        py.detach(move || {
             surfaces
                 .into_par_iter()
                 .map(|(name, usage, image_format, mipmaps, surface)| {
