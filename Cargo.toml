@@ -2,7 +2,7 @@
 name = "xc3_model_py"
 version = "0.15.0"
 authors = ["ScanMountGoat"]
-edition = "2021"
+edition = "2024"
 readme = "README.md"
 
 [dependencies]

@@ -154,8 +154,8 @@ python_enum!(
 
 #[pymodule]
 pub mod material {
-    use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::Operation;
+    use crate::shader_database::shader_database::ShaderProgram;
     use crate::xc3_model_py::ImageTexture;
     use map_py::{MapPy, TypedList};
     use numpy::PyArray1;
