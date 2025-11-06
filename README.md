@@ -62,7 +62,7 @@ for model in root.models.models:
             )
 
             weight_buffer = buffers.weights.weight_buffer(mesh.flags2)
-            if weight_buffer is not None:
+            if weight_buffer is not None and root.models.skinning is not None:
                 # Get vertex skinning attributes.
                 for attribute in vertex_buffer.attributes:
                     if (
@@ -74,7 +74,7 @@ for model in root.models.models:
                         skin_weights = weight_buffer.weights[weight_indices]
                         # Note that these indices index into a different bone list than the skeleton.
                         bone_indices = weight_buffer.bone_indices[weight_indices, 0]
-                        bone_name = weight_buffer.bone_names[bone_indices[0]]
+                        bone_name = root.models.skinning.bones[bone_indices[0]].name
 ```
 
 Certain types like matrices and vertex atribute data are stored using `numpy.ndarray`. All transformation matrices are column-major to match the Rust code in xc3_model. This greatly reduces conversion overhead and allows for more optimized Python code. xc3_model_py requires the numpy package to be installed. Blender already provides the numpy package, enabling the use of functions like `foreach_get` and `foreach_set` for efficient property access.
