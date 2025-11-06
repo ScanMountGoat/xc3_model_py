@@ -64,13 +64,14 @@ class Weights:
 class SkinWeights:
     bone_indices: numpy.ndarray
     weights: numpy.ndarray
-    bone_names: list[str]
 
-    def __init__(
-        self, bone_indices: numpy.ndarray, weights: numpy.ndarray, bone_names: list[str]
-    ) -> None: ...
-    def to_influences(self, weight_indices: numpy.ndarray) -> list[Influence]: ...
-    def add_influences(self, influences: list[Influence]) -> numpy.ndarray: ...
+    def __init__(self, bone_indices: numpy.ndarray, weights: numpy.ndarray) -> None: ...
+    def to_influences(
+        self, weight_indices: numpy.ndarray, bone_names: list[str]
+    ) -> list[Influence]: ...
+    def add_influences(
+        self, influences: list[Influence], bone_names: list[str]
+    ) -> numpy.ndarray: ...
 
 class Influence:
     bone_name: str

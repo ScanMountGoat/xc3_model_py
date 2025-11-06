@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added method `material.OutputAssignment.merge_xyz` and associated types for combining XYZ assignments if possible.
+* Added additional variants to `shader_database.Operation`.
+* Added `shader_database.Dependency.int` variant.
 
 ### Changed
 * Changed numpy arrays to be row-major to properly match conventions.
+* Moved `bone_names` field for `skinning.SkinWeights` to parameters for `to_influences` and `add_influences` methods.
+* Renamed `shader_database.Dependency.constant` to `shader_database.Dependency.float`.
 
 ## 0.15.0 - 2025-06-09
 ### Added

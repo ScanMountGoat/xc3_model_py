@@ -41,15 +41,20 @@ python_enum!(
     Dot4,
     NormalMapX,
     NormalMapY,
-    NormalMapZ
+    NormalMapZ,
+    MonochromeX,
+    MonochromeY,
+    MonochromeZ,
+    Negate,
+    FurInstanceAlpha
 );
 
 #[pymodule]
 pub mod shader_database {
 
     use crate::py_exception;
-    use map_py::{MapPy, TypedList};
-    use pyo3::{prelude::*, types::PyDict};
+    use map_py::{MapPy, TypedDict, TypedList};
+    use pyo3::prelude::*;
 
     #[pymodule_export]
     use super::Operation;
@@ -73,7 +78,7 @@ pub mod shader_database {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::ShaderProgram)]
     pub struct ShaderProgram {
-        pub output_dependencies: Py<PyDict>,
+        pub output_dependencies: TypedDict<String, usize>,
         pub outline_width: Option<Dependency>,
         pub normal_intensity: Option<usize>,
         pub exprs: TypedList<OutputExpr>,
@@ -145,9 +150,16 @@ pub mod shader_database {
 
     #[pymethods]
     impl Dependency {
-        pub fn constant(&self) -> Option<f32> {
+        pub fn int(&self) -> Option<i32> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Constant(c) => Some(c.0),
+                xc3_model::shader_database::Dependency::Int(i) => Some(*i),
+                _ => None,
+            }
+        }
+
+        pub fn float(&self) -> Option<f32> {
+            match &self.0 {
+                xc3_model::shader_database::Dependency::Float(c) => Some(c.0),
                 _ => None,
             }
         }

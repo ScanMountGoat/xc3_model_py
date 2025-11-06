@@ -191,22 +191,15 @@ pub mod skinning {
         pub bone_indices: Py<PyArray2<u8>>,
         // N x 4 numpy.ndarray
         pub weights: Py<PyArray2<f32>>,
-        /// The name list for the indices in [bone_indices](#structfield.bone_indices).
-        pub bone_names: TypedList<String>,
     }
 
     #[pymethods]
     impl SkinWeights {
         #[new]
-        pub fn new(
-            bone_indices: Py<PyArray2<u8>>,
-            weights: Py<PyArray2<f32>>,
-            bone_names: TypedList<String>,
-        ) -> Self {
+        pub fn new(bone_indices: Py<PyArray2<u8>>, weights: Py<PyArray2<f32>>) -> Self {
             Self {
                 bone_indices,
                 weights,
-                bone_names,
             }
         }
 
@@ -214,9 +207,13 @@ pub mod skinning {
             &self,
             py: Python,
             weight_indices: Py<PyArray2<u16>>,
+            bone_names: Vec<String>,
         ) -> PyResult<TypedList<Influence>> {
             let weight_indices: Vec<_> = weight_indices.extract(py)?;
-            let influences = self.clone().map_py(py)?.to_influences(&weight_indices);
+            let influences = self
+                .clone()
+                .map_py(py)?
+                .to_influences(&weight_indices, &bone_names);
             influences.map_py(py)
         }
 
@@ -225,6 +222,7 @@ pub mod skinning {
             py: Python,
             influences: Vec<PyRef<Influence>>,
             vertex_count: usize,
+            bone_names: Vec<String>,
         ) -> PyResult<Py<PyArray2<u16>>> {
             let influences = influences
                 .into_iter()
@@ -234,7 +232,8 @@ pub mod skinning {
                 })
                 .collect::<PyResult<Vec<_>>>()?;
             let mut skin_weights = self.clone().map_py(py)?;
-            let weight_indices = skin_weights.add_influences(&influences, vertex_count);
+            let weight_indices =
+                skin_weights.add_influences(&influences, vertex_count, &bone_names);
             *self = skin_weights.map_py(py)?;
             weight_indices.map_py(py)
         }
