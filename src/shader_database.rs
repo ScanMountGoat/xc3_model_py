@@ -46,7 +46,24 @@ python_enum!(
     MonochromeY,
     MonochromeZ,
     Negate,
-    FurInstanceAlpha
+    FurInstanceAlpha,
+    Float,
+    Int,
+    Uint,
+    Truncate,
+    FloatBitsToInt,
+    IntBitsToFloat,
+    UintBitsToFloat,
+    InverseSqrt,
+    Not,
+    LeftShift,
+    RightShift,
+    PartialDerivativeX,
+    PartialDerivativeY,
+    Exp2,
+    Log2,
+    Sin,
+    Cos
 );
 
 #[pymodule]
