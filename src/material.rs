@@ -160,6 +160,7 @@ pub mod material {
     use map_py::{MapPy, TypedList};
     use numpy::PyArray1;
     use pyo3::prelude::*;
+    use pyo3::types::PyDict;
 
     #[pymodule_export]
     use super::BlendMode;
@@ -295,6 +296,11 @@ pub mod material {
             let assignments: xc3_model::material::assignments::OutputAssignments =
                 self.clone().map_py(py)?.output_assignments(&image_textures);
             assignments.map_py(py)
+        }
+
+        fn __deepcopy__(&self, py: Python, _memo: Py<PyDict>) -> Self {
+            let copy: xc3_model::material::Material = self.clone().map_py(py).unwrap();
+            copy.map_py(py).unwrap()
         }
     }
 

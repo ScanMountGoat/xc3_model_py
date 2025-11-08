@@ -110,7 +110,7 @@ mod xc3_model_py {
     use crate::skinning::skinning::Skinning;
     use crate::vertex::vertex::ModelBuffers;
     use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArrayDyn};
-    use pyo3::types::PyBytes;
+    use pyo3::types::{PyBytes, PyDict};
     use xc3_lib::dds::DdsExt;
 
     use map_py::{MapPy, TypedList};
@@ -324,6 +324,10 @@ mod xc3_model_py {
                 flags2,
                 base_mesh_index,
             }
+        }
+
+        fn __deepcopy__(&self, _memo: Py<PyDict>) -> Self {
+            self.clone()
         }
     }
 
