@@ -199,7 +199,11 @@ pub mod material {
         pub state_flags: StateFlags,
         pub color: [f32; 4],
         pub textures: TypedList<Texture>,
-        pub alpha_test: Option<TextureAlphaTest>,
+
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
+        pub alpha_test: Option<Py<TextureAlphaTest>>,
+
         pub work_values: Py<PyArray1<f32>>,
         pub shader_vars: Vec<(u16, u16)>,
         pub work_callbacks: TypedList<WorkCallback>,
@@ -208,13 +212,23 @@ pub mod material {
         pub m_unks1_2: u32,
         pub m_unks1_3: u32,
         pub m_unks1_4: u32,
-        pub shader: Option<ShaderProgram>,
+
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
+        pub shader: Option<Py<ShaderProgram>>,
+
         pub technique_index: usize,
         pub pass_type: RenderPassType,
-        pub parameters: MaterialParameters,
+
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
+        pub parameters: Py<MaterialParameters>,
+
         pub m_unks2_2: u16,
         pub gbuffer_flags: u16,
-        pub fur_params: Option<FurShellParams>,
+
+        #[map(from(map_py::helpers::into_option_py))]
+        #[map(into(map_py::helpers::from_option_py))]
+        pub fur_params: Option<Py<FurShellParams>>,
     }
 
     #[pymethods]
@@ -237,12 +251,12 @@ pub mod material {
             m_unks1_4: u32,
             technique_index: usize,
             pass_type: RenderPassType,
-            parameters: MaterialParameters,
+            parameters: Py<MaterialParameters>,
             m_unks2_2: u16,
             gbuffer_flags: u16,
-            alpha_test: Option<TextureAlphaTest>,
-            shader: Option<ShaderProgram>,
-            fur_params: Option<FurShellParams>,
+            alpha_test: Option<Py<TextureAlphaTest>>,
+            shader: Option<Py<ShaderProgram>>,
+            fur_params: Option<Py<FurShellParams>>,
         ) -> Self {
             Self {
                 name,

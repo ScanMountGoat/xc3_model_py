@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Moved `bone_names` field for `skinning.SkinWeights` to parameters for `to_influences` and `add_influences` methods.
 * Renamed `shader_database.Dependency.constant` to `shader_database.Dependency.float`.
 
+### Fixed
+* Fixed an issue where fields on nested types for `material.Material` were not mutable.
+
 ## 0.15.0 - 2025-06-09
 ### Added
 * Added many additional fields to `material.MaterialParameters`.
