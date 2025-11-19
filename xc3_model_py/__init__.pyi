@@ -135,17 +135,19 @@ class Mesh:
     ) -> None: ...
 
 class LodData:
+    unk1: int
     items: list[LodItem]
     groups: list[LodGroup]
 
-    def __init__(self, items: list[LodItem], groups: list[LodGroup]) -> None: ...
+    def __init__(
+        self, unk1: int, items: list[LodItem], groups: list[LodGroup]
+    ) -> None: ...
 
 class LodItem:
     unk2: float
     index: int
-    unk5: int
 
-    def __init__(self, unk2: float, index: int, unk5: int) -> None: ...
+    def __init__(self, unk2: float, index: int) -> None: ...
 
 class LodGroup:
     base_lod_index: int

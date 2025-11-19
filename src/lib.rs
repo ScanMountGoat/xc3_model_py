@@ -335,6 +335,7 @@ mod xc3_model_py {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::LodData)]
     pub struct LodData {
+        pub unk1: u32,
         pub items: TypedList<LodItem>,
         pub groups: TypedList<LodGroup>,
     }
@@ -342,8 +343,12 @@ mod xc3_model_py {
     #[pymethods]
     impl LodData {
         #[new]
-        pub fn new(items: TypedList<LodItem>, groups: TypedList<LodGroup>) -> Self {
-            Self { items, groups }
+        pub fn new(unk1: u32, items: TypedList<LodItem>, groups: TypedList<LodGroup>) -> Self {
+            Self {
+                unk1,
+                items,
+                groups,
+            }
         }
     }
 
@@ -353,14 +358,13 @@ mod xc3_model_py {
     pub struct LodItem {
         pub unk2: f32,
         pub index: u8,
-        pub unk5: u8,
     }
 
     #[pymethods]
     impl LodItem {
         #[new]
-        pub fn new(unk2: f32, index: u8, unk5: u8) -> Self {
-            Self { unk2, index, unk5 }
+        pub fn new(unk2: f32, index: u8) -> Self {
+            Self { unk2, index }
         }
     }
 
