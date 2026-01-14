@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## unreleased
 ### Added
+* Added support for wimdo export for Xenoblade Chronicles X Definitive Edition.
 * Added method `material.OutputAssignment.merge_xyz` and associated types for combining XYZ assignments if possible.
 * Added additional variants to `shader_database.Operation`.
 * Added `shader_database.Dependency.int` variant.
