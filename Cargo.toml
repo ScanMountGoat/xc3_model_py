@@ -6,8 +6,8 @@ edition = "2024"
 readme = "README.md"
 
 [dependencies]
-xc3_model = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "0fe10dd" }
-xc3_lib = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "0fe10dd" }
+xc3_model = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "c2ab03a" }
+xc3_lib = { git = "https://github.com/ScanMountGoat/xc3_lib", rev = "c2ab03a" }
 map_py = { git = "https://github.com/ScanMountGoat/map_py", rev = "405318c" }
 image_dds = "0.7.1"
 pyo3 = { version = "0.27.1", features = ["extension-module", "indexmap", "py-clone"] }
