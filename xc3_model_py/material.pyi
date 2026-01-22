@@ -10,6 +10,7 @@ class Material:
     state_flags: StateFlags
     color: list[float]
     textures: list[Texture]
+    alt_textures: Optional[list[Texture]]
     alpha_test: Optional[TextureAlphaTest]
     work_values: list[float]
     shader_vars: list[Tuple[int, int]]
@@ -23,7 +24,7 @@ class Material:
     technique_index: int
     pass_type: RenderPassType
     parameters: MaterialParameters
-    m_unks2_2: int
+    m_unks2: int
     gbuffer_flags: int
     fur_params: Optional[FurShellParams]
 
@@ -35,6 +36,7 @@ class Material:
         state_flags: StateFlags,
         color: list[float],
         textures: list[Texture],
+        alt_textures: Optional[list[Texture]],
         work_values: list[float],
         shader_vars: list[Tuple[int, int]],
         work_callbacks: list[Tuple[int, int]],
@@ -46,7 +48,7 @@ class Material:
         technique_index: int,
         pass_type: RenderPassType,
         parameters: MaterialParameters,
-        m_unks2_2: int,
+        m_unks2: int,
         gbuffer_flags: int,
         alpha_test: Optional[TextureAlphaTest],
         shader: Optional[ShaderProgram],
@@ -57,8 +59,12 @@ class Material:
 class RenderPassType:
     Unk0: ClassVar[RenderPassType]
     Unk1: ClassVar[RenderPassType]
+    Unk2: ClassVar[RenderPassType]
+    Unk3: ClassVar[RenderPassType]
+    Unk5: ClassVar[RenderPassType]
     Unk6: ClassVar[RenderPassType]
     Unk7: ClassVar[RenderPassType]
+    Unk8: ClassVar[RenderPassType]
     Unk9: ClassVar[RenderPassType]
 
 class StateFlags:

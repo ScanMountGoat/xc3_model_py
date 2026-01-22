@@ -137,8 +137,12 @@ python_enum!(
     xc3_model::material::RenderPassType,
     Unk0,
     Unk1,
+    Unk2,
+    Unk3,
+    Unk5,
     Unk6,
     Unk7,
+    Unk8,
     Unk9
 );
 
@@ -199,6 +203,7 @@ pub mod material {
         pub state_flags: StateFlags,
         pub color: [f32; 4],
         pub textures: TypedList<Texture>,
+        pub alt_textures: Option<TypedList<Texture>>,
 
         #[map(from(map_py::helpers::into_option_py))]
         #[map(into(map_py::helpers::from_option_py))]
@@ -223,7 +228,7 @@ pub mod material {
         #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub parameters: Py<MaterialParameters>,
 
-        pub m_unks2_2: u16,
+        pub m_unks2: u16,
         pub gbuffer_flags: u16,
 
         #[map(from(map_py::helpers::into_option_py))]
@@ -241,6 +246,7 @@ pub mod material {
             state_flags: StateFlags,
             color: [f32; 4],
             textures: TypedList<Texture>,
+            alt_textures: Option<TypedList<Texture>>,
             work_values: Py<PyArray1<f32>>,
             shader_vars: Vec<(u16, u16)>,
             work_callbacks: TypedList<WorkCallback>,
@@ -252,7 +258,7 @@ pub mod material {
             technique_index: usize,
             pass_type: RenderPassType,
             parameters: Py<MaterialParameters>,
-            m_unks2_2: u16,
+            m_unks2: u16,
             gbuffer_flags: u16,
             alpha_test: Option<Py<TextureAlphaTest>>,
             shader: Option<Py<ShaderProgram>>,
@@ -265,6 +271,7 @@ pub mod material {
                 state_flags,
                 color,
                 textures,
+                alt_textures,
                 alpha_test,
                 work_values,
                 shader_vars,
@@ -278,7 +285,7 @@ pub mod material {
                 technique_index,
                 pass_type,
                 parameters,
-                m_unks2_2,
+                m_unks2,
                 gbuffer_flags,
                 fur_params,
             }
