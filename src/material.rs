@@ -37,8 +37,10 @@ python_enum!(
     Unk20,
     Unk33,
     Unk37,
+    Unk39,
     Unk41,
     Unk49,
+    Unk65,
     Unk97,
     Unk105,
     Unk128
@@ -50,6 +52,7 @@ python_enum!(
     Unk0,
     Unk1,
     Unk2,
+    Unk4,
     Unk6,
     Unk7,
     Unk8,
@@ -129,7 +132,8 @@ python_enum!(
     Unk27,
     Unk28,
     Unk29,
-    Unk30
+    Unk30,
+    Unk31
 );
 
 python_enum!(
@@ -207,7 +211,7 @@ pub mod material {
 
         #[map(from(map_py::helpers::into_option_py))]
         #[map(into(map_py::helpers::from_option_py))]
-        pub alpha_test: Option<Py<TextureAlphaTest>>,
+        pub alpha_test: Option<Py<Texture>>,
 
         pub work_values: Py<PyArray1<f32>>,
         pub shader_vars: Vec<(u16, u16)>,
@@ -260,7 +264,7 @@ pub mod material {
             parameters: Py<MaterialParameters>,
             m_unks2: u16,
             gbuffer_flags: u16,
-            alpha_test: Option<Py<TextureAlphaTest>>,
+            alpha_test: Option<Py<Texture>>,
             shader: Option<Py<ShaderProgram>>,
             fur_params: Option<Py<FurShellParams>>,
         ) -> Self {
@@ -341,27 +345,6 @@ pub mod material {
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::TextureAlphaTest)]
-    pub struct TextureAlphaTest {
-        pub texture_index: usize,
-        pub sampler_index: usize,
-        pub channel_index: usize,
-    }
-
-    #[pymethods]
-    impl TextureAlphaTest {
-        #[new]
-        fn new(texture_index: usize, sampler_index: usize, channel_index: usize) -> Self {
-            Self {
-                texture_index,
-                sampler_index,
-                channel_index,
-            }
-        }
-    }
-
-    #[pyclass(get_all, set_all)]
-    #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::MaterialParameters)]
     pub struct MaterialParameters {
         pub material_color: [f32; 4],
@@ -418,15 +401,17 @@ pub mod material {
     pub struct Texture {
         pub image_texture_index: usize,
         pub sampler_index: usize,
+        pub sampler_index2: usize,
     }
 
     #[pymethods]
     impl Texture {
         #[new]
-        fn new(image_texture_index: usize, sampler_index: usize) -> Self {
+        fn new(image_texture_index: usize, sampler_index: usize, sampler_index2: usize) -> Self {
             Self {
                 image_texture_index,
                 sampler_index,
+                sampler_index2,
             }
         }
     }

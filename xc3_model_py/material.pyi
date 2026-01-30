@@ -11,7 +11,7 @@ class Material:
     color: list[float]
     textures: list[Texture]
     alt_textures: Optional[list[Texture]]
-    alpha_test: Optional[TextureAlphaTest]
+    alpha_test: Optional[Texture]
     work_values: list[float]
     shader_vars: list[Tuple[int, int]]
     work_callbacks: list[WorkCallback]
@@ -50,7 +50,7 @@ class Material:
         parameters: MaterialParameters,
         m_unks2: int,
         gbuffer_flags: int,
-        alpha_test: Optional[TextureAlphaTest],
+        alpha_test: Optional[Texture],
         shader: Optional[ShaderProgram],
         fur_params: Optional[FurShellParams],
     ) -> None: ...
@@ -104,8 +104,10 @@ class StencilValue:
     Unk20: ClassVar[StencilValue]
     Unk33: ClassVar[StencilValue]
     Unk37: ClassVar[StencilValue]
+    Unk39: ClassVar[StencilValue]
     Unk41: ClassVar[StencilValue]
     Unk49: ClassVar[StencilValue]
+    Unk65: ClassVar[StencilValue]
     Unk97: ClassVar[StencilValue]
     Unk105: ClassVar[StencilValue]
     Unk128: ClassVar[StencilValue]
@@ -114,6 +116,7 @@ class StencilMode:
     Unk0: ClassVar[StencilMode]
     Unk1: ClassVar[StencilMode]
     Unk2: ClassVar[StencilMode]
+    Unk4: ClassVar[StencilMode]
     Unk6: ClassVar[StencilMode]
     Unk7: ClassVar[StencilMode]
     Unk8: ClassVar[StencilMode]
@@ -137,15 +140,6 @@ class DepthFunc:
     Disabled: ClassVar[DepthFunc]
     LessEqual: ClassVar[DepthFunc]
     Equal: ClassVar[DepthFunc]
-
-class TextureAlphaTest:
-    texture_index: int
-    sampler_index: int
-    channel_index: int
-
-    def __init__(
-        self, texture_index: int, sampler_index: int, channel_index: int
-    ) -> None: ...
 
 class MaterialParameters:
     material_color: list[float]
@@ -173,8 +167,11 @@ class MaterialParameters:
 class Texture:
     image_texture_index: int
     sampler_index: int
+    sampler_index2: int
 
-    def __init__(self, image_texture_index: int, sampler_index: int) -> None: ...
+    def __init__(
+        self, image_texture_index: int, sampler_index: int, sampler_index2: int
+    ) -> None: ...
 
 class WorkCallback:
     unk1: int

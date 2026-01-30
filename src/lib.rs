@@ -697,6 +697,7 @@ mod xc3_model_py {
         pub mag_filter: FilterMode,
         pub mip_filter: FilterMode,
         pub mipmaps: bool,
+        pub lod_bias: f32,
     }
 
     #[pymethods]
@@ -710,6 +711,7 @@ mod xc3_model_py {
             mag_filter: FilterMode,
             mip_filter: FilterMode,
             mipmaps: bool,
+            lod_bias: f32,
         ) -> Self {
             Self {
                 address_mode_u,
@@ -719,6 +721,7 @@ mod xc3_model_py {
                 mag_filter,
                 mip_filter,
                 mipmaps,
+                lod_bias,
             }
         }
     }

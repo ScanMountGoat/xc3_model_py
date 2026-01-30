@@ -245,6 +245,7 @@ class TextureUsage:
     Unk28: ClassVar[TextureUsage]
     Unk29: ClassVar[TextureUsage]
     Unk30: ClassVar[TextureUsage]
+    Unk31: ClassVar[TextureUsage]
 
 class ViewDimension:
     D2: ClassVar[ViewDimension]
@@ -328,6 +329,7 @@ class Sampler:
     mag_filter: FilterMode
     mip_filter: FilterMode
     mipmaps: bool
+    lod_bias: float
 
     def __init__(
         self,
@@ -338,6 +340,7 @@ class Sampler:
         mag_filter: FilterMode,
         mip_filter: FilterMode,
         mipmaps: bool,
+        lod_bias: float,
     ) -> None: ...
 
 class AddressMode:

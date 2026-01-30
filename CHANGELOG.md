@@ -13,15 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `unk` to `LodData` to better preserve in game data.
 * Added additional variants to `material.RenderPassType`.
 * Added field `alt_textures` to `material.Material`.
+* Added field `lod_bias` to `Sampler`.
+* Added additional variants to `material.StencilValue` and `material.StencilMode`.
+* Added additional variants to `TextureUsage`.
+* Added field `sampler_index2` to `material.Texture`.
 
 ### Changed
 * Changed numpy arrays to be row-major to properly match conventions.
 * Moved `bone_names` field for `skinning.SkinWeights` to parameters for `to_influences` and `add_influences` methods.
 * Renamed `shader_database.Dependency.constant` to `shader_database.Dependency.float`.
 * Renamed field `material.Material.m_unks2_2` to `m_unks2`.
+* Changed field `material.Material.alpha_test` to use type `material.Texture` to better match in game data.
 
 ### Removed
 * Removed field `unk5` from `LodItem`.
+* Removed type `material.TextureAlphaTest`.
 
 ### Fixed
 * Fixed an issue where fields on nested types for `material.Material` were not mutable.
