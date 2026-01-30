@@ -323,6 +323,10 @@ pub mod material {
             assignments.map_py(py)
         }
 
+        pub fn alpha_texture_channel_index(&self, py: Python) -> PyResult<usize> {
+            Ok(self.clone().map_py(py)?.alpha_texture_channel_index())
+        }
+
         fn __deepcopy__(&self, py: Python, _memo: Py<PyDict>) -> Self {
             let copy: xc3_model::material::Material = self.clone().map_py(py).unwrap();
             copy.map_py(py).unwrap()

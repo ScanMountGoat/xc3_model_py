@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added additional variants to `material.StencilValue` and `material.StencilMode`.
 * Added additional variants to `TextureUsage`.
 * Added field `sampler_index2` to `material.Texture`.
+* Added method `alpha_texture_channel_index` to `material.Material`.
 
 ### Changed
 * Changed numpy arrays to be row-major to properly match conventions.
