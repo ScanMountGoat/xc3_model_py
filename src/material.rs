@@ -199,11 +199,13 @@ pub mod material {
     #[map(xc3_model::material::Material)]
     pub struct Material {
         pub name: String,
-        pub flags: MaterialFlags,
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
+        pub flags: Py<MaterialFlags>,
         // TODO: how to handle flags?
         #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
         pub render_flags: u32,
-        pub state_flags: StateFlags,
+        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
+        pub state_flags: Py<StateFlags>,
         pub color: [f32; 4],
         pub textures: TypedList<Texture>,
         pub alt_textures: Option<TypedList<Texture>>,
@@ -244,9 +246,9 @@ pub mod material {
         #[new]
         fn new(
             name: String,
-            flags: MaterialFlags,
+            flags: Py<MaterialFlags>,
             render_flags: u32,
-            state_flags: StateFlags,
+            state_flags: Py<StateFlags>,
             color: [f32; 4],
             textures: TypedList<Texture>,
             alt_textures: Option<TypedList<Texture>>,
