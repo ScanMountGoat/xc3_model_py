@@ -5,7 +5,7 @@ from xc3_model_py.shader_database import Operation, ShaderProgram
 
 class Material:
     name: str
-    flags: int
+    flags: MaterialFlags
     render_flags: int
     state_flags: StateFlags
     color: list[float]
@@ -31,7 +31,7 @@ class Material:
     def __init__(
         self,
         name: str,
-        flags: int,
+        flags: MaterialFlags,
         render_flags: int,
         state_flags: StateFlags,
         color: list[float],
@@ -56,6 +56,38 @@ class Material:
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
     def alpha_texture_channel_index(self) -> int: ...
+
+class MaterialFlags:
+    unk1: bool
+    unk2: bool
+    alpha_mask: bool
+    separate_mask: bool
+    unk5: bool
+    unk6: bool
+    unk7: bool
+    unk8: bool
+    unk9: bool
+    fur: bool
+    unk11: int
+    fur_shells: bool
+    unk: int
+
+    def __init__(
+        self,
+        unk1: bool,
+        unk2: bool,
+        alpha_mask: bool,
+        separate_mask: bool,
+        unk5: bool,
+        unk6: bool,
+        unk7: bool,
+        unk8: bool,
+        unk9: bool,
+        fur: bool,
+        unk11: int,
+        fur_shells: bool,
+        unk: int,
+    ) -> None: ...
 
 class RenderPassType:
     Unk0: ClassVar[RenderPassType]

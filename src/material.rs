@@ -199,9 +199,8 @@ pub mod material {
     #[map(xc3_model::material::Material)]
     pub struct Material {
         pub name: String,
+        pub flags: MaterialFlags,
         // TODO: how to handle flags?
-        #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
-        pub flags: u32,
         #[map(from(map_py::helpers::into), into(map_py::helpers::into))]
         pub render_flags: u32,
         pub state_flags: StateFlags,
@@ -245,7 +244,7 @@ pub mod material {
         #[new]
         fn new(
             name: String,
-            flags: u32,
+            flags: MaterialFlags,
             render_flags: u32,
             state_flags: StateFlags,
             color: [f32; 4],
@@ -330,6 +329,101 @@ pub mod material {
         fn __deepcopy__(&self, py: Python, _memo: Py<PyDict>) -> Self {
             let copy: xc3_model::material::Material = self.clone().map_py(py).unwrap();
             copy.map_py(py).unwrap()
+        }
+    }
+
+    // TODO: macro for generating python class for bilge bitfield.
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone)]
+    pub struct MaterialFlags {
+        pub unk1: bool,
+        pub unk2: bool,
+        pub alpha_mask: bool,
+        pub separate_mask: bool,
+        pub unk5: bool,
+        pub unk6: bool,
+        pub unk7: bool,
+        pub unk8: bool,
+        pub unk9: bool,
+        pub fur: bool,
+        pub unk11: u32,
+        pub fur_shells: bool,
+        pub unk: u8,
+    }
+
+    #[pymethods]
+    impl MaterialFlags {
+        #[new]
+        fn new(
+            unk1: bool,
+            unk2: bool,
+            alpha_mask: bool,
+            separate_mask: bool,
+            unk5: bool,
+            unk6: bool,
+            unk7: bool,
+            unk8: bool,
+            unk9: bool,
+            fur: bool,
+            unk11: u32,
+            fur_shells: bool,
+            unk: u8,
+        ) -> Self {
+            Self {
+                unk1,
+                unk2,
+                alpha_mask,
+                separate_mask,
+                unk5,
+                unk6,
+                unk7,
+                unk8,
+                unk9,
+                fur,
+                unk11,
+                fur_shells,
+                unk,
+            }
+        }
+    }
+
+    impl MapPy<xc3_lib::mxmd::MaterialFlags> for MaterialFlags {
+        fn map_py(self, _py: Python) -> PyResult<xc3_lib::mxmd::MaterialFlags> {
+            Ok(xc3_lib::mxmd::MaterialFlags::new(
+                self.unk1,
+                self.unk2,
+                self.alpha_mask,
+                self.separate_mask,
+                self.unk5,
+                self.unk6,
+                self.unk7,
+                self.unk8,
+                self.unk9,
+                self.fur,
+                self.unk11.into(),
+                self.fur_shells,
+                self.unk.into(),
+            ))
+        }
+    }
+
+    impl MapPy<MaterialFlags> for xc3_lib::mxmd::MaterialFlags {
+        fn map_py(self, _py: Python) -> PyResult<MaterialFlags> {
+            Ok(MaterialFlags {
+                unk1: self.unk1(),
+                unk2: self.unk2(),
+                alpha_mask: self.alpha_mask(),
+                separate_mask: self.separate_mask(),
+                unk5: self.unk5(),
+                unk6: self.unk6(),
+                unk7: self.unk7(),
+                unk8: self.unk8(),
+                unk9: self.unk9(),
+                fur: self.fur(),
+                unk11: self.unk11().into(),
+                fur_shells: self.fur_shells(),
+                unk: self.unk().into(),
+            })
         }
     }
 
