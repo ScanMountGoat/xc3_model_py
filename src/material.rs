@@ -400,9 +400,9 @@ pub mod material {
                 self.unk8,
                 self.unk9,
                 self.fur,
-                self.unk11.into(),
+                bilge::arbitrary_int::u17::new(self.unk11),
                 self.fur_shells,
-                self.unk.into(),
+                bilge::arbitrary_int::u4::new(self.unk),
             ))
         }
     }
@@ -420,9 +420,9 @@ pub mod material {
                 unk8: self.unk8(),
                 unk9: self.unk9(),
                 fur: self.fur(),
-                unk11: self.unk11().into(),
+                unk11: self.unk11().value(),
                 fur_shells: self.fur_shells(),
-                unk: self.unk().into(),
+                unk: self.unk().value(),
             })
         }
     }
