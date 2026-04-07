@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added support for wimdo export for Xenoblade Chronicles X Definitive Edition.
+* Added support for wismhd import for Xenoblade Chronicles X Definitive Edition.
 * Added method `material.OutputAssignment.merge_xyz` and associated types for combining XYZ assignments if possible.
 * Added additional variants to `shader_database.Operation`.
 * Added `shader_database.Dependency.int` variant.
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `sampler_index2` to `material.Texture`.
 * Added method `alpha_texture_channel_index` to `material.Material`.
 * Added type `material.MaterialFlags`.
+* Added type `material.WorkCallbackType`.
+* Added type `material.MaterialVariable`.
 
 ### Changed
 * Changed numpy arrays to be row-major to properly match conventions.
@@ -27,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed field `material.Material.m_unks2_2` to `m_unks2`.
 * Changed field `material.Material.alpha_test` to use type `material.Texture` to better match in game data.
 * Changed field `material.Material.flags` to use type `material.MaterialFlags` to better match in game data.
+* Renamed `material.RenderPassType` to `material.MaterialTechniqueType`.
+* Renamed `material.Texture` fields to better reflect in game data.
+* Renamed `material.Material` fields to better reflect in game data.
 
 ### Removed
 * Removed field `unk5` from `LodItem`.

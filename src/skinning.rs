@@ -14,7 +14,7 @@ pub mod skinning {
     use numpy::PyArray2;
     use pyo3::prelude::*;
 
-    use crate::material::RenderPassType;
+    use crate::material::MaterialTechniqueType;
     use map_py::{MapPy, TypedList};
 
     #[pymodule_export]
@@ -158,7 +158,7 @@ pub mod skinning {
             &self,
             skin_flags: u32,
             lod_item_index: usize,
-            unk_type: RenderPassType,
+            unk_type: MaterialTechniqueType,
         ) -> usize {
             // TODO: Move the optional parameter last in Rust to match Python?
             self.weight_groups.weights_start_index(

@@ -137,17 +137,18 @@ python_enum!(
 );
 
 python_enum!(
-    RenderPassType,
-    xc3_model::material::RenderPassType,
-    Unk0,
-    Unk1,
+    MaterialTechniqueType,
+    xc3_model::material::MaterialTechniqueType,
+    Opaque,
+    Translucent,
     Unk2,
     Unk3,
+    LightPrepass,
     Unk5,
-    Unk6,
-    Unk7,
-    Unk8,
-    Unk9
+    Masked,
+    GBufferLast,
+    Refraction,
+    GBufferBlend
 );
 
 python_enum!(
@@ -158,6 +159,60 @@ python_enum!(
     Y,
     Z,
     W
+);
+
+python_enum!(
+    WorkCallbackType,
+    xc3_lib::mxmd::WorkCallbackType,
+    MatxView,
+    EmissiveTime,
+    RgbTime,
+    RTime,
+    AccRgb1,
+    AccRgb2,
+    AccRgb3,
+    AccRgb4,
+    AccMulRgb1,
+    AccMulRgb2,
+    AccMulRgb3,
+    AccMulRgb4,
+    AccVal1,
+    AccVal2,
+    AccVal3,
+    AccVal4,
+    AccMulVal1,
+    AccMulVal2,
+    AccMulVal3,
+    AccMulVal4,
+    WaterFog,
+    MatxInvView,
+    FurShader,
+    CalcBloom,
+    CalcColor,
+    OutLineVal,
+    ToonId,
+    VolumeTest,
+    BaseColor,
+    BaseVal,
+    TransVal,
+    CalcPrjView,
+    CalcPrjChgView,
+    CalcPrjDefCall,
+    CalcPrjAlpha,
+    Unk35,
+    Unk36,
+    Unk38,
+    Unk40,
+    Unk41,
+    Unk42,
+    Unk43,
+    Unk45,
+    Unk46,
+    Unk47,
+    Unk48,
+    Unk58,
+    Unk50,
+    Unk51
 );
 
 #[pymodule]
@@ -192,7 +247,10 @@ pub mod material {
     use super::TextureUsage;
 
     #[pymodule_export]
-    use super::RenderPassType;
+    use super::MaterialTechniqueType;
+
+    #[pymodule_export]
+    use super::WorkCallbackType;
 
     #[pyclass(get_all, set_all)]
     #[derive(Debug, Clone, MapPy)]
@@ -215,7 +273,7 @@ pub mod material {
         pub alpha_test: Option<Py<Texture>>,
 
         pub work_values: Py<PyArray1<f32>>,
-        pub shader_vars: Vec<(u16, u16)>,
+        pub variables: Vec<MaterialVariable>,
         pub work_callbacks: TypedList<WorkCallback>,
         pub alpha_test_ref: f32,
         pub m_unks1_1: u32,
@@ -228,7 +286,7 @@ pub mod material {
         pub shader: Option<Py<ShaderProgram>>,
 
         pub technique_index: usize,
-        pub pass_type: RenderPassType,
+        pub technique_type: MaterialTechniqueType,
 
         #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub parameters: Py<MaterialParameters>,
@@ -253,7 +311,7 @@ pub mod material {
             textures: TypedList<Texture>,
             alt_textures: Option<TypedList<Texture>>,
             work_values: Py<PyArray1<f32>>,
-            shader_vars: Vec<(u16, u16)>,
+            variables: Vec<MaterialVariable>,
             work_callbacks: TypedList<WorkCallback>,
             alpha_test_ref: f32,
             m_unks1_1: u32,
@@ -261,7 +319,7 @@ pub mod material {
             m_unks1_3: u32,
             m_unks1_4: u32,
             technique_index: usize,
-            pass_type: RenderPassType,
+            technique_type: MaterialTechniqueType,
             parameters: Py<MaterialParameters>,
             m_unks2: u16,
             gbuffer_flags: u16,
@@ -279,7 +337,7 @@ pub mod material {
                 alt_textures,
                 alpha_test,
                 work_values,
-                shader_vars,
+                variables,
                 work_callbacks,
                 alpha_test_ref,
                 m_unks1_1,
@@ -288,7 +346,7 @@ pub mod material {
                 m_unks1_4,
                 shader,
                 technique_index,
-                pass_type,
+                technique_type,
                 parameters,
                 m_unks2,
                 gbuffer_flags,
@@ -500,18 +558,43 @@ pub mod material {
     #[map(xc3_model::material::Texture)]
     pub struct Texture {
         pub image_texture_index: usize,
+        pub mipmap_sampler_index: usize,
         pub sampler_index: usize,
-        pub sampler_index2: usize,
     }
 
     #[pymethods]
     impl Texture {
         #[new]
-        fn new(image_texture_index: usize, sampler_index: usize, sampler_index2: usize) -> Self {
+        fn new(
+            image_texture_index: usize,
+            mipmap_sampler_index: usize,
+            sampler_index: usize,
+        ) -> Self {
             Self {
                 image_texture_index,
+                mipmap_sampler_index,
                 sampler_index,
-                sampler_index2,
+            }
+        }
+    }
+
+    #[pyclass(get_all, set_all)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::MaterialVariable)]
+    pub struct MaterialVariable {
+        pub var_type: u8,
+        pub param: u8,
+        pub work_value_index: u16,
+    }
+
+    #[pymethods]
+    impl MaterialVariable {
+        #[new]
+        fn new(var_type: u8, param: u8, work_value_index: u16) -> Self {
+            Self {
+                var_type,
+                param,
+                work_value_index,
             }
         }
     }
@@ -520,15 +603,18 @@ pub mod material {
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::WorkCallback)]
     pub struct WorkCallback {
-        pub unk1: u16,
-        pub unk2: u16,
+        pub callback_type: WorkCallbackType,
+        pub value: u16,
     }
 
     #[pymethods]
     impl WorkCallback {
         #[new]
-        fn new(unk1: u16, unk2: u16) -> Self {
-            Self { unk1, unk2 }
+        fn new(callback_type: WorkCallbackType, value: u16) -> Self {
+            Self {
+                callback_type,
+                value,
+            }
         }
     }
 

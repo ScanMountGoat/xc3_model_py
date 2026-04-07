@@ -13,7 +13,7 @@ class Material:
     alt_textures: Optional[list[Texture]]
     alpha_test: Optional[Texture]
     work_values: list[float]
-    shader_vars: list[Tuple[int, int]]
+    variables: list[MaterialVariable]
     work_callbacks: list[WorkCallback]
     alpha_test_ref: float
     m_unks1_1: int
@@ -22,7 +22,7 @@ class Material:
     m_unks1_4: int
     shader: Optional[ShaderProgram]
     technique_index: int
-    pass_type: RenderPassType
+    technique_type: MaterialTechniqueType
     parameters: MaterialParameters
     m_unks2: int
     gbuffer_flags: int
@@ -38,7 +38,7 @@ class Material:
         textures: list[Texture],
         alt_textures: Optional[list[Texture]],
         work_values: list[float],
-        shader_vars: list[Tuple[int, int]],
+        variables: list[MaterialVariable],
         work_callbacks: list[Tuple[int, int]],
         alpha_test_ref: float,
         m_unks1_1: int,
@@ -46,7 +46,7 @@ class Material:
         m_unks1_3: int,
         m_unks1_4: int,
         technique_index: int,
-        pass_type: RenderPassType,
+        technique_type: MaterialTechniqueType,
         parameters: MaterialParameters,
         m_unks2: int,
         gbuffer_flags: int,
@@ -89,16 +89,17 @@ class MaterialFlags:
         unk: int,
     ) -> None: ...
 
-class RenderPassType:
-    Unk0: ClassVar[RenderPassType]
-    Unk1: ClassVar[RenderPassType]
-    Unk2: ClassVar[RenderPassType]
-    Unk3: ClassVar[RenderPassType]
-    Unk5: ClassVar[RenderPassType]
-    Unk6: ClassVar[RenderPassType]
-    Unk7: ClassVar[RenderPassType]
-    Unk8: ClassVar[RenderPassType]
-    Unk9: ClassVar[RenderPassType]
+class MaterialTechniqueType:
+    Opaque: ClassVar[MaterialTechniqueType]
+    Translucent: ClassVar[MaterialTechniqueType]
+    Unk2: ClassVar[MaterialTechniqueType]
+    Unk3: ClassVar[MaterialTechniqueType]
+    LightPrepass: ClassVar[MaterialTechniqueType]
+    Unk5: ClassVar[MaterialTechniqueType]
+    Masked: ClassVar[MaterialTechniqueType]
+    GBufferLast: ClassVar[MaterialTechniqueType]
+    Refraction: ClassVar[MaterialTechniqueType]
+    GBufferBlend: ClassVar[MaterialTechniqueType]
 
 class StateFlags:
     depth_write_mode: int
@@ -199,18 +200,76 @@ class MaterialParameters:
 
 class Texture:
     image_texture_index: int
+    mipmap_sampler_index: int
     sampler_index: int
-    sampler_index2: int
 
     def __init__(
-        self, image_texture_index: int, sampler_index: int, sampler_index2: int
+        self, image_texture_index: int, mipmap_sampler_index: int, sampler_index: int
     ) -> None: ...
 
-class WorkCallback:
-    unk1: int
-    unk2: int
+class MaterialVariable:
+    var_type: int
+    param: int
+    work_value_index: int
 
-    def __init__(self, unk1: int, unk2: int) -> None: ...
+    def __init__(self, var_type: int, param: int, work_value_index: int) -> None: ...
+
+class WorkCallback:
+    callback_type: WorkCallbackType
+    value: int
+
+    def __init__(self, callback_type: WorkCallbackType, value: int) -> None: ...
+
+class WorkCallbackType:
+    MatxView: ClassVar[WorkCallbackType]
+    EmissiveTime: ClassVar[WorkCallbackType]
+    RgbTime: ClassVar[WorkCallbackType]
+    RTime: ClassVar[WorkCallbackType]
+    AccRgb1: ClassVar[WorkCallbackType]
+    AccRgb2: ClassVar[WorkCallbackType]
+    AccRgb3: ClassVar[WorkCallbackType]
+    AccRgb4: ClassVar[WorkCallbackType]
+    AccMulRgb1: ClassVar[WorkCallbackType]
+    AccMulRgb2: ClassVar[WorkCallbackType]
+    AccMulRgb3: ClassVar[WorkCallbackType]
+    AccMulRgb4: ClassVar[WorkCallbackType]
+    AccVal1: ClassVar[WorkCallbackType]
+    AccVal2: ClassVar[WorkCallbackType]
+    AccVal3: ClassVar[WorkCallbackType]
+    AccVal4: ClassVar[WorkCallbackType]
+    AccMulVal1: ClassVar[WorkCallbackType]
+    AccMulVal2: ClassVar[WorkCallbackType]
+    AccMulVal3: ClassVar[WorkCallbackType]
+    AccMulVal4: ClassVar[WorkCallbackType]
+    WaterFog: ClassVar[WorkCallbackType]
+    MatxInvView: ClassVar[WorkCallbackType]
+    FurShader: ClassVar[WorkCallbackType]
+    CalcBloom: ClassVar[WorkCallbackType]
+    CalcColor: ClassVar[WorkCallbackType]
+    OutLineVal: ClassVar[WorkCallbackType]
+    ToonId: ClassVar[WorkCallbackType]
+    VolumeTest: ClassVar[WorkCallbackType]
+    BaseColor: ClassVar[WorkCallbackType]
+    BaseVal: ClassVar[WorkCallbackType]
+    TransVal: ClassVar[WorkCallbackType]
+    CalcPrjView: ClassVar[WorkCallbackType]
+    CalcPrjChgView: ClassVar[WorkCallbackType]
+    CalcPrjDefCall: ClassVar[WorkCallbackType]
+    CalcPrjAlpha: ClassVar[WorkCallbackType]
+    Unk35: ClassVar[WorkCallbackType]
+    Unk36: ClassVar[WorkCallbackType]
+    Unk38: ClassVar[WorkCallbackType]
+    Unk40: ClassVar[WorkCallbackType]
+    Unk41: ClassVar[WorkCallbackType]
+    Unk42: ClassVar[WorkCallbackType]
+    Unk43: ClassVar[WorkCallbackType]
+    Unk45: ClassVar[WorkCallbackType]
+    Unk46: ClassVar[WorkCallbackType]
+    Unk47: ClassVar[WorkCallbackType]
+    Unk48: ClassVar[WorkCallbackType]
+    Unk58: ClassVar[WorkCallbackType]
+    Unk50: ClassVar[WorkCallbackType]
+    Unk51: ClassVar[WorkCallbackType]
 
 class FurShellParams:
     instance_count: int
