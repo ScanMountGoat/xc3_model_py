@@ -55,10 +55,10 @@ for model in root.models.models:
 
         if buffers.weights is not None:
             # Calculate the index offset based on the weight group for this mesh.
-            pass_type = root.models.materials[mesh.material_index].pass_type
+            technique_type = root.models.materials[mesh.material_index].technique_type
             lod_item_index = 0 if mesh.lod_item_index is None else mesh.lod_item_index
             start_index = buffers.weights.weights_start_index(
-                mesh.flags2, lod_item_index, pass_type
+                mesh.flags2, lod_item_index, technique_type
             )
 
             weight_buffer = buffers.weights.weight_buffer(mesh.flags2)
