@@ -1,4 +1,5 @@
-from typing import Optional, ClassVar
+from typing import ClassVar, Optional
+
 import numpy
 
 from xc3_model_py.skinning import Weights
@@ -56,22 +57,29 @@ class AttributeType:
     TexCoord6: ClassVar[AttributeType]
     TexCoord7: ClassVar[AttributeType]
     TexCoord8: ClassVar[AttributeType]
-    VertexColor: ClassVar[AttributeType]
-    Unk18: ClassVar[AttributeType]
     Blend: ClassVar[AttributeType]
     Unk15: ClassVar[AttributeType]
     Unk16: ClassVar[AttributeType]
+    VertexColor: ClassVar[AttributeType]
+    Unk18: ClassVar[AttributeType]
+    GmCal1: ClassVar[AttributeType]
+    GmCal2: ClassVar[AttributeType]
+    GmCal3: ClassVar[AttributeType]
     Normal: ClassVar[AttributeType]
     Tangent: ClassVar[AttributeType]
+    Unk30: ClassVar[AttributeType]
     Unk31: ClassVar[AttributeType]
     Normal2: ClassVar[AttributeType]
     ValInf: ClassVar[AttributeType]
+    Normal3: ClassVar[AttributeType]
+    VertexColor3: ClassVar[AttributeType]
     Position2: ClassVar[AttributeType]
     Normal4: ClassVar[AttributeType]
     OldPosition: ClassVar[AttributeType]
     Tangent2: ClassVar[AttributeType]
     SkinWeights: ClassVar[AttributeType]
     BoneIndices: ClassVar[AttributeType]
+    Flow: ClassVar[AttributeType]
 
 class MorphTarget:
     morph_controller_index: int

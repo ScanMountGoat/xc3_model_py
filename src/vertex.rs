@@ -167,9 +167,9 @@ pub mod vertex {
         Unk16,
         VertexColor,
         Unk18,
-        Unk24,
-        Unk25,
-        Unk26,
+        GmCal1,
+        GmCal2,
+        GmCal3,
         Normal,
         Tangent,
         Unk30,
@@ -344,16 +344,16 @@ pub mod vertex {
                     attribute_type: AttributeType::Unk18,
                     data: values.map_py(py)?,
                 }),
-                xc3_model::vertex::AttributeData::Unk24(values) => Ok(AttributeData {
-                    attribute_type: AttributeType::Unk24,
+                xc3_model::vertex::AttributeData::GmCal1(values) => Ok(AttributeData {
+                    attribute_type: AttributeType::GmCal1,
                     data: values.map_py(py)?,
                 }),
-                xc3_model::vertex::AttributeData::Unk25(values) => Ok(AttributeData {
-                    attribute_type: AttributeType::Unk25,
+                xc3_model::vertex::AttributeData::GmCal2(values) => Ok(AttributeData {
+                    attribute_type: AttributeType::GmCal2,
                     data: values.map_py(py)?,
                 }),
-                xc3_model::vertex::AttributeData::Unk26(values) => Ok(AttributeData {
-                    attribute_type: AttributeType::Unk26,
+                xc3_model::vertex::AttributeData::GmCal3(values) => Ok(AttributeData {
+                    attribute_type: AttributeType::GmCal3,
                     data: values.map_py(py)?,
                 }),
                 xc3_model::vertex::AttributeData::Normal(values) => Ok(AttributeData {
@@ -443,9 +443,9 @@ pub mod vertex {
                 AttributeType::Unk16 => Ok(AttrRs::Unk16(self.data.map_py(py)?)),
                 AttributeType::VertexColor => Ok(AttrRs::VertexColor(self.data.map_py(py)?)),
                 AttributeType::Unk18 => Ok(AttrRs::Unk18(self.data.map_py(py)?)),
-                AttributeType::Unk24 => Ok(AttrRs::Unk24(self.data.map_py(py)?)),
-                AttributeType::Unk25 => Ok(AttrRs::Unk25(self.data.map_py(py)?)),
-                AttributeType::Unk26 => Ok(AttrRs::Unk26(self.data.map_py(py)?)),
+                AttributeType::GmCal1 => Ok(AttrRs::GmCal1(self.data.map_py(py)?)),
+                AttributeType::GmCal2 => Ok(AttrRs::GmCal2(self.data.map_py(py)?)),
+                AttributeType::GmCal3 => Ok(AttrRs::GmCal3(self.data.map_py(py)?)),
                 AttributeType::Normal => Ok(AttrRs::Normal(self.data.map_py(py)?)),
                 AttributeType::Tangent => Ok(AttrRs::Tangent(self.data.map_py(py)?)),
                 AttributeType::Unk30 => Ok(AttrRs::Unk30(self.data.map_py(py)?)),

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `material.RenderPassType` to `material.MaterialTechniqueType`.
 * Renamed `material.Texture` fields to better reflect in game data.
 * Renamed `material.Material` fields to better reflect in game data.
+* Renamed `xc3_model_py.vertex.AttributeType` variants to better match in game data.
 
 ### Removed
 * Removed field `unk5` from `LodItem`.
