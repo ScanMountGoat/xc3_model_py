@@ -656,6 +656,7 @@ pub mod material {
         pub output_assignments: [OutputAssignment; 6],
         pub outline_width: Option<AssignmentValue>,
         pub normal_intensity: Option<usize>,
+        pub val_inf_intensity: Option<usize>,
         pub assignments: TypedList<Assignment>,
     }
 

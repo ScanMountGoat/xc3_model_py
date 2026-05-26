@@ -1,7 +1,7 @@
-from typing import Optional, ClassVar, Tuple
+from typing import ClassVar, Optional, Tuple
 
-from xc3_model_py.xc3_model_py import ImageTexture
 from xc3_model_py.shader_database import Operation, ShaderProgram
+from xc3_model_py.xc3_model_py import ImageTexture
 
 class Material:
     name: str
@@ -291,6 +291,7 @@ class OutputAssignments:
     output_assignments: list[OutputAssignment]
     outline_width: Optional[AssignmentValue]
     normal_intensity: Optional[int]
+    val_inf_intensity: Optional[int]
     assignments: list[Assignment]
 
     def mat_id(self) -> Optional[int]: ...

@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar, Optional
 
 class ShaderDatabase:
     @staticmethod
@@ -8,6 +8,7 @@ class ShaderProgram:
     output_dependencies: dict[str, int]
     outline_width: Optional[Dependency]
     normal_intensity: Optional[int]
+    val_inf_intensity: Optional[int]
     exprs: list[OutputExpr]
 
 class OutputExpr:

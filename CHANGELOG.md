@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added type `material.MaterialFlags`.
 * Added type `material.WorkCallbackType`.
 * Added type `material.MaterialVariable`.
+* Added field `val_inf_intensity` to `material.OutputAssignments` and `shader_database.ShaderProgram`.
 
 ### Changed
 * Changed numpy arrays to be row-major to properly match conventions.
