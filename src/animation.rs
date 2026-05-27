@@ -26,7 +26,7 @@ pub mod animation {
     #[pymodule_export]
     use super::BlendMode;
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::animation::Animation)]
     pub struct Animation {
@@ -101,7 +101,7 @@ pub mod animation {
     }
 
     // TODO: Expose implementation details?
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::animation::Track)]
     pub struct Track(xc3_model::animation::Track);
@@ -159,7 +159,7 @@ pub mod animation {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::animation::MorphTracks)]
     pub struct MorphTracks {
@@ -167,7 +167,7 @@ pub mod animation {
         pub track_values: Py<PyArray1<f32>>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct Keyframe {
         pub x_coeffs: (f32, f32, f32, f32),
@@ -176,7 +176,7 @@ pub mod animation {
         pub w_coeffs: (f32, f32, f32, f32),
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct FCurves {
         pub translation: Py<PyDict>,

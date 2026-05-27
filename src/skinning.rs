@@ -20,7 +20,7 @@ pub mod skinning {
     #[pymodule_export]
     use super::BoneConstraintType;
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::Skinning)]
     pub struct Skinning {
@@ -35,7 +35,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::Bone)]
     pub struct Bone {
@@ -70,7 +70,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::BoneBounds)]
     pub struct BoneBounds {
@@ -91,7 +91,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::BoneConstraint)]
     pub struct BoneConstraint {
@@ -119,7 +119,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::Weights)]
     pub struct Weights {
@@ -183,7 +183,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::SkinWeights)]
     pub struct SkinWeights {
@@ -239,7 +239,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::Influence)]
     pub struct Influence {
@@ -255,7 +255,7 @@ pub mod skinning {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::skinning::VertexWeight)]
     pub struct VertexWeight {

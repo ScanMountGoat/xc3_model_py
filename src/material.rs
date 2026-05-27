@@ -252,7 +252,7 @@ pub mod material {
     #[pymodule_export]
     use super::WorkCallbackType;
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::Material)]
     pub struct Material {
@@ -393,7 +393,7 @@ pub mod material {
     }
 
     // TODO: macro for generating python class for bilge bitfield.
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct MaterialFlags {
         pub unk1: bool,
@@ -487,7 +487,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::StateFlags)]
     pub struct StateFlags {
@@ -501,7 +501,7 @@ pub mod material {
         pub color_write_mode: ColorWriteMode,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::MaterialParameters)]
     pub struct MaterialParameters {
@@ -553,7 +553,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::Texture)]
     pub struct Texture {
@@ -578,7 +578,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::MaterialVariable)]
     pub struct MaterialVariable {
@@ -599,7 +599,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::WorkCallback)]
     pub struct WorkCallback {
@@ -618,7 +618,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::FurShellParams)]
     pub struct FurShellParams {
@@ -649,7 +649,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignments)]
     pub struct OutputAssignments {
@@ -669,7 +669,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignment)]
     pub struct OutputAssignment {
@@ -697,24 +697,24 @@ pub mod material {
         }
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::Assignment)]
     pub struct Assignment(pub xc3_model::material::assignments::Assignment);
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::AssignmentValue)]
     pub struct AssignmentValue(pub xc3_model::material::assignments::AssignmentValue);
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AssignmentFunc {
         pub op: Operation,
         pub args: Vec<usize>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct TextureAssignment {
         pub name: String,
@@ -722,7 +722,7 @@ pub mod material {
         pub texcoords: Vec<usize>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AssignmentValueAttribute {
         pub name: String,
@@ -788,7 +788,7 @@ pub mod material {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignmentXyz)]
     pub struct OutputAssignmentXyz {
@@ -796,24 +796,24 @@ pub mod material {
         pub assignments: TypedList<AssignmentXyz>,
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::AssignmentXyz)]
     pub struct AssignmentXyz(pub xc3_model::material::assignments::AssignmentXyz);
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::AssignmentValueXyz)]
     pub struct AssignmentValueXyz(pub xc3_model::material::assignments::AssignmentValueXyz);
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AssignmentFuncXyz {
         pub op: Operation,
         pub args: Vec<usize>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct TextureAssignmentXyz {
         pub name: String,
@@ -821,7 +821,7 @@ pub mod material {
         pub texcoords: Vec<usize>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AssignmentValueAttributeXyz {
         pub name: String,

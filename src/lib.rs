@@ -22,7 +22,7 @@ create_exception!(xc3_model_py, Xc3ModelError, PyException);
 #[macro_export]
 macro_rules! python_enum {
     ($py_ty:ident, $rust_ty:ty, $( $i:ident ),+) => {
-        #[pyclass(eq, eq_int)]
+        #[pyclass(eq, eq_int, from_py_object)]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub enum $py_ty {
             $($i),*
@@ -157,7 +157,7 @@ mod xc3_model_py {
     #[pymodule_export]
     use super::Xc3ModelError;
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::ModelRoot)]
     pub struct ModelRoot {
@@ -173,7 +173,7 @@ mod xc3_model_py {
         pub skeleton: Option<Py<Skeleton>>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::MapRoot)]
     pub struct MapRoot {
@@ -181,7 +181,7 @@ mod xc3_model_py {
         pub image_textures: TypedList<ImageTexture>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::ModelGroup)]
     pub struct ModelGroup {
@@ -197,7 +197,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Models)]
     pub struct Models {
@@ -248,7 +248,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Model)]
     pub struct Model {
@@ -283,7 +283,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Mesh)]
     pub struct Mesh {
@@ -331,7 +331,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::LodData)]
     pub struct LodData {
@@ -352,7 +352,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::LodItem)]
     pub struct LodItem {
@@ -368,7 +368,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::LodGroup)]
     pub struct LodGroup {
@@ -387,7 +387,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Skeleton)]
     pub struct Skeleton {
@@ -409,7 +409,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Bone)]
     pub struct Bone {
@@ -432,7 +432,7 @@ mod xc3_model_py {
     }
 
     // TODO: MapPy won't work with threads?
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::ImageTexture)]
     pub struct ImageTexture {
@@ -490,7 +490,7 @@ mod xc3_model_py {
 
     // Helper types for enabling parallel encoding.
     // TODO: Initialize this without copies?
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, skip_from_py_object)]
     pub struct EncodeSurfaceRgba32FloatArgs {
         pub width: u32,
         pub height: u32,
@@ -686,7 +686,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Sampler)]
     pub struct Sampler {
@@ -726,7 +726,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone)]
     pub struct Mxmd(xc3_lib::mxmd::Mxmd);
 
@@ -744,7 +744,7 @@ mod xc3_model_py {
         }
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone)]
     pub struct Msrd(xc3_lib::msrd::Msrd);
 
@@ -864,7 +864,7 @@ mod xc3_model_py {
             .collect()
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::Transform)]
     pub struct Transform {

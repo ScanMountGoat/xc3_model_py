@@ -76,7 +76,7 @@ pub mod shader_database {
     #[pymodule_export]
     use super::Operation;
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone)]
     pub struct ShaderDatabase(pub xc3_model::shader_database::ShaderDatabase);
 
@@ -91,7 +91,7 @@ pub mod shader_database {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::ShaderProgram)]
     pub struct ShaderProgram {
@@ -102,24 +102,24 @@ pub mod shader_database {
         pub exprs: TypedList<OutputExpr>,
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::OutputExpr)]
     pub struct OutputExpr(xc3_model::shader_database::OutputExpr);
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct OutputExprFunc {
         pub op: Operation,
         pub args: Vec<usize>,
     }
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::Dependency)]
     pub struct Dependency(xc3_model::shader_database::Dependency);
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::BufferDependency)]
     pub struct BufferDependency {
@@ -129,7 +129,7 @@ pub mod shader_database {
         pub channel: Option<char>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::TextureDependency)]
     pub struct TextureDependency {
@@ -138,7 +138,7 @@ pub mod shader_database {
         pub texcoords: Vec<usize>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::AttributeDependency)]
     pub struct AttributeDependency {

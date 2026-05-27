@@ -7,7 +7,7 @@ pub mod monolib {
     use crate::xc3_model_py::ImageTexture;
     use map_py::MapPy;
 
-    #[pyclass]
+    #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::monolib::ShaderTextures)]
     pub struct ShaderTextures(pub xc3_model::monolib::ShaderTextures);

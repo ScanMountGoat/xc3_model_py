@@ -7,7 +7,7 @@ pub mod collision {
 
     use map_py::{MapPy, TypedList};
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::collision::CollisionMeshes)]
     pub struct CollisionMeshes {
@@ -15,7 +15,7 @@ pub mod collision {
         pub meshes: TypedList<CollisionMesh>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::collision::CollisionMesh)]
     pub struct CollisionMesh {

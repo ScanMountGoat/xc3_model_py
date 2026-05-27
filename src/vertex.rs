@@ -22,7 +22,7 @@ pub mod vertex {
     #[pymodule_export]
     use super::PrimitiveType;
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::ModelBuffers)]
     pub struct ModelBuffers {
@@ -64,7 +64,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::VertexBuffer)]
     pub struct VertexBuffer {
@@ -92,7 +92,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::IndexBuffer)]
     pub struct IndexBuffer {
@@ -111,7 +111,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::OutlineBuffer)]
     pub struct OutlineBuffer {
@@ -126,7 +126,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AttributeData {
         pub attribute_type: AttributeType,
@@ -145,7 +145,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(eq, eq_int)]
+    #[pyclass(eq, eq_int, from_py_object)]
     #[derive(Debug, PartialEq, Eq, Clone)]
     pub enum AttributeType {
         Position,
@@ -187,7 +187,7 @@ pub mod vertex {
         Flow,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::MorphTarget)]
     pub struct MorphTarget {
@@ -221,7 +221,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::UnkBuffer)]
     pub struct UnkBuffer {
@@ -237,7 +237,7 @@ pub mod vertex {
         }
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::vertex::UnkDataBuffer)]
     pub struct UnkDataBuffer {
