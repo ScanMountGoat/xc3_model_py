@@ -1,7 +1,8 @@
+import builtins
 from typing import ClassVar, Optional, Tuple
 
-from xc3_model_py.shader_database import Operation, ShaderProgram
-from xc3_model_py.xc3_model_py import ImageTexture
+from xc3_model_py import ImageTexture
+from xc3_model_py.shader_database import OutputExpr, ShaderProgram, Value
 
 class Material:
     name: str
@@ -289,10 +290,10 @@ class FurShellParams:
 
 class OutputAssignments:
     output_assignments: list[OutputAssignment]
-    outline_width: Optional[AssignmentValue]
+    outline_width: Optional[Value]
     normal_intensity: Optional[int]
     val_inf_intensity: Optional[int]
-    assignments: list[Assignment]
+    exprs: list[OutputExpr]
 
     def mat_id(self) -> Optional[int]: ...
 
@@ -303,34 +304,12 @@ class OutputAssignment:
     w: Optional[int]
 
     def merge_xyz(
-        self, assignments: list[Assignment]
+        self, assignments: list[OutputExpr]
     ) -> Optional[OutputAssignmentXyz]: ...
 
-class Assignment:
-    def func(self) -> Optional[AssignmentFunc]: ...
-    def value(self) -> Optional[AssignmentValue]: ...
-
-class AssignmentValue:
-    def texture(self) -> Optional[TextureAssignment]: ...
-    def float(self) -> Optional[float]: ...
-    def attribute(self) -> Optional[AssignmentValueAttribute]: ...
-
-class AssignmentFunc:
-    op: Operation
-    args: list[int]
-
-class TextureAssignment:
-    name: str
-    channel: Optional[str]
-    texcoords: list[int]
-
-class AssignmentValueAttribute:
-    name: str
-    channel: Optional[str]
-
 class OutputAssignmentXyz:
-    assignment: int
-    assignments: list[AssignmentXyz]
+    expr: int
+    exprs: list[AssignmentXyz]
 
 class AssignmentXyz:
     def func(self) -> Optional[AssignmentFuncXyz]: ...
@@ -338,12 +317,60 @@ class AssignmentXyz:
 
 class AssignmentValueXyz:
     def texture(self) -> Optional[TextureAssignmentXyz]: ...
-    def float(self) -> Optional[Tuple[float, float, float]]: ...
+    def float(
+        self,
+    ) -> Optional[Tuple[builtins.float, builtins.float, builtins.float]]: ...
     def attribute(self) -> Optional[AssignmentValueAttributeXyz]: ...
 
 class AssignmentFuncXyz:
-    op: Operation
+    op: OperationXyz
     args: list[int]
+
+class OperationXyz:
+    Unk: ClassVar[OperationXyz]
+    Mix: ClassVar[OperationXyz]
+    Mul: ClassVar[OperationXyz]
+    Div: ClassVar[OperationXyz]
+    Add: ClassVar[OperationXyz]
+    Sub: ClassVar[OperationXyz]
+    Fma: ClassVar[OperationXyz]
+    MulRatio: ClassVar[OperationXyz]
+    Overlay: ClassVar[OperationXyz]
+    Overlay2: ClassVar[OperationXyz]
+    OverlayRatio: ClassVar[OperationXyz]
+    Power: ClassVar[OperationXyz]
+    Min: ClassVar[OperationXyz]
+    Max: ClassVar[OperationXyz]
+    Clamp: ClassVar[OperationXyz]
+    Abs: ClassVar[OperationXyz]
+    Fresnel: ClassVar[OperationXyz]
+    Sqrt: ClassVar[OperationXyz]
+    Reflect: ClassVar[OperationXyz]
+    Floor: ClassVar[OperationXyz]
+    Select: ClassVar[OperationXyz]
+    Equal: ClassVar[OperationXyz]
+    NotEqual: ClassVar[OperationXyz]
+    Less: ClassVar[OperationXyz]
+    Greater: ClassVar[OperationXyz]
+    LessEqual: ClassVar[OperationXyz]
+    GreaterEqual: ClassVar[OperationXyz]
+    Monochrome: ClassVar[OperationXyz]
+    Negate: ClassVar[OperationXyz]
+    Float: ClassVar[OperationXyz]
+    Int: ClassVar[OperationXyz]
+    Uint: ClassVar[OperationXyz]
+    Truncate: ClassVar[OperationXyz]
+    FloatBitsToInt: ClassVar[OperationXyz]
+    IntBitsToFloat: ClassVar[OperationXyz]
+    UintBitsToFloat: ClassVar[OperationXyz]
+    InverseSqrt: ClassVar[OperationXyz]
+    Not: ClassVar[OperationXyz]
+    LeftShift: ClassVar[OperationXyz]
+    RightShift: ClassVar[OperationXyz]
+    Exp2: ClassVar[OperationXyz]
+    Log2: ClassVar[OperationXyz]
+    Sin: ClassVar[OperationXyz]
+    Cos: ClassVar[OperationXyz]
 
 class TextureAssignmentXyz:
     name: str

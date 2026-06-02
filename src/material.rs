@@ -215,10 +215,60 @@ python_enum!(
     Unk51
 );
 
+python_enum!(
+    OperationXyz,
+    xc3_model::material::assignments::OperationXyz,
+    Unk,
+    Mix,
+    Mul,
+    Div,
+    Add,
+    Sub,
+    Fma,
+    MulRatio,
+    Overlay,
+    Overlay2,
+    OverlayRatio,
+    Power,
+    Min,
+    Max,
+    Clamp,
+    Abs,
+    Fresnel,
+    Sqrt,
+    Reflect,
+    Floor,
+    Select,
+    Equal,
+    NotEqual,
+    Less,
+    Greater,
+    LessEqual,
+    GreaterEqual,
+    Monochrome,
+    Negate,
+    Float,
+    Int,
+    Uint,
+    Truncate,
+    FloatBitsToInt,
+    IntBitsToFloat,
+    UintBitsToFloat,
+    InverseSqrt,
+    Not,
+    LeftShift,
+    RightShift,
+    Exp2,
+    Log2,
+    Sin,
+    Cos
+);
+
 #[pymodule]
 pub mod material {
-    use crate::shader_database::Operation;
+    use crate::shader_database::shader_database::OutputExpr;
     use crate::shader_database::shader_database::ShaderProgram;
+    use crate::shader_database::shader_database::Value;
     use crate::xc3_model_py::ImageTexture;
     use map_py::{MapPy, TypedList};
     use numpy::PyArray1;
@@ -654,10 +704,10 @@ pub mod material {
     #[map(xc3_model::material::assignments::OutputAssignments)]
     pub struct OutputAssignments {
         pub output_assignments: [OutputAssignment; 6],
-        pub outline_width: Option<AssignmentValue>,
+        pub outline_width: Option<Value>,
         pub normal_intensity: Option<usize>,
         pub val_inf_intensity: Option<usize>,
-        pub assignments: TypedList<Assignment>,
+        pub exprs: TypedList<OutputExpr>,
     }
 
     #[pymethods]
@@ -684,11 +734,11 @@ pub mod material {
         fn merge_xyz(
             &self,
             py: Python,
-            assignments: TypedList<Assignment>,
+            assignments: TypedList<OutputExpr>,
         ) -> PyResult<Option<OutputAssignmentXyz>> {
             let output_assignment: xc3_model::material::assignments::OutputAssignment =
                 self.clone().map_py(py)?;
-            let assignments: Vec<xc3_model::material::assignments::Assignment> =
+            let assignments: Vec<xc3_model::shader_database::OutputExpr> =
                 assignments.map_py(py)?;
             output_assignment
                 .merge_xyz(&assignments)
@@ -697,103 +747,12 @@ pub mod material {
         }
     }
 
-    #[pyclass(from_py_object)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::assignments::Assignment)]
-    pub struct Assignment(pub xc3_model::material::assignments::Assignment);
-
-    #[pyclass(from_py_object)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::assignments::AssignmentValue)]
-    pub struct AssignmentValue(pub xc3_model::material::assignments::AssignmentValue);
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct AssignmentFunc {
-        pub op: Operation,
-        pub args: Vec<usize>,
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct TextureAssignment {
-        pub name: String,
-        pub channel: Option<char>,
-        pub texcoords: Vec<usize>,
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct AssignmentValueAttribute {
-        pub name: String,
-        pub channel: Option<char>,
-    }
-
-    #[pymethods]
-    impl Assignment {
-        pub fn func(&self) -> Option<AssignmentFunc> {
-            match &self.0 {
-                xc3_model::material::assignments::Assignment::Func { op, args } => {
-                    Some(AssignmentFunc {
-                        op: (*op).into(),
-                        args: args.clone(),
-                    })
-                }
-                _ => None,
-            }
-        }
-
-        pub fn value(&self) -> Option<AssignmentValue> {
-            match &self.0 {
-                xc3_model::material::assignments::Assignment::Value(v) => {
-                    Some(AssignmentValue(v.clone()?))
-                }
-                _ => None,
-            }
-        }
-    }
-
-    #[pymethods]
-    impl AssignmentValue {
-        pub fn texture(&self) -> Option<TextureAssignment> {
-            match &self.0 {
-                xc3_model::material::assignments::AssignmentValue::Texture(t) => {
-                    Some(TextureAssignment {
-                        name: t.name.to_string(),
-                        channel: t.channel,
-                        texcoords: t.texcoords.clone(),
-                    })
-                }
-                _ => None,
-            }
-        }
-
-        pub fn float(&self) -> Option<f32> {
-            match self.0 {
-                xc3_model::material::assignments::AssignmentValue::Float(f) => Some(f.0),
-                _ => None,
-            }
-        }
-
-        pub fn attribute(&self) -> Option<AssignmentValueAttribute> {
-            match self.0.clone() {
-                xc3_model::material::assignments::AssignmentValue::Attribute { name, channel } => {
-                    Some(AssignmentValueAttribute {
-                        name: name.to_string(),
-                        channel,
-                    })
-                }
-                _ => None,
-            }
-        }
-    }
-
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::material::assignments::OutputAssignmentXyz)]
     pub struct OutputAssignmentXyz {
-        pub assignment: usize,
-        pub assignments: TypedList<AssignmentXyz>,
+        pub expr: usize,
+        pub exprs: TypedList<AssignmentXyz>,
     }
 
     #[pyclass(from_py_object)]
@@ -806,10 +765,13 @@ pub mod material {
     #[map(xc3_model::material::assignments::AssignmentValueXyz)]
     pub struct AssignmentValueXyz(pub xc3_model::material::assignments::AssignmentValueXyz);
 
+    #[pymodule_export]
+    use super::OperationXyz;
+
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
     pub struct AssignmentFuncXyz {
-        pub op: Operation,
+        pub op: OperationXyz,
         pub args: Vec<usize>,
     }
 

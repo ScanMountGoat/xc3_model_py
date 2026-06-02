@@ -96,7 +96,7 @@ pub mod shader_database {
     #[map(xc3_model::shader_database::ShaderProgram)]
     pub struct ShaderProgram {
         pub output_dependencies: TypedDict<String, usize>,
-        pub outline_width: Option<Dependency>,
+        pub outline_width: Option<Value>,
         pub normal_intensity: Option<usize>,
         pub val_inf_intensity: Option<usize>,
         pub exprs: TypedList<OutputExpr>,
@@ -105,7 +105,7 @@ pub mod shader_database {
     #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::OutputExpr)]
-    pub struct OutputExpr(xc3_model::shader_database::OutputExpr);
+    pub struct OutputExpr(pub xc3_model::shader_database::OutputExpr);
 
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone)]
@@ -116,13 +116,13 @@ pub mod shader_database {
 
     #[pyclass(from_py_object)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::Dependency)]
-    pub struct Dependency(xc3_model::shader_database::Dependency);
+    #[map(xc3_model::shader_database::Value)]
+    pub struct Value(pub xc3_model::shader_database::Value);
 
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::BufferDependency)]
-    pub struct BufferDependency {
+    #[map(xc3_model::shader_database::Parameter)]
+    pub struct Parameter {
         pub name: String,
         pub field: String,
         pub index: Option<usize>,
@@ -131,8 +131,8 @@ pub mod shader_database {
 
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::TextureDependency)]
-    pub struct TextureDependency {
+    #[map(xc3_model::shader_database::Texture)]
+    pub struct Texture {
         pub name: String,
         pub channel: Option<char>,
         pub texcoords: Vec<usize>,
@@ -140,17 +140,17 @@ pub mod shader_database {
 
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::shader_database::AttributeDependency)]
-    pub struct AttributeDependency {
+    #[map(xc3_model::shader_database::Attribute)]
+    pub struct Attribute {
         pub name: String,
         pub channel: Option<char>,
     }
 
     #[pymethods]
     impl OutputExpr {
-        pub fn value(&self) -> Option<Dependency> {
+        pub fn value(&self) -> Option<Value> {
             match &self.0 {
-                xc3_model::shader_database::OutputExpr::Value(v) => Some(Dependency(v.clone())),
+                xc3_model::shader_database::OutputExpr::Value(v) => Some(Value(v.clone())),
                 _ => None,
             }
         }
@@ -167,42 +167,38 @@ pub mod shader_database {
     }
 
     #[pymethods]
-    impl Dependency {
+    impl Value {
         pub fn int(&self) -> Option<i32> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Int(i) => Some(*i),
+                xc3_model::shader_database::Value::Int(i) => Some(*i),
                 _ => None,
             }
         }
 
         pub fn float(&self) -> Option<f32> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Float(c) => Some(c.0),
+                xc3_model::shader_database::Value::Float(c) => Some(c.0),
                 _ => None,
             }
         }
 
-        pub fn buffer(&self, py: Python) -> PyResult<Option<BufferDependency>> {
+        pub fn parameter(&self, py: Python) -> PyResult<Option<Parameter>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Buffer(b) => b.clone().map_py(py).map(Some),
+                xc3_model::shader_database::Value::Parameter(b) => b.clone().map_py(py).map(Some),
                 _ => Ok(None),
             }
         }
 
-        pub fn texture(&self, py: Python) -> PyResult<Option<TextureDependency>> {
+        pub fn texture(&self, py: Python) -> PyResult<Option<Texture>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Texture(t) => {
-                    t.clone().map_py(py).map(Some)
-                }
+                xc3_model::shader_database::Value::Texture(t) => t.clone().map_py(py).map(Some),
                 _ => Ok(None),
             }
         }
 
-        pub fn attribute(&self, py: Python) -> PyResult<Option<AttributeDependency>> {
+        pub fn attribute(&self, py: Python) -> PyResult<Option<Attribute>> {
             match &self.0 {
-                xc3_model::shader_database::Dependency::Attribute(a) => {
-                    a.clone().map_py(py).map(Some)
-                }
+                xc3_model::shader_database::Value::Attribute(a) => a.clone().map_py(py).map(Some),
                 _ => Ok(None),
             }
         }

@@ -1,3 +1,4 @@
+import builtins
 from typing import ClassVar, Optional
 
 class ShaderDatabase:
@@ -6,38 +7,38 @@ class ShaderDatabase:
 
 class ShaderProgram:
     output_dependencies: dict[str, int]
-    outline_width: Optional[Dependency]
+    outline_width: Optional[Value]
     normal_intensity: Optional[int]
     val_inf_intensity: Optional[int]
     exprs: list[OutputExpr]
 
 class OutputExpr:
     def func(self) -> Optional[OutputExprFunc]: ...
-    def value(self) -> Optional[Dependency]: ...
+    def value(self) -> Optional[Value]: ...
 
 class OutputExprFunc:
     op: Operation
     args: list[int]
 
-class Dependency:
-    def int(self) -> Optional[int]: ...
-    def float(self) -> Optional[float]: ...
-    def buffer(self) -> Optional[BufferDependency]: ...
-    def texture(self) -> Optional[TextureDependency]: ...
-    def attribute(self) -> Optional[AttributeDependency]: ...
+class Value:
+    def int(self) -> Optional[builtins.int]: ...
+    def float(self) -> Optional[builtins.float]: ...
+    def parameter(self) -> Optional[Parameter]: ...
+    def texture(self) -> Optional[Texture]: ...
+    def attribute(self) -> Optional[Attribute]: ...
 
-class BufferDependency:
+class Parameter:
     name: str
     field: str
     index: Optional[int]
     channel: Optional[str]
 
-class TextureDependency:
+class Texture:
     name: str
     channel: Optional[str]
     texcoords: list[int]
 
-class AttributeDependency:
+class Attribute:
     name: str
     channel: Optional[str]
 
