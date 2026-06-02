@@ -1,4 +1,5 @@
-from typing import Optional, ClassVar, Tuple
+from typing import ClassVar, Optional, Tuple
+
 import numpy
 
 from xc3_model_py import Skeleton, Transform

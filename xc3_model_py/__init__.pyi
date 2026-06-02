@@ -1,13 +1,8 @@
-from typing import Optional, ClassVar, Tuple
+from typing import ClassVar, Optional, Tuple
+
 import numpy
 
-from . import animation
-from . import material
-from . import monolib
-from . import shader_database
-from . import skinning
-from . import vertex
-from . import collision
+from . import animation, collision, material, monolib, shader_database, skinning, vertex
 
 def load_model(
     wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]

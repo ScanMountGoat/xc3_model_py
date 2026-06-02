@@ -1,5 +1,7 @@
-from typing import Optional, ClassVar, Tuple
+from typing import ClassVar, Optional, Tuple
+
 import numpy
+
 from xc3_model_py.material import MaterialTechniqueType
 
 class Skinning:
@@ -70,7 +72,7 @@ class SkinWeights:
         self, weight_indices: numpy.ndarray, bone_names: list[str]
     ) -> list[Influence]: ...
     def add_influences(
-        self, influences: list[Influence], bone_names: list[str]
+        self, influences: list[Influence], vertex_count: int, bone_names: list[str]
     ) -> numpy.ndarray: ...
 
 class Influence:
