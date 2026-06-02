@@ -321,6 +321,7 @@ class AssignmentValueXyz:
         self,
     ) -> Optional[Tuple[builtins.float, builtins.float, builtins.float]]: ...
     def attribute(self) -> Optional[AssignmentValueAttributeXyz]: ...
+    def parameter(self) -> Optional[AssignmentValueParameterXyz]: ...
 
 class AssignmentFuncXyz:
     op: OperationXyz
@@ -379,6 +380,12 @@ class TextureAssignmentXyz:
 
 class AssignmentValueAttributeXyz:
     name: str
+    channel: Optional[ChannelXyz]
+
+class AssignmentValueParameterXyz:
+    name: str
+    field: str
+    index: Optional[int]
     channel: Optional[ChannelXyz]
 
 class ChannelXyz:
