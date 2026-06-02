@@ -33,6 +33,14 @@ class Parameter:
     index: Optional[int]
     channel: Optional[str]
 
+    def __init__(
+        self,
+        name: str,
+        field: str,
+        index: Optional[int],
+        channel: Optional[str],
+    ) -> None: ...
+
 class Texture:
     name: str
     channel: Optional[str]

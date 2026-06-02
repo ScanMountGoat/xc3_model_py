@@ -129,6 +129,19 @@ pub mod shader_database {
         pub channel: Option<char>,
     }
 
+    #[pymethods]
+    impl Parameter {
+        #[new]
+        fn new(name: String, field: String, index: Option<usize>, channel: Option<char>) -> Self {
+            Self {
+                name,
+                field,
+                index,
+                channel,
+            }
+        }
+    }
+
     #[pyclass(get_all, set_all, from_py_object)]
     #[derive(Debug, Clone, MapPy)]
     #[map(xc3_model::shader_database::Texture)]

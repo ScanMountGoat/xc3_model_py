@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `material.OperationXYZ` for merged XYZ operations.
 * Added `material.AssignmentValueXyz.parameter` method and associated `material.AssignmentValueParameterXyz` type.
 * Added `material.MaterialParameters.get_parameter` method for converting parameters to floats.
+* Added a constructor for `shader_database.Parameter`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.
