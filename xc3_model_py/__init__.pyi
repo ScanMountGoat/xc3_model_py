@@ -115,6 +115,7 @@ class Mesh:
     lod_item_index: Optional[int]
     flags1: int
     flags2: int
+    base_mesh_index: Optional[int]
 
     def __init__(
         self,
