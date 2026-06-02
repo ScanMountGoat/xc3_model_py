@@ -267,6 +267,7 @@ python_enum!(
 #[pymodule]
 pub mod material {
     use crate::shader_database::shader_database::OutputExpr;
+    use crate::shader_database::shader_database::Parameter;
     use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::shader_database::Value;
     use crate::xc3_model_py::ImageTexture;
@@ -600,6 +601,12 @@ pub mod material {
                 mdl_param,
                 ava_skin,
             }
+        }
+
+        fn get_parameter(&self, py: Python, parameter: Parameter) -> PyResult<Option<f32>> {
+            let params: xc3_model::material::MaterialParameters = self.clone().map_py(py)?;
+            let parameter: xc3_model::shader_database::Parameter = parameter.map_py(py)?;
+            Ok(params.get_parameter(&parameter))
         }
     }
 

@@ -2,7 +2,7 @@ import builtins
 from typing import ClassVar, Optional, Tuple
 
 from xc3_model_py import ImageTexture
-from xc3_model_py.shader_database import OutputExpr, ShaderProgram, Value
+from xc3_model_py.shader_database import OutputExpr, Parameter, ShaderProgram, Value
 
 class Material:
     name: str
@@ -198,6 +198,7 @@ class MaterialParameters:
         work_color: Optional[list[float]],
         ava_skin: Optional[list[float]],
     ) -> None: ...
+    def get_parameter(self, parameter: Parameter) -> Optional[float]: ...
 
 class Texture:
     image_texture_index: int
