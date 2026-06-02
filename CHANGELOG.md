@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 ### Added
 * Added `material.OperationXYZ` for merged XYZ operations.
+* Added `material.AssignmentValueXyz.parameter()` method and associated `material.AssignmentValueParameterXyz` type.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.

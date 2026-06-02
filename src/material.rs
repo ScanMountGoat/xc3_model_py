@@ -790,6 +790,15 @@ pub mod material {
         pub channel: Option<ChannelXyz>,
     }
 
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct AssignmentValueParameterXyz {
+        pub name: String,
+        pub field: String,
+        pub index: Option<usize>,
+        pub channel: Option<ChannelXyz>,
+    }
+
     #[pymodule_export]
     use super::ChannelXyz;
 
@@ -848,6 +857,23 @@ pub mod material {
                     channel,
                 } => Some(AssignmentValueAttributeXyz {
                     name: name.to_string(),
+                    channel: channel.map(Into::into),
+                }),
+                _ => None,
+            }
+        }
+
+        pub fn parameter(&self) -> Option<AssignmentValueParameterXyz> {
+            match self.0.clone() {
+                xc3_model::material::assignments::AssignmentValueXyz::Parameter {
+                    name,
+                    field,
+                    index,
+                    channel,
+                } => Some(AssignmentValueParameterXyz {
+                    name: name.to_string(),
+                    field: field.to_string(),
+                    index: index,
                     channel: channel.map(Into::into),
                 }),
                 _ => None,
