@@ -113,7 +113,7 @@ class Operation:
     Cos: ClassVar[Operation]
 
 class OutputExprXyz:
-    def func(self) -> Optional[AssignmentFuncXyz]: ...
+    def func(self) -> Optional[OutputExprFuncXyz]: ...
     def value(self) -> Optional[ValueXyz]: ...
 
 class ValueXyz:
@@ -124,7 +124,7 @@ class ValueXyz:
     def attribute(self) -> Optional[AttributeXyz]: ...
     def parameter(self) -> Optional[ParameterXyz]: ...
 
-class AssignmentFuncXyz:
+class OutputExprFuncXyz:
     op: OperationXyz
     args: list[int]
 
