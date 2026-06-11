@@ -152,16 +152,6 @@ python_enum!(
 );
 
 python_enum!(
-    ChannelXyz,
-    xc3_model::material::assignments::ChannelXyz,
-    Xyz,
-    X,
-    Y,
-    Z,
-    W
-);
-
-python_enum!(
     WorkCallbackType,
     xc3_lib::mxmd::WorkCallbackType,
     MatxView,
@@ -215,58 +205,10 @@ python_enum!(
     Unk51
 );
 
-python_enum!(
-    OperationXyz,
-    xc3_model::material::assignments::OperationXyz,
-    Unk,
-    Mix,
-    Mul,
-    Div,
-    Add,
-    Sub,
-    Fma,
-    MulRatio,
-    Overlay,
-    Overlay2,
-    OverlayRatio,
-    Power,
-    Min,
-    Max,
-    Clamp,
-    Abs,
-    Fresnel,
-    Sqrt,
-    Reflect,
-    Floor,
-    Select,
-    Equal,
-    NotEqual,
-    Less,
-    Greater,
-    LessEqual,
-    GreaterEqual,
-    Monochrome,
-    Negate,
-    Float,
-    Int,
-    Uint,
-    Truncate,
-    FloatBitsToInt,
-    IntBitsToFloat,
-    UintBitsToFloat,
-    InverseSqrt,
-    Not,
-    LeftShift,
-    RightShift,
-    Exp2,
-    Log2,
-    Sin,
-    Cos
-);
-
 #[pymodule]
 pub mod material {
     use crate::shader_database::shader_database::OutputExpr;
+    use crate::shader_database::shader_database::OutputExprXyz;
     use crate::shader_database::shader_database::Parameter;
     use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::shader_database::Value;
@@ -336,8 +278,7 @@ pub mod material {
         #[map(into(map_py::helpers::from_option_py))]
         pub shader: Option<Py<ShaderProgram>>,
 
-        pub technique_index: usize,
-        pub technique_type: MaterialTechniqueType,
+        pub techniques: TypedList<MaterialTechnique>,
 
         #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub parameters: Py<MaterialParameters>,
@@ -369,8 +310,7 @@ pub mod material {
             m_unks1_2: u32,
             m_unks1_3: u32,
             m_unks1_4: u32,
-            technique_index: usize,
-            technique_type: MaterialTechniqueType,
+            techniques: TypedList<MaterialTechnique>,
             parameters: Py<MaterialParameters>,
             m_unks2: u16,
             gbuffer_flags: u16,
@@ -396,8 +336,7 @@ pub mod material {
                 m_unks1_3,
                 m_unks1_4,
                 shader,
-                technique_index,
-                technique_type,
+                techniques,
                 parameters,
                 m_unks2,
                 gbuffer_flags,
@@ -440,6 +379,66 @@ pub mod material {
         fn __deepcopy__(&self, py: Python, _memo: Py<PyDict>) -> Self {
             let copy: xc3_model::material::Material = self.clone().map_py(py).unwrap();
             copy.map_py(py).unwrap()
+        }
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::material::MaterialTechnique)]
+    pub struct MaterialTechnique {
+        pub technique_index: u32,
+        pub technique_type: MaterialTechniqueType,
+        pub flags: MaterialTechniqueFlags,
+        pub material_texture_count: u32,
+    }
+
+    #[pymethods]
+    impl MaterialTechnique {
+        #[new]
+        fn new(
+            technique_index: u32,
+            technique_type: MaterialTechniqueType,
+            flags: MaterialTechniqueFlags,
+            material_texture_count: u32,
+        ) -> PyResult<Self> {
+            Ok(Self {
+                technique_index,
+                technique_type,
+                flags,
+                material_texture_count,
+            })
+        }
+    }
+
+    // TODO: macro for generating python class for bilge bitfield.
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct MaterialTechniqueFlags {
+        pub use_work_buffer: bool,
+    }
+
+    #[pymethods]
+    impl MaterialTechniqueFlags {
+        #[new]
+        fn new(use_work_buffer: bool) -> PyResult<Self> {
+            Ok(Self { use_work_buffer })
+        }
+    }
+
+    impl MapPy<xc3_model::material::MaterialTechniqueFlags> for MaterialTechniqueFlags {
+        fn map_py(self, _py: Python) -> PyResult<xc3_model::material::MaterialTechniqueFlags> {
+            Ok(xc3_model::material::MaterialTechniqueFlags::new(
+                self.use_work_buffer,
+                0u16.into(),
+            ))
+        }
+    }
+
+    impl MapPy<MaterialTechniqueFlags> for xc3_model::material::MaterialTechniqueFlags {
+        fn map_py(self, _py: Python) -> PyResult<MaterialTechniqueFlags> {
+            Ok(MaterialTechniqueFlags {
+                use_work_buffer: self.use_work_buffer(),
+            })
         }
     }
 
@@ -715,6 +714,7 @@ pub mod material {
         pub normal_intensity: Option<usize>,
         pub val_inf_intensity: Option<usize>,
         pub exprs: TypedList<OutputExpr>,
+        pub exprs_xyz: TypedList<OutputExprXyz>,
     }
 
     #[pymethods]
@@ -734,157 +734,6 @@ pub mod material {
         pub y: Option<usize>,
         pub z: Option<usize>,
         pub w: Option<usize>,
-    }
-
-    #[pymethods]
-    impl OutputAssignment {
-        fn merge_xyz(
-            &self,
-            py: Python,
-            assignments: TypedList<OutputExpr>,
-        ) -> PyResult<Option<OutputAssignmentXyz>> {
-            let output_assignment: xc3_model::material::assignments::OutputAssignment =
-                self.clone().map_py(py)?;
-            let assignments: Vec<xc3_model::shader_database::OutputExpr> =
-                assignments.map_py(py)?;
-            output_assignment
-                .merge_xyz(&assignments)
-                .map(|o| o.map_py(py))
-                .transpose()
-        }
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::assignments::OutputAssignmentXyz)]
-    pub struct OutputAssignmentXyz {
-        pub expr: usize,
-        pub exprs: TypedList<AssignmentXyz>,
-    }
-
-    #[pyclass(from_py_object)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::assignments::AssignmentXyz)]
-    pub struct AssignmentXyz(pub xc3_model::material::assignments::AssignmentXyz);
-
-    #[pyclass(from_py_object)]
-    #[derive(Debug, Clone, MapPy)]
-    #[map(xc3_model::material::assignments::AssignmentValueXyz)]
-    pub struct AssignmentValueXyz(pub xc3_model::material::assignments::AssignmentValueXyz);
-
-    #[pymodule_export]
-    use super::OperationXyz;
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct AssignmentFuncXyz {
-        pub op: OperationXyz,
-        pub args: Vec<usize>,
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct TextureAssignmentXyz {
-        pub name: String,
-        pub channel: Option<ChannelXyz>,
-        pub texcoords: Vec<usize>,
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct AssignmentValueAttributeXyz {
-        pub name: String,
-        pub channel: Option<ChannelXyz>,
-    }
-
-    #[pyclass(get_all, set_all, from_py_object)]
-    #[derive(Debug, Clone)]
-    pub struct AssignmentValueParameterXyz {
-        pub name: String,
-        pub field: String,
-        pub index: Option<usize>,
-        pub channel: Option<ChannelXyz>,
-    }
-
-    #[pymodule_export]
-    use super::ChannelXyz;
-
-    #[pymethods]
-    impl AssignmentXyz {
-        pub fn func(&self) -> Option<AssignmentFuncXyz> {
-            match &self.0 {
-                xc3_model::material::assignments::AssignmentXyz::Func { op, args } => {
-                    Some(AssignmentFuncXyz {
-                        op: (*op).into(),
-                        args: args.clone(),
-                    })
-                }
-                _ => None,
-            }
-        }
-
-        pub fn value(&self) -> Option<AssignmentValueXyz> {
-            match &self.0 {
-                xc3_model::material::assignments::AssignmentXyz::Value(v) => {
-                    Some(AssignmentValueXyz(v.clone()?))
-                }
-                _ => None,
-            }
-        }
-    }
-
-    #[pymethods]
-    impl AssignmentValueXyz {
-        pub fn texture(&self) -> Option<TextureAssignmentXyz> {
-            match &self.0 {
-                xc3_model::material::assignments::AssignmentValueXyz::Texture(t) => {
-                    Some(TextureAssignmentXyz {
-                        name: t.name.to_string(),
-                        channel: t.channel.map(Into::into),
-                        texcoords: t.texcoords.clone(),
-                    })
-                }
-                _ => None,
-            }
-        }
-
-        pub fn float(&self) -> Option<(f32, f32, f32)> {
-            match self.0 {
-                xc3_model::material::assignments::AssignmentValueXyz::Float(f) => {
-                    Some((f[0].0, f[1].0, f[2].0))
-                }
-                _ => None,
-            }
-        }
-
-        pub fn attribute(&self) -> Option<AssignmentValueAttributeXyz> {
-            match self.0.clone() {
-                xc3_model::material::assignments::AssignmentValueXyz::Attribute {
-                    name,
-                    channel,
-                } => Some(AssignmentValueAttributeXyz {
-                    name: name.to_string(),
-                    channel: channel.map(Into::into),
-                }),
-                _ => None,
-            }
-        }
-
-        pub fn parameter(&self) -> Option<AssignmentValueParameterXyz> {
-            match self.0.clone() {
-                xc3_model::material::assignments::AssignmentValueXyz::Parameter {
-                    name,
-                    field,
-                    index,
-                    channel,
-                } => Some(AssignmentValueParameterXyz {
-                    name: name.to_string(),
-                    field: field.to_string(),
-                    index: index,
-                    channel: channel.map(Into::into),
-                }),
-                _ => None,
-            }
-        }
+        pub xyz: Option<usize>,
     }
 }

@@ -1,5 +1,5 @@
 import builtins
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Tuple
 
 class ShaderDatabase:
     @staticmethod
@@ -111,3 +111,87 @@ class Operation:
     Log2: ClassVar[Operation]
     Sin: ClassVar[Operation]
     Cos: ClassVar[Operation]
+
+class OutputExprXyz:
+    def func(self) -> Optional[AssignmentFuncXyz]: ...
+    def value(self) -> Optional[ValueXyz]: ...
+
+class ValueXyz:
+    def texture(self) -> Optional[TextureXyz]: ...
+    def float(
+        self,
+    ) -> Optional[Tuple[builtins.float, builtins.float, builtins.float]]: ...
+    def attribute(self) -> Optional[AttributeXyz]: ...
+    def parameter(self) -> Optional[ParameterXyz]: ...
+
+class AssignmentFuncXyz:
+    op: OperationXyz
+    args: list[int]
+
+class OperationXyz:
+    Unk: ClassVar[OperationXyz]
+    Mix: ClassVar[OperationXyz]
+    Mul: ClassVar[OperationXyz]
+    Div: ClassVar[OperationXyz]
+    Add: ClassVar[OperationXyz]
+    Sub: ClassVar[OperationXyz]
+    Fma: ClassVar[OperationXyz]
+    MulRatio: ClassVar[OperationXyz]
+    Overlay: ClassVar[OperationXyz]
+    Overlay2: ClassVar[OperationXyz]
+    OverlayRatio: ClassVar[OperationXyz]
+    Power: ClassVar[OperationXyz]
+    Min: ClassVar[OperationXyz]
+    Max: ClassVar[OperationXyz]
+    Clamp: ClassVar[OperationXyz]
+    Abs: ClassVar[OperationXyz]
+    Fresnel: ClassVar[OperationXyz]
+    Sqrt: ClassVar[OperationXyz]
+    Reflect: ClassVar[OperationXyz]
+    Floor: ClassVar[OperationXyz]
+    Select: ClassVar[OperationXyz]
+    Equal: ClassVar[OperationXyz]
+    NotEqual: ClassVar[OperationXyz]
+    Less: ClassVar[OperationXyz]
+    Greater: ClassVar[OperationXyz]
+    LessEqual: ClassVar[OperationXyz]
+    GreaterEqual: ClassVar[OperationXyz]
+    Monochrome: ClassVar[OperationXyz]
+    Negate: ClassVar[OperationXyz]
+    Float: ClassVar[OperationXyz]
+    Int: ClassVar[OperationXyz]
+    Uint: ClassVar[OperationXyz]
+    Truncate: ClassVar[OperationXyz]
+    FloatBitsToInt: ClassVar[OperationXyz]
+    IntBitsToFloat: ClassVar[OperationXyz]
+    UintBitsToFloat: ClassVar[OperationXyz]
+    InverseSqrt: ClassVar[OperationXyz]
+    Not: ClassVar[OperationXyz]
+    LeftShift: ClassVar[OperationXyz]
+    RightShift: ClassVar[OperationXyz]
+    Exp2: ClassVar[OperationXyz]
+    Log2: ClassVar[OperationXyz]
+    Sin: ClassVar[OperationXyz]
+    Cos: ClassVar[OperationXyz]
+
+class TextureXyz:
+    name: str
+    channel: Optional[ChannelXyz]
+    texcoords: list[int]
+
+class AttributeXyz:
+    name: str
+    channel: Optional[ChannelXyz]
+
+class ParameterXyz:
+    name: str
+    field: str
+    index: Optional[int]
+    channel: Optional[ChannelXyz]
+
+class ChannelXyz:
+    Xyz: ClassVar[ChannelXyz]
+    X: ClassVar[ChannelXyz]
+    Y: ClassVar[ChannelXyz]
+    Z: ClassVar[ChannelXyz]
+    W: ClassVar[ChannelXyz]

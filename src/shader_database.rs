@@ -66,6 +66,65 @@ python_enum!(
     Cos
 );
 
+python_enum!(
+    OperationXyz,
+    xc3_model::shader_database::OperationXyz,
+    Unk,
+    Mix,
+    Mul,
+    Div,
+    Add,
+    Sub,
+    Fma,
+    MulRatio,
+    Overlay,
+    Overlay2,
+    OverlayRatio,
+    Power,
+    Min,
+    Max,
+    Clamp,
+    Abs,
+    Fresnel,
+    Sqrt,
+    Reflect,
+    Floor,
+    Select,
+    Equal,
+    NotEqual,
+    Less,
+    Greater,
+    LessEqual,
+    GreaterEqual,
+    Monochrome,
+    Negate,
+    Float,
+    Int,
+    Uint,
+    Truncate,
+    FloatBitsToInt,
+    IntBitsToFloat,
+    UintBitsToFloat,
+    InverseSqrt,
+    Not,
+    LeftShift,
+    RightShift,
+    Exp2,
+    Log2,
+    Sin,
+    Cos
+);
+
+python_enum!(
+    ChannelXyz,
+    xc3_model::shader_database::ChannelXyz,
+    Xyz,
+    X,
+    Y,
+    Z,
+    W
+);
+
 #[pymodule]
 pub mod shader_database {
 
@@ -100,6 +159,8 @@ pub mod shader_database {
         pub normal_intensity: Option<usize>,
         pub val_inf_intensity: Option<usize>,
         pub exprs: TypedList<OutputExpr>,
+        pub output_dependencies_xyz: TypedDict<String, usize>,
+        pub exprs_xyz: TypedList<OutputExprXyz>,
     }
 
     #[pyclass(from_py_object)]
@@ -213,6 +274,125 @@ pub mod shader_database {
             match &self.0 {
                 xc3_model::shader_database::Value::Attribute(a) => a.clone().map_py(py).map(Some),
                 _ => Ok(None),
+            }
+        }
+    }
+
+    #[pyclass(from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::shader_database::OutputExprXyz)]
+    pub struct OutputExprXyz(pub xc3_model::shader_database::OutputExprXyz);
+
+    #[pyclass(from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::shader_database::ValueXyz)]
+    pub struct ValueXyz(pub xc3_model::shader_database::ValueXyz);
+
+    #[pymodule_export]
+    use super::OperationXyz;
+
+    #[pymodule_export]
+    use super::ChannelXyz;
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct OutputExprFuncXyz {
+        pub op: OperationXyz,
+        pub args: Vec<usize>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct TextureXyz {
+        pub name: String,
+        pub channel: Option<ChannelXyz>,
+        pub texcoords: Vec<usize>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct AttributeXyz {
+        pub name: String,
+        pub channel: Option<ChannelXyz>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone)]
+    pub struct ParameterXyz {
+        pub name: String,
+        pub field: String,
+        pub index: Option<usize>,
+        pub channel: Option<ChannelXyz>,
+    }
+
+    #[pymethods]
+    impl OutputExprXyz {
+        pub fn func(&self) -> Option<OutputExprFuncXyz> {
+            match &self.0 {
+                xc3_model::shader_database::OutputExprXyz::Func { op, args } => {
+                    Some(OutputExprFuncXyz {
+                        op: (*op).into(),
+                        args: args.clone(),
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        pub fn value(&self) -> Option<ValueXyz> {
+            match &self.0 {
+                xc3_model::shader_database::OutputExprXyz::Value(v) => Some(ValueXyz(v.clone())),
+                _ => None,
+            }
+        }
+    }
+
+    #[pymethods]
+    impl ValueXyz {
+        pub fn texture(&self) -> Option<TextureXyz> {
+            match &self.0 {
+                xc3_model::shader_database::ValueXyz::Texture(t) => Some(TextureXyz {
+                    name: t.name.to_string(),
+                    channel: t.channel.map(Into::into),
+                    texcoords: t.texcoords.clone(),
+                }),
+                _ => None,
+            }
+        }
+
+        pub fn float(&self) -> Option<(f32, f32, f32)> {
+            match self.0 {
+                xc3_model::shader_database::ValueXyz::Float(f) => Some((f[0].0, f[1].0, f[2].0)),
+                _ => None,
+            }
+        }
+
+        pub fn attribute(&self) -> Option<AttributeXyz> {
+            match self.0.clone() {
+                xc3_model::shader_database::ValueXyz::Attribute { name, channel } => {
+                    Some(AttributeXyz {
+                        name: name.to_string(),
+                        channel: channel.map(Into::into),
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        pub fn parameter(&self) -> Option<ParameterXyz> {
+            match self.0.clone() {
+                xc3_model::shader_database::ValueXyz::Parameter {
+                    name,
+                    field,
+                    index,
+                    channel,
+                } => Some(ParameterXyz {
+                    name: name.to_string(),
+                    field: field.to_string(),
+                    index: index,
+                    channel: channel.map(Into::into),
+                }),
+                _ => None,
             }
         }
     }

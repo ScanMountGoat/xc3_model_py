@@ -10,16 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `material.AssignmentValueXyz.parameter` method and associated `material.AssignmentValueParameterXyz` type.
 * Added `material.MaterialParameters.get_parameter` method for converting parameters to floats.
 * Added a constructor for `shader_database.Parameter`.
+* Added `material.MaterialTechnique` and `material.MaterialTechniqueFlags`.
+* Added fields `material.OutputAssignment.xyz` and `material.OutputAssignments.exprs_xyz`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.
 * Renamed `shader_database.BufferDependency` to `shader_database.Parameter` and updated getter.
-* Renamed `material.OutputExprXyz.assignment` to `material.OutputExprXyz.expr`.
-* Renamed `material.OutputExprXyz.assignments` to `material.OutputExprXyz.exprs`.
+* Moved XYZ assignment types from `material.AssignmentXyz` to `shader_database.OutputExprXyz` as well as related types.
+* Changed fields `material.Material.technique_index` and `material.Material.technique_type` with a technique list `material.Material.techniques` to better match in game data.
 
 ### Removed
 * Removed `material.Assignment` and associated types and replaced with `shader_database.OutputExpr`.
-
+* Removed `material.OutputAssignment.merge_xyz` method. Use the new fields instead.
 
 ## 0.16.0 - 2026-05-26
 ### Added
