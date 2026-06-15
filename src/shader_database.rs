@@ -369,28 +369,21 @@ pub mod shader_database {
 
         pub fn attribute(&self) -> Option<AttributeXyz> {
             match self.0.clone() {
-                xc3_model::shader_database::ValueXyz::Attribute { name, channel } => {
-                    Some(AttributeXyz {
-                        name: name.to_string(),
-                        channel: channel.map(Into::into),
-                    })
-                }
+                xc3_model::shader_database::ValueXyz::Attribute(a) => Some(AttributeXyz {
+                    name: a.name.to_string(),
+                    channel: a.channel.map(Into::into),
+                }),
                 _ => None,
             }
         }
 
         pub fn parameter(&self) -> Option<ParameterXyz> {
             match self.0.clone() {
-                xc3_model::shader_database::ValueXyz::Parameter {
-                    name,
-                    field,
-                    index,
-                    channel,
-                } => Some(ParameterXyz {
-                    name: name.to_string(),
-                    field: field.to_string(),
-                    index: index,
-                    channel: channel.map(Into::into),
+                xc3_model::shader_database::ValueXyz::Parameter(p) => Some(ParameterXyz {
+                    name: p.name.to_string(),
+                    field: p.field.to_string(),
+                    index: p.index,
+                    channel: p.channel.map(Into::into),
                 }),
                 _ => None,
             }
