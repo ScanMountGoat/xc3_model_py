@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added a constructor for `shader_database.Parameter`.
 * Added `material.MaterialTechnique` and `material.MaterialTechniqueFlags`.
 * Added fields `material.OutputAssignment.xyz` and `material.OutputAssignments.exprs_xyz`.
+* Added field `channel` to `shader_database.OutputExprFuncXyz`.
+* Added field` unk4_legacy` to `material.Material`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.

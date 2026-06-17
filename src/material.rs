@@ -283,6 +283,8 @@ pub mod material {
         #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
         pub parameters: Py<MaterialParameters>,
 
+        pub unk4_legacy: [u16; 2],
+
         pub m_unks2: u16,
         pub gbuffer_flags: u16,
 
@@ -312,6 +314,7 @@ pub mod material {
             m_unks1_4: u32,
             techniques: TypedList<MaterialTechnique>,
             parameters: Py<MaterialParameters>,
+            unk4_legacy: [u16; 2],
             m_unks2: u16,
             gbuffer_flags: u16,
             alpha_test: Option<Py<Texture>>,
@@ -338,6 +341,7 @@ pub mod material {
                 shader,
                 techniques,
                 parameters,
+                unk4_legacy,
                 m_unks2,
                 gbuffer_flags,
                 fur_params,

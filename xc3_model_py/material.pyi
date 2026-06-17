@@ -29,6 +29,7 @@ class Material:
     shader: Optional[ShaderProgram]
     techniques: list[MaterialTechnique]
     parameters: MaterialParameters
+    unk4_legacy: list[int]
     m_unks2: int
     gbuffer_flags: int
     fur_params: Optional[FurShellParams]
@@ -52,6 +53,7 @@ class Material:
         m_unks1_4: int,
         techniques: list[MaterialTechnique],
         parameters: MaterialParameters,
+        unk4_legacy: list[int],
         m_unks2: int,
         gbuffer_flags: int,
         alpha_test: Optional[Texture],

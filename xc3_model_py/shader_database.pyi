@@ -127,6 +127,7 @@ class ValueXyz:
 class OutputExprFuncXyz:
     op: OperationXyz
     args: list[int]
+    channel: Optional[ChannelXyz]
 
 class OperationXyz:
     Unk: ClassVar[OperationXyz]

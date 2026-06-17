@@ -299,6 +299,7 @@ pub mod shader_database {
     pub struct OutputExprFuncXyz {
         pub op: OperationXyz,
         pub args: Vec<usize>,
+        pub channel: Option<ChannelXyz>,
     }
 
     #[pyclass(get_all, set_all, from_py_object)]
@@ -329,10 +330,11 @@ pub mod shader_database {
     impl OutputExprXyz {
         pub fn func(&self) -> Option<OutputExprFuncXyz> {
             match &self.0 {
-                xc3_model::shader_database::OutputExprXyz::Func { op, args } => {
+                xc3_model::shader_database::OutputExprXyz::Func { op, args, channel } => {
                     Some(OutputExprFuncXyz {
                         op: (*op).into(),
                         args: args.clone(),
+                        channel: channel.map(Into::into),
                     })
                 }
                 _ => None,
