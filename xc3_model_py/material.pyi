@@ -15,6 +15,8 @@ class Material:
     render_flags: int
     state_flags: StateFlags
     color: list[float]
+    unk_param1: Optional[list[float]]
+    unk_param2: Optional[list[float]]
     textures: list[Texture]
     alt_textures: Optional[list[Texture]]
     alpha_test: Optional[Texture]
@@ -41,6 +43,8 @@ class Material:
         render_flags: int,
         state_flags: StateFlags,
         color: list[float],
+        unk_param1: Optional[list[float]],
+        unk_param2: Optional[list[float]],
         textures: list[Texture],
         alt_textures: Optional[list[Texture]],
         work_values: list[float],
