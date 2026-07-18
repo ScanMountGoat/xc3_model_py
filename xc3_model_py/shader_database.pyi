@@ -10,6 +10,7 @@ class ShaderProgram:
     outline_width: Optional[Value]
     normal_intensity: Optional[int]
     val_inf_intensity: Optional[int]
+    discard_condition: Optional[int]
     exprs: list[OutputExpr]
 
 class OutputExpr:

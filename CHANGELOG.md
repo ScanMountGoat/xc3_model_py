@@ -14,12 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added fields `material.OutputAssignment.xyz` and `material.OutputAssignments.exprs_xyz`.
 * Added field `channel` to `shader_database.OutputExprFuncXyz`.
 * Added fields `unk4_legacy`, `unk_param1`, `unk_param2` to `material.Material`.
+* Added field `discard_condition` to `material.OutputAssignments` and `shader_database.ShaderProgram`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.
 * Renamed `shader_database.BufferDependency` to `shader_database.Parameter` and updated getter.
 * Moved XYZ assignment types from `material.AssignmentXyz` to `shader_database.OutputExprXyz` as well as related types.
 * Changed fields `material.Material.technique_index` and `material.Material.technique_type` with a technique list `material.Material.techniques` to better match in game data.
+* Changed field `material.MaterialParameters.alpha_info` to be a list of 4 floats.
 
 ### Removed
 * Removed `material.Assignment` and associated types and replaced with `shader_database.OutputExpr`.

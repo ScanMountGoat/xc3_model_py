@@ -158,6 +158,7 @@ pub mod shader_database {
         pub outline_width: Option<Value>,
         pub normal_intensity: Option<usize>,
         pub val_inf_intensity: Option<usize>,
+        pub discard_condition: Option<usize>,
         pub exprs: TypedList<OutputExpr>,
         pub output_dependencies_xyz: TypedDict<String, usize>,
         pub exprs_xyz: TypedList<OutputExprXyz>,

@@ -206,25 +206,32 @@ class DepthFunc:
 
 class MaterialParameters:
     material_color: list[float]
-    tex_matrix: Optional[list[float]]
-    work_float4: Optional[list[float]]
-    work_color: Optional[list[float]]
-    alpha_info: Optional[list[float]]
-    dp_rat: Optional[list[float]]
-    projection_tex_matrix: Optional[list[float]]
-    material_ambient: Optional[list[float]]
-    material_specular: Optional[list[float]]
-    dt_work: Optional[list[float]]
-    mdl_param: Optional[list[float]]
-    ava_skin: Optional[list[float]]
+    tex_matrix: Optional[list[list[float]]]
+    work_float4: Optional[list[list[float]]]
+    work_color: Optional[list[list[float]]]
+    alpha_info: list[float]
+    dp_rat: Optional[list[list[float]]]
+    projection_tex_matrix: Optional[list[list[float]]]
+    material_ambient: Optional[list[list[float]]]
+    material_specular: Optional[list[list[float]]]
+    dt_work: Optional[list[list[float]]]
+    mdl_param: Optional[list[list[float]]]
+    ava_skin: Optional[list[list[float]]]
 
     def __init__(
         self,
         material_color: list[float],
-        tex_matrix: Optional[list[float]],
-        work_float4: Optional[list[float]],
-        work_color: Optional[list[float]],
-        ava_skin: Optional[list[float]],
+        tex_matrix: Optional[list[list[float]]],
+        work_float4: Optional[list[list[float]]],
+        work_color: Optional[list[list[float]]],
+        alpha_info: list[float],
+        dp_rat: Optional[list[list[float]]],
+        projection_tex_matrix: Optional[list[list[float]]],
+        material_ambient: Optional[list[list[float]]],
+        material_specular: Optional[list[list[float]]],
+        dt_work: Optional[list[list[float]]],
+        mdl_param: Optional[list[list[float]]],
+        ava_skin: Optional[list[list[float]]],
     ) -> None: ...
     def get_parameter(self, parameter: Parameter) -> Optional[float]: ...
 
@@ -322,6 +329,7 @@ class OutputAssignments:
     outline_width: Optional[Value]
     normal_intensity: Optional[int]
     val_inf_intensity: Optional[int]
+    discard_condition: Optional[int]
     exprs: list[OutputExpr]
     exprs_xyz: list[OutputExprXyz]
 
