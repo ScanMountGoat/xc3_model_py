@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 import numpy
 
@@ -11,16 +11,16 @@ class Skinning:
 
 class Bone:
     name: str
-    bounds: Optional[BoneBounds]
-    constraint: Optional[BoneConstraint]
+    bounds: BoneBounds | None
+    constraint: BoneConstraint | None
     no_camera_overlap: bool
 
     def __init__(
         self,
         name: str,
         no_camera_overlap: bool,
-        bounds: Optional[BoneBounds],
-        constraint: Optional[BoneConstraint],
+        bounds: BoneBounds | None,
+        constraint: BoneConstraint | None,
     ) -> None: ...
 
 class BoneBounds:
@@ -39,14 +39,14 @@ class BoneConstraint:
     fixed_offset: list[float]
     max_distance: float
     constraint_type: BoneConstraintType
-    parent_index: Optional[int]
+    parent_index: int | None
 
     def __init__(
         self,
         fixed_offset: list[float],
         max_distance: float,
         constraint_type: BoneConstraintType,
-        parent_index: Optional[int],
+        parent_index: int | None,
     ) -> None: ...
 
 class BoneConstraintType:
@@ -57,7 +57,7 @@ class Weights:
     weight_buffers: list[SkinWeights]
 
     def __init__(self, weight_buffers: list[SkinWeights]) -> None: ...
-    def weight_buffer(self, flags2: int) -> Optional[SkinWeights]: ...
+    def weight_buffer(self, flags2: int) -> SkinWeights | None: ...
     def weights_start_index(
         self, flags2: int, lod_item_index: int, unk_type: MaterialTechniqueType
     ) -> int: ...

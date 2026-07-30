@@ -1,5 +1,5 @@
 import builtins
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 class ShaderDatabase:
     @staticmethod
@@ -7,49 +7,49 @@ class ShaderDatabase:
 
 class ShaderProgram:
     output_dependencies: dict[str, int]
-    outline_width: Optional[Value]
-    normal_intensity: Optional[int]
-    val_inf_intensity: Optional[int]
-    discard_condition: Optional[int]
+    outline_width: Value | None
+    normal_intensity: int | None
+    val_inf_intensity: int | None
+    discard_condition: int | None
     exprs: list[OutputExpr]
 
 class OutputExpr:
-    def func(self) -> Optional[OutputExprFunc]: ...
-    def value(self) -> Optional[Value]: ...
+    def func(self) -> OutputExprFunc | None: ...
+    def value(self) -> Value | None: ...
 
 class OutputExprFunc:
     op: Operation
     args: list[int]
 
 class Value:
-    def int(self) -> Optional[builtins.int]: ...
-    def float(self) -> Optional[builtins.float]: ...
-    def parameter(self) -> Optional[Parameter]: ...
-    def texture(self) -> Optional[Texture]: ...
-    def attribute(self) -> Optional[Attribute]: ...
+    def int(self) -> builtins.int | None: ...
+    def float(self) -> builtins.float | None: ...
+    def parameter(self) -> Parameter | None: ...
+    def texture(self) -> Texture | None: ...
+    def attribute(self) -> Attribute | None: ...
 
 class Parameter:
     name: str
     field: str
-    index: Optional[int]
-    channel: Optional[str]
+    index: int | None
+    channel: str | None
 
     def __init__(
         self,
         name: str,
         field: str,
-        index: Optional[int],
-        channel: Optional[str],
+        index: int | None,
+        channel: str | None,
     ) -> None: ...
 
 class Texture:
     name: str
-    channel: Optional[str]
+    channel: str | None
     texcoords: list[int]
 
 class Attribute:
     name: str
-    channel: Optional[str]
+    channel: str | None
 
 class Operation:
     Unk: ClassVar[Operation]
@@ -116,21 +116,21 @@ class Operation:
     Cos: ClassVar[Operation]
 
 class OutputExprXyz:
-    def func(self) -> Optional[OutputExprFuncXyz]: ...
-    def value(self) -> Optional[ValueXyz]: ...
+    def func(self) -> OutputExprFuncXyz | None: ...
+    def value(self) -> ValueXyz | None: ...
 
 class ValueXyz:
-    def texture(self) -> Optional[TextureXyz]: ...
+    def texture(self) -> TextureXyz | None: ...
     def float(
         self,
-    ) -> Optional[Tuple[builtins.float, builtins.float, builtins.float]]: ...
-    def attribute(self) -> Optional[AttributeXyz]: ...
-    def parameter(self) -> Optional[ParameterXyz]: ...
+    ) -> tuple[builtins.float, builtins.float, builtins.float] | None: ...
+    def attribute(self) -> AttributeXyz | None: ...
+    def parameter(self) -> ParameterXyz | None: ...
 
 class OutputExprFuncXyz:
     op: OperationXyz
     args: list[int]
-    channel: Optional[ChannelXyz]
+    channel: ChannelXyz | None
 
 class OperationXyz:
     Unk: ClassVar[OperationXyz]
@@ -180,18 +180,18 @@ class OperationXyz:
 
 class TextureXyz:
     name: str
-    channel: Optional[ChannelXyz]
+    channel: ChannelXyz | None
     texcoords: list[int]
 
 class AttributeXyz:
     name: str
-    channel: Optional[ChannelXyz]
+    channel: ChannelXyz | None
 
 class ParameterXyz:
     name: str
     field: str
-    index: Optional[int]
-    channel: Optional[ChannelXyz]
+    index: int | None
+    channel: ChannelXyz | None
 
 class ChannelXyz:
     Xyz: ClassVar[ChannelXyz]

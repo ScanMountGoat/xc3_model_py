@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 from xc3_model_py import ImageTexture
 from xc3_model_py.shader_database import (
@@ -15,11 +15,11 @@ class Material:
     render_flags: int
     state_flags: StateFlags
     color: list[float]
-    unk_param1: Optional[list[float]]
-    unk_param2: Optional[list[float]]
+    unk_param1: list[float] | None
+    unk_param2: list[float] | None
     textures: list[Texture]
-    alt_textures: Optional[list[Texture]]
-    alpha_test: Optional[Texture]
+    alt_textures: list[Texture] | None
+    alpha_test: Texture | None
     work_values: list[float]
     variables: list[MaterialVariable]
     work_callbacks: list[WorkCallback]
@@ -28,13 +28,13 @@ class Material:
     m_unks1_2: int
     m_unks1_3: int
     m_unks1_4: int
-    shader: Optional[ShaderProgram]
+    shader: ShaderProgram | None
     techniques: list[MaterialTechnique]
     parameters: MaterialParameters
     unk4_legacy: list[int]
     m_unks2: int
     gbuffer_flags: int
-    fur_params: Optional[FurShellParams]
+    fur_params: FurShellParams | None
 
     def __init__(
         self,
@@ -43,13 +43,13 @@ class Material:
         render_flags: int,
         state_flags: StateFlags,
         color: list[float],
-        unk_param1: Optional[list[float]],
-        unk_param2: Optional[list[float]],
+        unk_param1: list[float] | None,
+        unk_param2: list[float] | None,
         textures: list[Texture],
-        alt_textures: Optional[list[Texture]],
+        alt_textures: list[Texture] | None,
         work_values: list[float],
         variables: list[MaterialVariable],
-        work_callbacks: list[Tuple[int, int]],
+        work_callbacks: list[tuple[int, int]],
         alpha_test_ref: float,
         m_unks1_1: int,
         m_unks1_2: int,
@@ -60,9 +60,9 @@ class Material:
         unk4_legacy: list[int],
         m_unks2: int,
         gbuffer_flags: int,
-        alpha_test: Optional[Texture],
-        shader: Optional[ShaderProgram],
-        fur_params: Optional[FurShellParams],
+        alpha_test: Texture | None,
+        shader: ShaderProgram | None,
+        fur_params: FurShellParams | None,
     ) -> None: ...
     def output_assignments(self, textures: list[ImageTexture]) -> OutputAssignments: ...
     def alpha_texture_channel_index(self) -> int: ...
@@ -206,36 +206,36 @@ class DepthFunc:
 
 class MaterialParameters:
     material_color: list[float]
-    tex_matrix: Optional[list[list[float]]]
-    work_float4: Optional[list[list[float]]]
-    work_color: Optional[list[list[float]]]
+    tex_matrix: list[list[float]] | None
+    work_float4: list[list[float]] | None
+    work_color: list[list[float]] | None
     alpha_info: list[float]
-    dp_rat: Optional[list[list[float]]]
-    projection_tex_matrix: Optional[list[list[float]]]
-    material_ambient: Optional[list[list[float]]]
-    material_specular: Optional[list[list[float]]]
-    dt_work: Optional[list[list[float]]]
-    mdl_param: Optional[list[list[float]]]
-    aa_map: Optional[list[list[float]]]
-    ava_skin: Optional[list[list[float]]]
+    dp_rat: list[list[float]] | None
+    projection_tex_matrix: list[list[float]] | None
+    material_ambient: list[list[float]] | None
+    material_specular: list[list[float]] | None
+    dt_work: list[list[float]] | None
+    mdl_param: list[list[float]] | None
+    aa_map: list[list[float]] | None
+    ava_skin: list[list[float]] | None
 
     def __init__(
         self,
         material_color: list[float],
-        tex_matrix: Optional[list[list[float]]],
-        work_float4: Optional[list[list[float]]],
-        work_color: Optional[list[list[float]]],
+        tex_matrix: list[list[float]] | None,
+        work_float4: list[list[float]] | None,
+        work_color: list[list[float]] | None,
         alpha_info: list[float],
-        dp_rat: Optional[list[list[float]]],
-        projection_tex_matrix: Optional[list[list[float]]],
-        material_ambient: Optional[list[list[float]]],
-        material_specular: Optional[list[list[float]]],
-        dt_work: Optional[list[list[float]]],
-        mdl_param: Optional[list[list[float]]],
-        aa_map: Optional[list[list[float]]],
-        ava_skin: Optional[list[list[float]]],
+        dp_rat: list[list[float]] | None,
+        projection_tex_matrix: list[list[float]] | None,
+        material_ambient: list[list[float]] | None,
+        material_specular: list[list[float]] | None,
+        dt_work: list[list[float]] | None,
+        mdl_param: list[list[float]] | None,
+        aa_map: list[list[float]] | None,
+        ava_skin: list[list[float]] | None,
     ) -> None: ...
-    def get_parameter(self, parameter: Parameter) -> Optional[float]: ...
+    def get_parameter(self, parameter: Parameter) -> float | None: ...
 
 class Texture:
     image_texture_index: int
@@ -328,18 +328,18 @@ class FurShellParams:
 
 class OutputAssignments:
     output_assignments: list[OutputAssignment]
-    outline_width: Optional[Value]
-    normal_intensity: Optional[int]
-    val_inf_intensity: Optional[int]
-    discard_condition: Optional[int]
+    outline_width: Value | None
+    normal_intensity: int | None
+    val_inf_intensity: int | None
+    discard_condition: int | None
     exprs: list[OutputExpr]
     exprs_xyz: list[OutputExprXyz]
 
-    def mat_id(self) -> Optional[int]: ...
+    def mat_id(self) -> int | None: ...
 
 class OutputAssignment:
-    x: Optional[int]
-    y: Optional[int]
-    z: Optional[int]
-    w: Optional[int]
-    xyz: Optional[int]
+    x: int | None
+    y: int | None
+    z: int | None
+    w: int | None
+    xyz: int | None

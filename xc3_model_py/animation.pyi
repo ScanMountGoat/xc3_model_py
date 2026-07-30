@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 import numpy
 
@@ -12,8 +12,8 @@ class Animation:
     frames_per_second: float
     frame_count: int
     tracks: list[Track]
-    morph_tracks: Optional[MorphTracks]
-    root_translation: Optional[numpy.ndarray]
+    morph_tracks: MorphTracks | None
+    root_translation: numpy.ndarray | None
 
     def current_frame(self, current_time_seconds: float) -> float: ...
     def skinning_transforms(
@@ -30,27 +30,27 @@ class Animation:
 class Track:
     def sample_translation(
         self, frame: float, frame_count: int
-    ) -> Optional[Tuple[float, float, float]]: ...
+    ) -> tuple[float, float, float] | None: ...
     def sample_rotation(
         self, frame: float, frame_count: int
-    ) -> Optional[Tuple[float, float, float]]: ...
+    ) -> tuple[float, float, float] | None: ...
     def sample_scale(
         self, frame: float, frame_count: int
-    ) -> Optional[Tuple[float, float, float]]: ...
-    def sample_transform(self, frame: float) -> Optional[Transform]: ...
-    def bone_index(self) -> Optional[int]: ...
-    def bone_hash(self) -> Optional[int]: ...
-    def bone_name(self) -> Optional[str]: ...
+    ) -> tuple[float, float, float] | None: ...
+    def sample_transform(self, frame: float) -> Transform | None: ...
+    def bone_index(self) -> int | None: ...
+    def bone_hash(self) -> int | None: ...
+    def bone_name(self) -> str | None: ...
 
 class MorphTracks:
     track_indices: numpy.ndarray
     track_values: numpy.ndarray
 
 class KeyFrame:
-    x_coeffs: Tuple[float, float, float, float]
-    y_coeffs: Tuple[float, float, float, float]
-    z_coeffs: Tuple[float, float, float, float]
-    w_coeffs: Tuple[float, float, float, float]
+    x_coeffs: tuple[float, float, float, float]
+    y_coeffs: tuple[float, float, float, float]
+    z_coeffs: tuple[float, float, float, float]
+    w_coeffs: tuple[float, float, float, float]
 
 class SpaceMode:
     Local: ClassVar[SpaceMode]

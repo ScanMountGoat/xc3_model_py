@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import numpy
 
@@ -9,8 +9,8 @@ class ModelBuffers:
     outline_buffers: list[OutlineBuffer]
     index_buffers: list[IndexBuffer]
     unk_buffers: list[UnkBuffer]
-    unk_data: Optional[UnkDataBuffer]
-    weights: Optional[Weights]
+    unk_data: UnkDataBuffer | None
+    weights: Weights | None
 
     def __init__(
         self,
@@ -18,22 +18,22 @@ class ModelBuffers:
         outline_buffers: list[OutlineBuffer],
         index_buffers: list[IndexBuffer],
         unk_buffers: list[UnkBuffer],
-        unk_data: Optional[UnkDataBuffer],
-        weights: Optional[Weights],
+        unk_data: UnkDataBuffer | None,
+        weights: Weights | None,
     ) -> None: ...
 
 class VertexBuffer:
     attributes: list[AttributeData]
     morph_blend_target: list[AttributeData]
     morph_targets: list[MorphTarget]
-    outline_buffer_index: Optional[int]
+    outline_buffer_index: int | None
 
     def __init__(
         self,
         attributes: list[AttributeData],
         morph_blend_target: list[AttributeData],
         morph_targets: list[MorphTarget],
-        outline_buffer_index: Optional[int],
+        outline_buffer_index: int | None,
     ) -> None: ...
 
 class AttributeData:

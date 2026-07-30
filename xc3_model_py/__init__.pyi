@@ -1,17 +1,17 @@
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 import numpy
 
 from . import animation, collision, material, monolib, shader_database, skinning, vertex
 
 def load_model(
-    wimdo_path: str, shader_database: Optional[shader_database.ShaderDatabase]
+    wimdo_path: str, shader_database: shader_database.ShaderDatabase | None
 ) -> ModelRoot: ...
 def load_model_legacy(
-    camdo_path, shader_database: Optional[shader_database.ShaderDatabase]
+    camdo_path, shader_database: shader_database.ShaderDatabase | None
 ) -> ModelRoot: ...
 def load_map(
-    wismhd: str, shader_database: Optional[shader_database.ShaderDatabase]
+    wismhd: str, shader_database: shader_database.ShaderDatabase | None
 ) -> list[MapRoot]: ...
 def load_animations(anim_path: str) -> list[animation.Animation]: ...
 def load_collisions(idcm_path: str) -> collision.CollisionMeshes: ...
@@ -31,19 +31,19 @@ class ModelRoot:
     models: Models
     buffers: vertex.ModelBuffers
     image_textures: list[ImageTexture]
-    skeleton: Optional[Skeleton]
+    skeleton: Skeleton | None
 
     def __init__(
         self,
         models: Models,
         buffers: vertex.ModelBuffers,
         image_textures: list[ImageTexture],
-        skeleton: Optional[Skeleton],
+        skeleton: Skeleton | None,
     ) -> None: ...
     def save_images_rgba8(
         self, folder: str, prefix: str, ext: str, flip_vertical: bool
     ) -> list[str]: ...
-    def to_mxmd_model(self, mxmd: Mxmd, msrd: Msrd) -> Tuple[Mxmd, Msrd]: ...
+    def to_mxmd_model(self, mxmd: Mxmd, msrd: Msrd) -> tuple[Mxmd, Msrd]: ...
 
 class MapRoot:
     groups: list[ModelGroup]
@@ -69,8 +69,8 @@ class Models:
     models: list[Model]
     materials: list[material.Material]
     samplers: list[Sampler]
-    skinning: Optional[skinning.Skinning]
-    lod_data: Optional[LodData]
+    skinning: skinning.Skinning | None
+    lod_data: LodData | None
     morph_controller_names: list[str]
     animation_morph_names: list[str]
     max_xyz: list[float]
@@ -85,8 +85,8 @@ class Models:
         min_xyz: list[float],
         morph_controller_names: list[str],
         animation_morph_names: list[str],
-        skinning: Optional[skinning.Skinning],
-        lod_data: Optional[LodData],
+        skinning: skinning.Skinning | None,
+        lod_data: LodData | None,
     ) -> None: ...
 
 class Model:
@@ -112,11 +112,11 @@ class Mesh:
     index_buffer_index: int
     index_buffer_index2: int
     material_index: int
-    ext_mesh_index: Optional[int]
-    lod_item_index: Optional[int]
+    ext_mesh_index: int | None
+    lod_item_index: int | None
     flags1: int
     flags2: int
-    base_mesh_index: Optional[int]
+    base_mesh_index: int | None
 
     def __init__(
         self,
@@ -126,9 +126,9 @@ class Mesh:
         material_index: int,
         flags1: int,
         flags2: int,
-        lod_item_index: Optional[int],
-        ext_mesh_index: Optional[int],
-        base_mesh_index: Optional[int],
+        lod_item_index: int | None,
+        ext_mesh_index: int | None,
+        base_mesh_index: int | None,
     ) -> None: ...
 
 class LodData:
@@ -161,15 +161,15 @@ class Skeleton:
 class Bone:
     name: str
     transform: Transform
-    parent_index: Optional[int]
+    parent_index: int | None
 
     def __init__(
-        self, name: str, transform: Transform, parent_index: Optional[int]
+        self, name: str, transform: Transform, parent_index: int | None
     ) -> None: ...
 
 class ImageTexture:
-    name: Optional[str]
-    usage: Optional[TextureUsage]
+    name: str | None
+    usage: TextureUsage | None
     width: int
     height: int
     depth: int
@@ -187,12 +187,12 @@ class ImageTexture:
         image_format: ImageFormat,
         mipmap_count: int,
         image_data: bytes,
-        name: Optional[str],
-        usage: Optional[TextureUsage],
+        name: str | None,
+        usage: TextureUsage | None,
     ) -> None: ...
     @staticmethod
     def from_dds(
-        dds: Dds, name: Optional[str], usage: Optional[TextureUsage]
+        dds: Dds, name: str | None, usage: TextureUsage | None
     ) -> ImageTexture: ...
 
 class TextureUsage:
@@ -271,8 +271,8 @@ class EncodeSurfaceRgba32FloatArgs:
     image_format: ImageFormat
     mipmaps: bool
     data: numpy.ndarray
-    name: Optional[str]
-    usage: Optional[TextureUsage]
+    name: str | None
+    usage: TextureUsage | None
 
     def __init__(
         self,
@@ -283,8 +283,8 @@ class EncodeSurfaceRgba32FloatArgs:
         image_format: ImageFormat,
         mipmaps: bool,
         data: numpy.ndarray,
-        name: Optional[str],
-        usage: Optional[TextureUsage],
+        name: str | None,
+        usage: TextureUsage | None,
     ) -> None: ...
     def encode(self) -> ImageTexture: ...
 
@@ -296,8 +296,8 @@ class EncodeSurfaceRgba8Args:
     image_format: ImageFormat
     mipmaps: bool
     data: bytes
-    name: Optional[str]
-    usage: Optional[TextureUsage]
+    name: str | None
+    usage: TextureUsage | None
 
     def __init__(
         self,
@@ -308,8 +308,8 @@ class EncodeSurfaceRgba8Args:
         image_format: ImageFormat,
         mipmaps: bool,
         data: bytes,
-        name: Optional[str],
-        usage: Optional[TextureUsage],
+        name: str | None,
+        usage: TextureUsage | None,
     ) -> None: ...
     def encode(self) -> ImageTexture: ...
 
