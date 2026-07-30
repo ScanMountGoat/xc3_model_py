@@ -106,6 +106,8 @@ class Operation:
     Not: ClassVar[Operation]
     LeftShift: ClassVar[Operation]
     RightShift: ClassVar[Operation]
+    BitAnd: ClassVar[Operation]
+    BitOr: ClassVar[Operation]
     PartialDerivativeX: ClassVar[Operation]
     PartialDerivativeY: ClassVar[Operation]
     Exp2: ClassVar[Operation]

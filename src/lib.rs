@@ -179,6 +179,7 @@ mod xc3_model_py {
     pub struct MapRoot {
         pub groups: TypedList<ModelGroup>,
         pub image_textures: TypedList<ImageTexture>,
+        pub label: String,
     }
 
     #[pyclass(get_all, set_all, from_py_object)]
@@ -809,10 +810,15 @@ mod xc3_model_py {
     #[pymethods]
     impl MapRoot {
         #[new]
-        pub fn new(groups: TypedList<ModelGroup>, image_textures: TypedList<ImageTexture>) -> Self {
+        pub fn new(
+            groups: TypedList<ModelGroup>,
+            image_textures: TypedList<ImageTexture>,
+            label: String,
+        ) -> Self {
             Self {
                 groups,
                 image_textures,
+                label,
             }
         }
 

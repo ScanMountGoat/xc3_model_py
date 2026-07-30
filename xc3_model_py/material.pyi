@@ -216,6 +216,7 @@ class MaterialParameters:
     material_specular: Optional[list[list[float]]]
     dt_work: Optional[list[list[float]]]
     mdl_param: Optional[list[list[float]]]
+    aa_map: Optional[list[list[float]]]
     ava_skin: Optional[list[list[float]]]
 
     def __init__(
@@ -231,6 +232,7 @@ class MaterialParameters:
         material_specular: Optional[list[list[float]]],
         dt_work: Optional[list[list[float]]],
         mdl_param: Optional[list[list[float]]],
+        aa_map: Optional[list[list[float]]],
         ava_skin: Optional[list[list[float]]],
     ) -> None: ...
     def get_parameter(self, parameter: Parameter) -> Optional[float]: ...

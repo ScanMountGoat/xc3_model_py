@@ -580,6 +580,7 @@ pub mod material {
         pub material_specular: Option<Vec<[f32; 4]>>,
         pub dt_work: Option<Vec<[f32; 4]>>,
         pub mdl_param: Option<Vec<[f32; 4]>>,
+        pub aa_map: Option<Vec<[f32; 4]>>,
         pub ava_skin: Option<[f32; 4]>,
     }
 
@@ -598,6 +599,7 @@ pub mod material {
             material_specular: Option<Vec<[f32; 4]>>,
             dt_work: Option<Vec<[f32; 4]>>,
             mdl_param: Option<Vec<[f32; 4]>>,
+            aa_map: Option<Vec<[f32; 4]>>,
             ava_skin: Option<[f32; 4]>,
         ) -> Self {
             Self {
@@ -612,6 +614,7 @@ pub mod material {
                 material_specular,
                 dt_work,
                 mdl_param,
+                aa_map,
                 ava_skin,
             }
         }

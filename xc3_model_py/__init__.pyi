@@ -48,9 +48,10 @@ class ModelRoot:
 class MapRoot:
     groups: list[ModelGroup]
     image_textures: list[ImageTexture]
+    label: str
 
     def __init__(
-        self, groups: list[ModelGroup], image_textures: list[ImageTexture]
+        self, groups: list[ModelGroup], image_textures: list[ImageTexture], label: str
     ) -> None: ...
     def save_images_rgba8(
         self, folder: str, prefix: str, ext: str, flip_vertical: bool

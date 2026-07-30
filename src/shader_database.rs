@@ -58,6 +58,8 @@ python_enum!(
     Not,
     LeftShift,
     RightShift,
+    BitAnd,
+    BitOr,
     PartialDerivativeX,
     PartialDerivativeY,
     Exp2,

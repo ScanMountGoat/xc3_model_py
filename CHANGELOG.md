@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added field `channel` to `shader_database.OutputExprFuncXyz`.
 * Added fields `unk4_legacy`, `unk_param1`, `unk_param2` to `material.Material`.
 * Added field `discard_condition` to `material.OutputAssignments` and `shader_database.ShaderProgram`.
+* Added field `aa_map` to `material.MaterialParameters`.
+* Added additional variants to `shader_database.Operation`.
+* Added field `label` to `MapRoot`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.
