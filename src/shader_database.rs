@@ -52,20 +52,44 @@ python_enum!(
     Uint,
     Truncate,
     FloatBitsToInt,
+    FloatBitsToUint,
     IntBitsToFloat,
     UintBitsToFloat,
     InverseSqrt,
     Not,
     LeftShift,
     RightShift,
+    And,
+    Or,
     BitAnd,
     BitOr,
+    BitXor,
     PartialDerivativeX,
     PartialDerivativeY,
     Exp2,
     Log2,
     Sin,
-    Cos
+    Cos,
+    NormalizeX,
+    NormalizeY,
+    NormalizeZ,
+    MatMulPointProjX,
+    MatMulPointProjY,
+    MatMulPointProjZ,
+    MatMulPointProjW,
+    MatMulPointInstanceX,
+    MatMulPointInstanceY,
+    MatMulPointInstanceZ,
+    MatMulVectorInstanceX,
+    MatMulVectorInstanceY,
+    MatMulVectorInstanceZ,
+    SkinVectorX,
+    SkinVectorY,
+    SkinVectorZ,
+    SkinPointX,
+    SkinPointY,
+    SkinPointZ,
+    IsNaN
 );
 
 python_enum!(
@@ -105,6 +129,7 @@ python_enum!(
     Uint,
     Truncate,
     FloatBitsToInt,
+    FloatBitsToUint,
     IntBitsToFloat,
     UintBitsToFloat,
     InverseSqrt,
@@ -114,7 +139,8 @@ python_enum!(
     Exp2,
     Log2,
     Sin,
-    Cos
+    Cos,
+    Normalize
 );
 
 python_enum!(
@@ -190,17 +216,25 @@ pub mod shader_database {
         pub name: String,
         pub field: String,
         pub index: Option<usize>,
+        pub index2: Option<usize>,
         pub channel: Option<char>,
     }
 
     #[pymethods]
     impl Parameter {
         #[new]
-        fn new(name: String, field: String, index: Option<usize>, channel: Option<char>) -> Self {
+        fn new(
+            name: String,
+            field: String,
+            index: Option<usize>,
+            index2: Option<usize>,
+            channel: Option<char>,
+        ) -> Self {
             Self {
                 name,
                 field,
                 index,
+                index2,
                 channel,
             }
         }
@@ -326,6 +360,7 @@ pub mod shader_database {
         pub name: String,
         pub field: String,
         pub index: Option<usize>,
+        pub index2: Option<usize>,
         pub channel: Option<ChannelXyz>,
     }
 
@@ -388,6 +423,7 @@ pub mod shader_database {
                     name: p.name.to_string(),
                     field: p.field.to_string(),
                     index: p.index,
+                    index2: p.index2,
                     channel: p.channel.map(Into::into),
                 }),
                 _ => None,

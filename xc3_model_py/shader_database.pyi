@@ -32,6 +32,7 @@ class Parameter:
     name: str
     field: str
     index: int | None
+    index2: int | None
     channel: str | None
 
     def __init__(
@@ -39,6 +40,7 @@ class Parameter:
         name: str,
         field: str,
         index: int | None,
+        index2: int | None,
         channel: str | None,
     ) -> None: ...
 
@@ -100,20 +102,44 @@ class Operation:
     Uint: ClassVar[Operation]
     Truncate: ClassVar[Operation]
     FloatBitsToInt: ClassVar[Operation]
+    FloatBitsToUint: ClassVar[Operation]
     IntBitsToFloat: ClassVar[Operation]
     UintBitsToFloat: ClassVar[Operation]
     InverseSqrt: ClassVar[Operation]
     Not: ClassVar[Operation]
     LeftShift: ClassVar[Operation]
     RightShift: ClassVar[Operation]
+    And: ClassVar[Operation]
+    Or: ClassVar[Operation]
     BitAnd: ClassVar[Operation]
     BitOr: ClassVar[Operation]
+    BitXor: ClassVar[Operation]
     PartialDerivativeX: ClassVar[Operation]
     PartialDerivativeY: ClassVar[Operation]
     Exp2: ClassVar[Operation]
     Log2: ClassVar[Operation]
     Sin: ClassVar[Operation]
     Cos: ClassVar[Operation]
+    NormalizeX: ClassVar[Operation]
+    NormalizeY: ClassVar[Operation]
+    NormalizeZ: ClassVar[Operation]
+    MatMulPointProjX: ClassVar[Operation]
+    MatMulPointProjY: ClassVar[Operation]
+    MatMulPointProjZ: ClassVar[Operation]
+    MatMulPointProjW: ClassVar[Operation]
+    MatMulPointInstanceX: ClassVar[Operation]
+    MatMulPointInstanceY: ClassVar[Operation]
+    MatMulPointInstanceZ: ClassVar[Operation]
+    MatMulVectorInstanceX: ClassVar[Operation]
+    MatMulVectorInstanceY: ClassVar[Operation]
+    MatMulVectorInstanceZ: ClassVar[Operation]
+    SkinVectorX: ClassVar[Operation]
+    SkinVectorY: ClassVar[Operation]
+    SkinVectorZ: ClassVar[Operation]
+    SkinPointX: ClassVar[Operation]
+    SkinPointY: ClassVar[Operation]
+    SkinPointZ: ClassVar[Operation]
+    IsNaN: ClassVar[Operation]
 
 class OutputExprXyz:
     def func(self) -> OutputExprFuncXyz | None: ...
@@ -167,6 +193,7 @@ class OperationXyz:
     Uint: ClassVar[OperationXyz]
     Truncate: ClassVar[OperationXyz]
     FloatBitsToInt: ClassVar[OperationXyz]
+    FloatBitsToUint: ClassVar[OperationXyz]
     IntBitsToFloat: ClassVar[OperationXyz]
     UintBitsToFloat: ClassVar[OperationXyz]
     InverseSqrt: ClassVar[OperationXyz]
@@ -177,6 +204,7 @@ class OperationXyz:
     Log2: ClassVar[OperationXyz]
     Sin: ClassVar[OperationXyz]
     Cos: ClassVar[OperationXyz]
+    Normalize: ClassVar[OperationXyz]
 
 class TextureXyz:
     name: str
@@ -191,6 +219,7 @@ class ParameterXyz:
     name: str
     field: str
     index: int | None
+    index2: int | None
     channel: ChannelXyz | None
 
 class ChannelXyz:

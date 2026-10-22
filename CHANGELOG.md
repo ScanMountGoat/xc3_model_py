@@ -16,8 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added fields `unk4_legacy`, `unk_param1`, `unk_param2` to `material.Material`.
 * Added field `discard_condition` to `material.OutputAssignments` and `shader_database.ShaderProgram`.
 * Added field `aa_map` to `material.MaterialParameters`.
-* Added additional variants to `shader_database.Operation`.
+* Added additional variants to `shader_database.Operation` and `shader_database.OperationXyz`.
 * Added field `label` to `MapRoot`.
+* Added field `index2` to `shader_database.Parameter` and `shader_database.ParameterXyz`.
+* Added field `material_animations` to `Models` and associated types.
+* Added field `techniques` to `Models` and associated type.
+* Added optional parameter `part_id` to `load_maps` to determine what portion of a map to load.
+* Added `models` and `current_frame` parameters to `material.Material.output_assignments`.
 
 ### Changed
 * Renamed `shader_database.Dependency` to `shader_database.Value` and updated associated type names.
@@ -25,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Moved XYZ assignment types from `material.AssignmentXyz` to `shader_database.OutputExprXyz` as well as related types.
 * Changed fields `material.Material.technique_index` and `material.Material.technique_type` with a technique list `material.Material.techniques` to better match in game data.
 * Changed field `material.MaterialParameters.alpha_info` to be a list of 4 floats.
+* Changed `material.Material.parameters` to be a method instead of a field.
+* Renamed field `material.Material.m_unks1_1`, to `material.Material.texture_anim_group_index`.
+* Renamed field `material.Material.m_unks1_2`, to `material.Material.color_anim_group_index`.
+* Renamed field `material.Material.m_unks1_3`, to `material.Material.variable_anim_group_index`.
+* Renamed field `material.Material.m_unks1_4`, to `material.Material.plane_matrix_anim_group_index`.
+* Renamed field `material.MaterialParameters.mdl_param` to `material.MaterialParameters.model_param`.
 
 ### Removed
 * Removed `material.Assignment` and associated types and replaced with `shader_database.OutputExpr`.

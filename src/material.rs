@@ -213,6 +213,9 @@ pub mod material {
     use crate::shader_database::shader_database::ShaderProgram;
     use crate::shader_database::shader_database::Value;
     use crate::xc3_model_py::ImageTexture;
+    use crate::xc3_model_py::MaterialAnimations;
+    use crate::xc3_model_py::Models;
+    use crate::xc3_model_py::Techniques;
     use map_py::{MapPy, TypedList};
     use numpy::PyArray1;
     use pyo3::prelude::*;
@@ -275,19 +278,16 @@ pub mod material {
         pub variables: Vec<MaterialVariable>,
         pub work_callbacks: TypedList<WorkCallback>,
         pub alpha_test_ref: f32,
-        pub m_unks1_1: u32,
-        pub m_unks1_2: u32,
-        pub m_unks1_3: u32,
-        pub m_unks1_4: u32,
+        pub texture_anim_group_index: u32,
+        pub color_anim_group_index: u32,
+        pub variable_anim_group_index: u32,
+        pub plane_matrix_anim_group_index: u32,
 
         #[map(from(map_py::helpers::into_option_py))]
         #[map(into(map_py::helpers::from_option_py))]
         pub shader: Option<Py<ShaderProgram>>,
 
         pub techniques: TypedList<MaterialTechnique>,
-
-        #[map(from(map_py::helpers::into_py), into(map_py::helpers::from_py))]
-        pub parameters: Py<MaterialParameters>,
 
         pub unk4_legacy: [u16; 2],
 
@@ -316,12 +316,11 @@ pub mod material {
             variables: Vec<MaterialVariable>,
             work_callbacks: TypedList<WorkCallback>,
             alpha_test_ref: f32,
-            m_unks1_1: u32,
-            m_unks1_2: u32,
-            m_unks1_3: u32,
-            m_unks1_4: u32,
+            texture_anim_group_index: u32,
+            color_anim_group_index: u32,
+            variable_anim_group_index: u32,
+            plane_matrix_anim_group_index: u32,
             techniques: TypedList<MaterialTechnique>,
-            parameters: Py<MaterialParameters>,
             unk4_legacy: [u16; 2],
             m_unks2: u16,
             gbuffer_flags: u16,
@@ -344,13 +343,12 @@ pub mod material {
                 variables,
                 work_callbacks,
                 alpha_test_ref,
-                m_unks1_1,
-                m_unks1_2,
-                m_unks1_3,
-                m_unks1_4,
+                texture_anim_group_index,
+                color_anim_group_index,
+                variable_anim_group_index,
+                plane_matrix_anim_group_index,
                 shader,
                 techniques,
-                parameters,
                 unk4_legacy,
                 m_unks2,
                 gbuffer_flags,
@@ -361,7 +359,9 @@ pub mod material {
         pub fn output_assignments(
             &self,
             py: Python,
+            models: &Models,
             textures: Vec<PyRef<ImageTexture>>,
+            current_frame: f32,
         ) -> PyResult<OutputAssignments> {
             // Converting all the Python images to Rust is very expensive.
             // We can avoid costly conversion of input images using PyRef.
@@ -381,9 +381,29 @@ pub mod material {
                 })
                 .collect();
 
-            let assignments: xc3_model::material::assignments::OutputAssignments =
-                self.clone().map_py(py)?.output_assignments(&image_textures);
+            let models: xc3_model::Models = models.clone().map_py(py)?;
+
+            let assignments: xc3_model::material::assignments::OutputAssignments = self
+                .clone()
+                .map_py(py)?
+                .output_assignments(&models, &image_textures, current_frame);
             assignments.map_py(py)
+        }
+
+        pub fn parameters(
+            &self,
+            py: Python,
+            material_animations: Option<MaterialAnimations>,
+            techniques: &Techniques,
+            current_frame: f32,
+        ) -> PyResult<MaterialParameters> {
+            let material_animations: Option<xc3_model::MaterialAnimations> =
+                material_animations.map_py(py)?;
+            let parameters: xc3_model::material::MaterialParameters = self
+                .clone()
+                .map_py(py)?
+                .parameters(material_animations.as_ref(), &techniques.0, current_frame);
+            parameters.map_py(py)
         }
 
         pub fn alpha_texture_channel_index(&self, py: Python) -> PyResult<usize> {
@@ -579,7 +599,7 @@ pub mod material {
         pub material_ambient: Option<Vec<[f32; 4]>>,
         pub material_specular: Option<Vec<[f32; 4]>>,
         pub dt_work: Option<Vec<[f32; 4]>>,
-        pub mdl_param: Option<Vec<[f32; 4]>>,
+        pub model_param: Option<Vec<[f32; 4]>>,
         pub aa_map: Option<Vec<[f32; 4]>>,
         pub ava_skin: Option<[f32; 4]>,
     }
@@ -598,7 +618,7 @@ pub mod material {
             material_ambient: Option<Vec<[f32; 4]>>,
             material_specular: Option<Vec<[f32; 4]>>,
             dt_work: Option<Vec<[f32; 4]>>,
-            mdl_param: Option<Vec<[f32; 4]>>,
+            model_param: Option<Vec<[f32; 4]>>,
             aa_map: Option<Vec<[f32; 4]>>,
             ava_skin: Option<[f32; 4]>,
         ) -> Self {
@@ -613,7 +633,7 @@ pub mod material {
                 material_ambient,
                 material_specular,
                 dt_work,
-                mdl_param,
+                model_param,
                 aa_map,
                 ava_skin,
             }

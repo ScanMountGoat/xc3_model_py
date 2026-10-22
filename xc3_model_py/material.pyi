@@ -24,10 +24,10 @@ class Material:
     variables: list[MaterialVariable]
     work_callbacks: list[WorkCallback]
     alpha_test_ref: float
-    m_unks1_1: int
-    m_unks1_2: int
-    m_unks1_3: int
-    m_unks1_4: int
+    texture_anim_group_index: int
+    color_anim_group_index: int
+    variable_anim_group_index: int
+    plane_matrix_anim_group_index: int
     shader: ShaderProgram | None
     techniques: list[MaterialTechnique]
     parameters: MaterialParameters
@@ -51,10 +51,10 @@ class Material:
         variables: list[MaterialVariable],
         work_callbacks: list[tuple[int, int]],
         alpha_test_ref: float,
-        m_unks1_1: int,
-        m_unks1_2: int,
-        m_unks1_3: int,
-        m_unks1_4: int,
+        texture_anim_group_index: int,
+        color_anim_group_index: int,
+        variable_anim_group_index: int,
+        plane_matrix_anim_group_index: int,
         techniques: list[MaterialTechnique],
         parameters: MaterialParameters,
         unk4_legacy: list[int],

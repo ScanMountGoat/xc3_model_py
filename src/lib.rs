@@ -97,6 +97,25 @@ python_enum!(
 
 python_enum!(FilterMode, xc3_model::FilterMode, Nearest, Linear);
 
+python_enum!(
+    MaterialAnimTrackType,
+    xc3_model::MaterialAnimTrackType,
+    ScaleU,
+    ScaleV,
+    TranslateU,
+    TranslateV,
+    RotateDeg,
+    WorkFloat,
+    MatRecord0,
+    MatRecord1,
+    MatRecord2,
+    MatRecord3,
+    MatRecord4,
+    MatRecord5,
+    Unk12,
+    Unk13
+);
+
 // Match the module hierarchy and types of xc3_model as closely as possible.
 #[pymodule]
 mod xc3_model_py {
@@ -153,6 +172,9 @@ mod xc3_model_py {
 
     #[pymodule_export]
     use super::FilterMode;
+
+    #[pymodule_export]
+    use super::MaterialAnimTrackType;
 
     #[pymodule_export]
     use super::Xc3ModelError;
@@ -212,6 +234,13 @@ mod xc3_model_py {
         pub skinning: Option<Py<Skinning>>,
         pub morph_controller_names: TypedList<String>,
         pub animation_morph_names: TypedList<String>,
+
+        #[map(
+            from(map_py::helpers::into_option_py),
+            into(map_py::helpers::from_option_py)
+        )]
+        pub material_animations: Option<Py<MaterialAnimations>>,
+
         pub max_xyz: [f32; 3],
         pub min_xyz: [f32; 3],
         #[map(
@@ -219,6 +248,8 @@ mod xc3_model_py {
             into(map_py::helpers::from_option_py)
         )]
         pub lod_data: Option<Py<LodData>>,
+        // TODO: how to handle techniques?
+        pub techniques: Techniques,
     }
 
     #[pymethods]
@@ -228,23 +259,27 @@ mod xc3_model_py {
             models: TypedList<Model>,
             materials: TypedList<crate::material::material::Material>,
             samplers: TypedList<Sampler>,
+            material_animations: Option<Py<MaterialAnimations>>,
             max_xyz: [f32; 3],
             min_xyz: [f32; 3],
             morph_controller_names: TypedList<String>,
             animation_morph_names: TypedList<String>,
             skinning: Option<Py<Skinning>>,
             lod_data: Option<Py<LodData>>,
+            techniques: Techniques,
         ) -> Self {
             Self {
                 models,
                 materials,
                 samplers,
+                material_animations,
                 skinning,
                 lod_data,
                 morph_controller_names,
                 animation_morph_names,
                 max_xyz,
                 min_xyz,
+                techniques,
             }
         }
     }
@@ -386,6 +421,53 @@ mod xc3_model_py {
                 lod_count,
             }
         }
+    }
+
+    #[pyclass(from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::Techniques)]
+    pub struct Techniques(pub xc3_model::Techniques);
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::MaterialAnimations)]
+    pub struct MaterialAnimations {
+        pub groups: TypedList<MaterialAnimGroup>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::MaterialAnimGroup)]
+    pub struct MaterialAnimGroup {
+        pub entries: TypedList<MaterialAnimEntry>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::MaterialAnimEntry)]
+    pub struct MaterialAnimEntry {
+        pub tracks: TypedList<MaterialAnimTrack>,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::MaterialAnimTrack)]
+    pub struct MaterialAnimTrack {
+        pub track_type: MaterialAnimTrackType,
+        pub work_value_index: usize,
+        pub keys: TypedList<MaterialAnimKey>,
+        pub frame_start: usize,
+        pub frame_end: usize,
+    }
+
+    #[pyclass(get_all, set_all, from_py_object)]
+    #[derive(Debug, Clone, MapPy)]
+    #[map(xc3_model::MaterialAnimKey)]
+    pub struct MaterialAnimKey {
+        pub out_tangent: f32,
+        pub in_tangent: f32,
+        pub value: f32,
+        pub frame: usize,
     }
 
     #[pyclass(get_all, set_all, from_py_object)]
@@ -918,11 +1000,13 @@ mod xc3_model_py {
         py: Python,
         wismhd_path: &str,
         shader_database: Option<&ShaderDatabase>,
+        part_id: Option<u16>,
     ) -> PyResult<TypedList<MapRoot>> {
         let database = shader_database.map(|database| &database.0);
         // Prevent Python from locking up while Rust processes map data in parallel.
-        let roots =
-            py.detach(move || xc3_model::load_map(wismhd_path, database).map_err(py_exception))?;
+        let roots = py.detach(move || {
+            xc3_model::load_map(wismhd_path, database, part_id).map_err(py_exception)
+        })?;
         roots.map_py(py)
     }
 

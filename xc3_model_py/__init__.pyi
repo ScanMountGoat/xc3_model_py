@@ -2,6 +2,8 @@ from typing import ClassVar
 
 import numpy
 
+from xc3_model_py.skinning import Skinning
+
 from . import animation, collision, material, monolib, shader_database, skinning, vertex
 
 def load_model(
@@ -69,24 +71,28 @@ class Models:
     models: list[Model]
     materials: list[material.Material]
     samplers: list[Sampler]
-    skinning: skinning.Skinning | None
+    skinning: Skinning | None
     lod_data: LodData | None
     morph_controller_names: list[str]
     animation_morph_names: list[str]
+    material_animations: MaterialAnimations | None
     max_xyz: list[float]
     min_xyz: list[float]
+    techniques: Techniques
 
     def __init__(
         self,
         models: list[Model],
         materials: list[material.Material],
         samplers: list[Sampler],
+        material_animations: MaterialAnimations | None,
         max_xyz: list[float],
         min_xyz: list[float],
         morph_controller_names: list[str],
         animation_morph_names: list[str],
-        skinning: skinning.Skinning | None,
+        skinning: Skinning | None,
         lod_data: LodData | None,
+        techniques: Techniques,
     ) -> None: ...
 
 class Model:
@@ -151,6 +157,47 @@ class LodGroup:
     lod_count: int
 
     def __init__(self, base_lod_index: int, lod_count: int) -> None: ...
+
+class Techniques:
+    pass
+
+class MaterialAnimations:
+    groups: list[MaterialAnimGroup]
+
+class MaterialAnimGroup:
+    entries: list[MaterialAnimEntry]
+
+class MaterialAnimEntry:
+    tracks: list[MaterialAnimTrack]
+
+class MaterialAnimTrack:
+    track_type: MaterialAnimTrackType
+    work_value_index: int
+    keys: list[MaterialAnimKey]
+    frame_start: int
+    frame_end: int
+
+class MaterialAnimTrackType:
+    ScaleU: ClassVar[MaterialAnimTrackType]
+    ScaleV: ClassVar[MaterialAnimTrackType]
+    TranslateU: ClassVar[MaterialAnimTrackType]
+    TranslateV: ClassVar[MaterialAnimTrackType]
+    RotateDeg: ClassVar[MaterialAnimTrackType]
+    WorkFloat: ClassVar[MaterialAnimTrackType]
+    MatRecord0: ClassVar[MaterialAnimTrackType]
+    MatRecord1: ClassVar[MaterialAnimTrackType]
+    MatRecord2: ClassVar[MaterialAnimTrackType]
+    MatRecord3: ClassVar[MaterialAnimTrackType]
+    MatRecord4: ClassVar[MaterialAnimTrackType]
+    MatRecord5: ClassVar[MaterialAnimTrackType]
+    Unk12: ClassVar[MaterialAnimTrackType]
+    Unk13: ClassVar[MaterialAnimTrackType]
+
+class MaterialAnimKey:
+    out_tangent: float
+    in_tangent: float
+    value: float
+    frame: int
 
 class Skeleton:
     bones: list[Bone]
